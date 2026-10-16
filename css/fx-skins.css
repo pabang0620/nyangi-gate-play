@@ -1,0 +1,78 @@
+/* skin trails (js/rewards.js SKIN_TIERS): paw badges (영웅: prints, 전설: + afterimages) + trail note */
+:root { --sk-rare: #6cc8ff; --sk-hidden: #ff7ae0; }
+
+.skbadge {
+    position: absolute; top: -4px; left: -4px; z-index: 2; pointer-events: none;
+    padding: 1px 6px; border-radius: 8px; font-family: 'BlackHan'; font-size: 11px; line-height: 1.35;
+    color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.55); white-space: nowrap;
+    box-shadow: 0 1px 0 rgba(0,0,0,.45), 0 0 0 1.5px rgba(255,255,255,.75);
+}
+.skbadge.t-rare { background: linear-gradient(#58b6f5, #2f7fd0); }
+.skbadge.t-hidden {
+    background: linear-gradient(110deg, #ff6fd8, #a874ff 45%, #5fd6ff);
+    background-size: 200% 100%; animation: skb-shine 2.4s linear infinite;
+}
+@keyframes skb-shine { from { background-position: 0 0; } to { background-position: 200% 0; } }
+
+/* hero screen skin picker */
+.skinpick .sk { position: relative; }
+.skinpick .sk > .skbadge { top: -2px; left: 2px; max-width: none; overflow: visible; font-size: 10px; padding: 0 5px; }
+.sknote { font-size: 12px; line-height: 1.25; }
+.sknote::before { content: ''; display: inline-block; width: 1em; height: 1em; margin-right: .3em; vertical-align: -.12em; background: url('../img/ui_paw.png') center / contain no-repeat; }
+.skbadge .pawico { width: 1.05em; height: 1.05em; vertical-align: -.15em; filter: brightness(0) invert(1); }
+.sknote.t-rare { color: var(--sk-rare); }
+.sknote.t-hidden { color: var(--sk-hidden); }
+.hero-left > .sknote { margin-top: -2px; text-shadow: var(--stroke-s); }
+
+/* shop skin cards */
+.pcard > .skbadge { top: 0; left: 0; font-size: 12px; }
+.pcard .pd.sknote { flex: none; min-height: 0; -webkit-line-clamp: 1; font-size: 11px; }
+.pcard .pd.sknote.t-rare { color: #2a78b8; }
+.pcard .pd.sknote.t-hidden { color: #b0389a; }
+#app.mobile .pcard .pd.sknote { font-size: 12px; }
+
+/* reward cells (pass / got popups) */
+.cell > .skbadge { top: -6px; left: -6px; font-size: 10px; padding: 0 4px; }
+
+@media (prefers-reduced-motion: reduce) { .skbadge.t-hidden { animation: none; } }
+
+/* hero tab skin row: default + owned skins scroll sideways, grade ring, "+" opens the collection */
+.skinpick { overflow-x: auto; overflow-y: hidden; padding: 4px 2px 2px; flex: none; }
+.skinpick .sk { flex: none; }
+.skinpick .sk > span { max-width: 74px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skinpick .sk.r0 img { box-shadow: 0 0 0 3px var(--r0), 0 0 0 5px #4a2a0e; }
+.skinpick .sk.r1 img { box-shadow: 0 0 0 3px var(--r1), 0 0 0 5px #4a2a0e; }
+.skinpick .sk.r2 img { box-shadow: 0 0 0 3px var(--r2), 0 0 0 5px #4a2a0e; }
+.skinpick .sk.r3 img { box-shadow: 0 0 0 3px var(--r3), 0 0 0 5px #4a2a0e; }
+.skinpick .sk.on img { box-shadow: 0 0 0 3px #fff3d6, 0 0 10px 4px var(--gold); }
+.skinpick .sk.more b { display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%; font-size: 30px; color: var(--gold); background: #3a2412; box-shadow: 0 0 0 2px #f2c14e, 0 0 0 4px #6b3e12; }
+.hero-left > .skopt { font-size: 13px; text-shadow: var(--stroke-s); margin-top: -2px; }
+#app.mobile .hero-left > .skopt { font-size: 15px; }
+.skopt .sknote { font-size: inherit; }
+
+/* skin collection popup */
+.skbook-pop { width: 900px; }
+.skbook { display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: max-content; gap: 10px; width: 100%; max-height: 430px; overflow-y: auto; padding: 6px 6px 12px; }
+.skc { --rc: var(--r0); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 10px; cursor: pointer; font-size: 12px; line-height: 1.15;
+    background: rgba(90,55,20,.12); box-shadow: inset 0 0 0 3px var(--rc); }
+.skc > * { flex: none; }
+.skc.r1 { --rc: var(--r1); } .skc.r2 { --rc: var(--r2); } .skc.r3 { --rc: var(--r3); }
+.skc img { width: 66px; height: 66px; border-radius: 50%; object-fit: cover; object-position: top; background: #3a2412; box-shadow: 0 0 0 3px var(--rc); }
+.skc.lock img { filter: grayscale(1) brightness(.7); }
+.skc.on { background: rgba(242,193,78,.4); }
+.skc-g { margin-top: 5px; padding: 0 8px; border-radius: 4px; background: #2a170a; font-family: 'BlackHan'; font-size: 13px; line-height: 1.35; }
+.skc-n { font-family: 'BlackHan'; font-size: 13px; min-height: 2.3em; display: flex; align-items: center; text-align: center; }
+.skc-o { color: #3f6a12; }
+.skc-t { font-size: 11px; } .skc-t.t-rare { color: #2a78b8; } .skc-t.t-hidden { color: #b0389a; }
+.skc-s { font-family: 'BlackHan'; color: #8a3a12; }
+.skc.on .skc-s { color: #3f6a12; }
+
+/* skin preview: the big picture first, then the 착용 button */
+.skp { display: flex; gap: 16px; align-items: center; justify-content: center; }
+.skp-pic { flex: none; width: 150px; height: 180px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+    border-radius: 12px; background: radial-gradient(ellipse at 50% 70%, rgba(255,230,180,.22), rgba(30,16,6,.5) 70%); box-shadow: inset 0 0 0 3px #6b4a24; }
+.skp-pic img { height: 100%; object-fit: contain; object-position: bottom; }
+.skp-info { min-width: 170px; max-width: 320px; display: flex; flex-direction: column; gap: 6px; }
+.skp-n { font-family: 'BlackHan'; font-size: 24px; text-shadow: var(--stroke-s); }
+#app.mobile .skp-pic { width: 118px; height: 142px; }
+#app.mobile .skp-n { font-size: 21px; }

@@ -1,0 +1,248 @@
+/* Layout passes: mobile scaling and touch targets, rewards/shop, frame-safe window sizes per screen. */
+/* ---------- mobile first: phones land at ~0.5 scale, so touch targets grow ---------- */
+#app.mobile .hud-top, #app.mobile .hud-hero, #app.mobile .hud-spells, #app.mobile .topbar, #app.mobile .navbar { zoom: 1.4; }
+#app.mobile .navbtn { width: 96px; height: 78px; }
+#app.mobile .navbtn img { width: 54px; height: 54px; top: -24px; }
+#app.mobile .modal { zoom: 1.15; }
+#app.mobile .win { left: 16px; right: 16px; font-size: 20px; bottom: 152px; top: 90px; }
+#app.mobile .win .tip { font-size: 17px; }
+#app.mobile .detail { font-size: 18px; }
+#app.mobile .rnode { font-size: 14px; }
+#app.mobile .tpop { transform: translate(-50%, -50%) scale(1.35); }
+#app.mobile .tinfo { transform: scale(1.3); transform-origin: 0 0; }
+#app.mobile .wave-btn { transform: scale(1.35); animation: none; }
+#app.mobile #toast { transform: translateX(-50%) scale(1.35); transform-origin: 50% 0; }
+#app.mobile .aim-cancel { transform: translateX(-50%) scale(1.35); transform-origin: 50% 0; top: 40px; }
+#app.mobile .cell { width: 76px; height: 76px; }
+#app.mobile .cell canvas, #app.mobile .cell img { width: 54px; height: 54px; }
+img.icon { width: 32px; height: 32px; object-fit: contain; vertical-align: middle; }
+.chip img.icon { width: 36px; height: 36px; object-fit: cover; object-position: top; border-radius: 50%; box-shadow: 0 0 0 2px #c08a3a; }
+.tree, .tcol { min-height: 0; }
+#app.mobile .rnode .nm { font-size: 16px; }
+/* frame only (no leather fill) so the painted scene shows through; text sits on a dark band */
+/* stage info: two columns for landscape phones */
+.si { display: flex; gap: 18px; align-items: stretch; text-align: left; }
+.si-left { flex: 1.4; display: flex; flex-direction: column; gap: 8px; align-items: center; text-align: center; }
+.si-right { width: 250px; display: flex; flex-direction: column; gap: 8px; }
+.heropick { display: flex; flex-direction: column; gap: 6px; }
+.heropick .hp { display: flex; gap: 8px; align-items: center; padding: 4px 8px 4px 4px; border-radius: 8px; cursor: pointer; background: rgba(90,55,20,.12); box-shadow: inset 0 0 0 2px rgba(90,55,20,.3); }
+.heropick .hp img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 2px #8a6a3a; }
+.heropick .hp b { font-family: 'BlackHan'; font-weight: normal; font-size: 16px; color: #3b2412; }
+.heropick .hp .tip { font-size: 12px; }
+.heropick .hp.on { background: rgba(240,160,48,.3); box-shadow: inset 0 0 0 3px #c9781a; }
+/* title & hub readability on phones */
+#app.mobile .title-screen { zoom: 1.25; }
+#app.mobile .node .nm { font-size: 19px; top: -36px; }
+#app.mobile .hubtip { display: none; }
+#app.mobile .paper.guide { zoom: 1.4; }
+.tbtn .nm { position: absolute; top: -15px; font-family: 'BlackHan'; font-size: 13px; color: #fff3d6; text-shadow: var(--stroke-s); white-space: nowrap; }
+
+/* overlays never swallow battlefield taps (#ui > * would otherwise win on specificity) */
+#ui .banner, #ui .burst, #ui .tinfo, #ui .hud-top { pointer-events: none; }
+#ui .hud-top > * { pointer-events: auto; }
+#ui .hud-top > .sp { pointer-events: none; }
+
+/* ---- review pass ---- */
+@media (hover: none) { .node:hover, .tbtn:hover, .btn:hover { transform: none; filter: drop-shadow(0 3px 0 rgba(20,10,4,.6)); } }
+.card .f .rn { background: #2a170a; padding: 0 8px; border-radius: 4px; text-shadow: none !important; font-family: 'BlackHan'; }
+.card.r1 .f { box-shadow: inset 0 6px 0 var(--r1); } .card.r2 .f { box-shadow: inset 0 6px 0 var(--r2); }
+.card.r3 .f { box-shadow: inset 0 6px 0 var(--r3); } .card.r4 .f { box-shadow: inset 0 6px 0 var(--r4); }
+.up { color: #4f8a2a; font-family: 'Lilita', 'BlackHan'; }
+.panel .up, .hud-box .up { color: #9fd65a; }
+.wave-prev { position: absolute; top: 96px; display: flex; gap: 2px; padding: 2px 4px; border-radius: 6px; background: rgba(30,16,6,.85); box-shadow: inset 0 0 0 1px #6b4a24; }
+.wave-prev canvas { height: 26px; width: auto; }
+.wave-prev .boss { filter: drop-shadow(0 0 0 #c0392b); outline: 2px solid #c0392b; border-radius: 4px; }
+/* phones: touch targets and a readable minimum text size */
+#app.mobile .btn { min-height: 66px; font-size: 22px; }
+#app.mobile .btn.small { min-height: 60px; font-size: 19px; border-width: 13px; border-image-width: 13px; }
+#app.mobile .tog { padding: 10px 14px 10px 8px; font-size: 16px; }
+#app.mobile .skill .key { display: none; }
+#app.mobile [style*="font-size: 12px"], #app.mobile [style*="font-size: 13px"], #app.mobile [style*="font-size: 14px"], #app.mobile [style*="font-size: 15px"] { font-size: 17px !important; }
+#app.mobile .tip { font-size: 16px; }
+#app.mobile .hero-left, #app.mobile .detail, #app.mobile .heropick .hp .tip { font-size: 17px; }
+
+/* ---- rewards / shop ---- */
+.testtag { font-family: 'BlackHan'; font-size: 14px; color: #fff; background: #8a3a12; padding: 2px 10px; border-radius: 5px; }
+img.shopimg { width: 92px; height: 92px; object-fit: contain; filter: drop-shadow(0 3px 0 rgba(0,0,0,.4)); }
+img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top; box-shadow: 0 0 0 3px #8a6a3a; background: #3a2412; }
+.gotext { font-family: 'BlackHan'; font-size: 18px; padding: 10px 14px; border-radius: 8px; background: #3a2412; color: var(--gold); }
+.days { display: flex; gap: 8px; }
+.day { width: 96px; padding: 6px 2px 10px; border-radius: 10px; display: flex; flex-direction: column; align-items: center; gap: 6px; background: rgba(90,55,20,.14); box-shadow: inset 0 0 0 2px rgba(90,55,20,.3); }
+.day .dn { font-family: 'BlackHan'; font-size: 15px; }
+.day.today { background: rgba(240,160,48,.3); box-shadow: inset 0 0 0 3px #c9781a; animation: armed .6s ease-in-out infinite alternate; }
+.day.done { opacity: .5; }
+.rw { display: flex; gap: 12px; flex: 1; min-height: 0; }
+.rw-col { padding: 10px; display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; }
+.rw-col:first-child { flex: 1.2; }
+.rw-pass { flex: 1.5; }
+.rw-side { width: 230px; }
+.rw-col h3 { font-family: 'BlackHan'; font-weight: normal; font-size: 20px; color: var(--gold); text-shadow: var(--stroke-s); display: flex; align-items: center; gap: 6px; }
+.rw-col h3 .claimall { margin-left: auto; flex: none; min-height: 36px; padding: 0 10px; text-shadow: var(--stroke-s); }
+#app.mobile .rw-col h3 .claimall { min-height: 46px; font-size: 18px; }
+.mrow { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 8px; background: rgba(0,0,0,.2); }
+.mrow .cell { width: 50px; height: 50px; border-width: 7px; border-image-width: 7px; }
+.mrow .cell canvas, .mrow .cell img { width: 32px; height: 32px; }
+.mrow .bar { margin: 3px 0; }
+.mrow.claimed { opacity: .55; }
+.mrow.bonus { background: rgba(240,160,48,.18); }
+.claimed-t { font-family: 'BlackHan'; color: var(--moss); text-shadow: var(--stroke-s); white-space: nowrap; }
+.ptrack { display: flex; gap: 6px; overflow-x: auto; padding: 4px 2px 8px; flex: 1; }
+.ptier { display: flex; flex-direction: column; gap: 6px; align-items: center; opacity: .55; }
+.ptier.open { opacity: 1; }
+.pstar { display: flex; align-items: center; font-size: 15px; }
+.pstar img { width: 20px; height: 20px; }
+.pcell { position: relative; border-radius: 8px; padding: 2px; cursor: default; }
+.pcell .cell { width: 70px; height: 70px; border-width: 9px; border-image-width: 9px; }
+.pcell .cell canvas, .pcell .cell img { width: 46px; height: 46px; }
+.pcell.can { cursor: pointer; box-shadow: 0 0 0 3px var(--gold); animation: armed .6s ease-in-out infinite alternate; }
+.pcell.got::after { content: '✓'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #9fd65a; text-shadow: var(--stroke); background: rgba(0,0,0,.35); border-radius: 8px; }
+.pcell.lockp { filter: grayscale(.7) brightness(.7); }
+.plabels { display: flex; flex-direction: column; gap: 6px; padding-top: 4px; }
+.skinpick { display: flex; gap: 6px; }
+.skinpick .sk { width: 76px; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; font-size: 12px; text-shadow: var(--stroke-s); }
+.skinpick .sk img { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; object-position: top; background: #3a2412; box-shadow: 0 0 0 2px #6b4a24; }
+.skinpick .sk.on img { box-shadow: 0 0 0 3px var(--gold); }
+.skinpick .sk.lock { filter: grayscale(1) brightness(.6); }
+.shopwin { overflow-y: auto; }
+.shop-sec h3 { font-family: 'BlackHan'; font-weight: normal; font-size: 20px; color: var(--gold); text-shadow: var(--stroke-s); margin: 4px 0; }
+.shop-row { display: flex; gap: 10px; overflow-x: auto; padding: 16px 12px 10px 4px; align-items: stretch; }
+.pcard { position: relative; width: 170px; flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 6px; text-align: center; color: var(--ink); border: 18px solid transparent; border-image: url('../img/ui_panel.png') 108 fill / 18px stretch; filter: drop-shadow(0 3px 0 rgba(0,0,0,.45)); height: 238px; justify-content: flex-start; }
+.pcard .pn { font-family: 'BlackHan'; font-size: 16px; }
+.pcard .pd { font-size: 12px; color: #6a4a2a; line-height: 1.3; flex: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; min-height: 3.9em; }
+.pcard .pg { font-size: 20px; display: flex; gap: 2px; flex: 1; align-items: center; justify-content: center; width: 100%; }
+.pcard.owned { filter: grayscale(.6) drop-shadow(0 3px 0 rgba(0,0,0,.45)); }
+.pcard.skin.r1 { box-shadow: inset 0 5px 0 var(--r1); } .pcard.skin.r2 { box-shadow: inset 0 5px 0 var(--r2); } .pcard.skin.r3 { box-shadow: inset 0 5px 0 var(--r3); }
+.ribbon-s { position: absolute; background: #c0392b; color: #fff; font-family: 'BlackHan'; font-size: 12px; padding: 2px 8px; border-radius: 5px; box-shadow: var(--hard); z-index: 1; top: -14px; right: -8px; }
+#app.mobile .pcard .pd { font-size: 14px; }
+#app.mobile .day { width: 104px; }
+
+.enh-stamp { display: flex; align-items: center; gap: 14px; animation: starpop .45s; }
+.enh-stamp .num { color: #8a3a12; text-shadow: 0 3px 0 rgba(255,230,180,.7); }
+.enh-stamp.fail { animation: shake .3s 2; }
+.enh-stamp.fail .num { color: #6a6a6a; }
+/* ribbons inside scrollable popups keep their tails inside the box (they'd be clipped) */
+.modal .ribbon { margin: 10px 40px 0; }
+/* two-line title logo */
+.logo .l1 { font-size: 92px; color: #ffe08a; }
+.logo .l2 { font-size: 56px; letter-spacing: 6px; }
+
+/* ===== layout pass: nothing overlaps frames ===== */
+/* windows clear the nav bar (its icons stick up ~30px) and scroll inside their frame */
+.win::-webkit-scrollbar { width: 8px; }
+.win::-webkit-scrollbar-track { margin: 10px 0; }
+.win::-webkit-scrollbar-thumb { background: #8a6a3a; border-radius: 4px; }
+.shop-row::-webkit-scrollbar, .ptrack::-webkit-scrollbar { height: 8px; }
+.shop-row::-webkit-scrollbar-thumb, .ptrack::-webkit-scrollbar-thumb { background: #8a6a3a; border-radius: 4px; }
+.hero-wrap, .tree, .rw { min-height: 260px; }
+
+/* shop: equal-height cards, price pinned to the bottom, tags not clipped */
+.pcard > .btn, .pcard > .claimed-t, .pcard > .tip { margin-top: auto; width: 100%; }
+.pcard .shopimg { flex: none; }
+#app.mobile .pcard { width: 180px; height: 290px; }
+
+/* hero: equipment row above the bag */
+.equiprow { display: flex; align-items: center; gap: 10px; padding: 2px 4px 10px; border-bottom: 1px dashed rgba(217,195,154,.2); }
+.eqlabel { font-family: 'BlackHan'; color: var(--gold); text-shadow: var(--stroke-s); margin-right: 4px; }
+
+/* research: text fits the card */
+.rnode > div:nth-child(2) { font-size: 12px; line-height: 1.25; }
+#app.mobile .rnode > div:nth-child(2) { font-size: 13px !important; }
+
+/* rewards pass: row labels + bigger cells fill the column */
+.pwrap { display: flex; gap: 6px; align-items: flex-start; }
+.plabels span { height: 24px; font-family: 'BlackHan'; font-size: 14px; text-shadow: var(--stroke-s); }
+.plabels span:nth-child(2) { height: 76px; display: flex; align-items: center; }
+.plabels span.paid { height: 76px; display: flex; align-items: center; color: var(--gold); }
+
+/* summon / endless: centred column that never pushes the title into the frame */
+.summonwin { align-items: center; justify-content: center; gap: 10px; text-align: center; }
+.summonwin > * { flex: none; }
+
+/* settings: two columns */
+.set-wrap { display: flex; gap: 18px; align-items: flex-start; }
+.set-col { display: flex; flex-direction: column; gap: 10px; align-items: flex-start; flex: 1; }
+.set-col.inset { flex: 1.6; gap: 12px; }
+/* shop cards: room for 3 description lines on phones */
+#app.mobile .pcard img.shopimg { width: 76px; height: 76px; }
+#app.mobile .pcard > .btn { min-height: 0; height: 48px; padding-top: 0; padding-bottom: 0; }
+#app.mobile .summonwin { gap: 6px; padding-top: 14px; padding-bottom: 14px; }
+#app.mobile .summonwin .cell { width: 54px; height: 54px; }
+/* phones: research nodes get one description line (two were cut off), the long hint goes, header is tighter */
+#app.mobile .rs-tip { display: none; }
+#app.mobile .tcol { gap: 5px; padding: 6px; }
+#app.mobile .tcol h3 { font-size: 18px; margin: 0; }
+#app.mobile .rnode .rd { -webkit-line-clamp: 1; line-clamp: 1; font-size: 12px !important; line-height: 1.15; }
+#app.mobile .rnode .nm { font-size: 15px; line-height: 1.1; }
+#app.mobile .rnode { gap: 0; padding-top: 0; padding-bottom: 0; border-width: 6px; border-image-width: 6px; }
+#app.mobile .tcol h3 canvas, #app.mobile .tcol h3 img { height: 28px; }
+/* phones: nav icons sit higher so the label below them is not covered */
+#app.mobile .navbtn img { width: 50px; height: 50px; top: -38px; }
+#app.mobile .navbtn > span:not(.badge) { position: relative; z-index: 1; }
+/* long translations: top bar keeps one line, class tabs share the row (their labels shrink to fit) */
+.topbar .title-t { white-space: nowrap; overflow: hidden; max-width: 240px; flex-shrink: 0; }
+.topbar .chip { white-space: nowrap; flex-shrink: 0; }
+.classpick { display: flex; gap: 6px; }
+.classpick .btn { flex: 1 1 0; min-width: 0; padding-left: 2px; padding-right: 2px; }
+.navbtn > span:not(.badge) { overflow: visible; }
+.topbar .chip.herochip { flex-shrink: 1; min-width: 90px; }
+.topbar .herochip > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.topbar .title-t { flex-shrink: 1; min-width: 120px; }
+.logo > span { white-space: nowrap; }
+
+/* policies: settings row, legal line, first-start consent */
+.policy-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.legal-line { font-size: 13px; opacity: .85; margin-bottom: 8px; }
+.title-acct { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; }
+.title-acct .tip { color: #fff4dc; text-shadow: 0 1px 3px #000; }
+.locknote { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 6px; color: #a8401a; }
+.locknote .icon { width: 20px; height: 20px; }
+.title-legal { position: absolute; right: 18px; top: 10px; font-size: 13px; color: #fff4dc; text-shadow: 0 1px 3px #000; opacity: .85; }
+.consent-row { display: flex; align-items: center; gap: 10px; justify-content: space-between; width: 560px; max-width: 100%; }
+.consent-all { width: 560px; max-width: 100%; padding-bottom: 8px; border-bottom: 2px solid rgba(90,55,20,.3); font-family: 'BlackHan'; }
+.consent-note { max-width: 560px; font-size: 13px; }
+.set-col { min-height: 0; overflow-y: auto; }
+.consent-row .tog { flex: 1; }
+#app.mobile .policy-row .btn { font-size: 15px; min-height: 40px; padding: 0 6px; border-width: 10px; }
+#app.mobile .set-col.inset { gap: 8px; }
+/* stage info: long single-word enemy names/tags (German) break inside their 78px column instead of overprinting */
+.si-enemy { line-height: 1.15; }
+.si-enemy > div { overflow: hidden; }
+/* popups on phones: zoom 1.15 x 690px was taller than the 720px stage (title and close button cut off) */
+#app.mobile .modal { max-height: 600px; }
+/* top bar hero chip: shrink the text rather than cutting the level off */
+.topbar .herochip > span { white-space: nowrap; }
+/* hero: long skin names (German) break inside their caption instead of running into the next one */
+.skinpick .sk span { max-width: 76px; text-align: center; white-space: nowrap; overflow: hidden; line-height: 1.1; }
+/* hero: the left column scrolls (stats, skills) — fade the bottom edge so it reads as scrollable */
+.hero-left { -webkit-mask-image: linear-gradient(#000 calc(100% - 28px), transparent); mask-image: linear-gradient(#000 calc(100% - 28px), transparent); padding-bottom: 28px; }
+/* shop: the description box is exactly 4 lines so a line is never sliced in half */
+#app.mobile .pcard .pd { min-height: 0; }
+/* top bar hero chip: name over level, so big currency totals never squeeze it to "치..." */
+.topbar .herochip { flex-shrink: 0; min-width: 0; }
+.topbar .herochip > span.hc { display: flex; flex-direction: column; line-height: 1.05; overflow: visible; }
+.topbar .herochip > span.hc b { font-weight: normal; font-size: .82em; }
+.topbar .herochip > span.hc i { font-style: normal; font-size: .9em; }
+
+/* enhance result: the step before -> after (success and failure must never look alike) */
+.enh-step { font-family: 'BlackHan'; font-size: 26px; text-shadow: var(--stroke-s); }
+.enh-step.up { color: #9fd65a; }
+.enh-step.down { color: #ff7a5c; }
+.enh-step.same { color: #b8c0cc; }
+/* 최적 장착 preview: which slot changes, and the stat gain */
+.eqprev { display: flex; flex-direction: column; gap: 6px; }
+.eqprev-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.eqprev-s { min-width: 54px; text-align: right; }
+.eqprev-a { color: #f5c451; font-size: 20px; }
+.eqprev-st { display: flex; flex-direction: column; gap: 2px; min-width: 280px; }
+
+/* reward icons shown inside explanation popups and shop cards */
+.rwrow { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
+.info-body .rwrow .cell { width: 64px; height: 64px; }
+/* +1 bonus badge on the 10-pull buttons */
+.sm-bonus { font-family: 'BlackHan'; font-size: 20px; color: #9fd65a; text-shadow: var(--stroke-s); }
+
+/* pass-only skins: a flat plate the size of the price button, so every card ends at the same line */
+.pcard > .pbtn { margin-top: auto; width: 100%; display: flex; align-items: center; justify-content: center; min-height: 40px; font-size: 14px; color: #6a4a2a; }
+#app.mobile .pcard > .pbtn { min-height: 48px; font-size: 15px; }
+
+.enh-stamp { position: relative; }

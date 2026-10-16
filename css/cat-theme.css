@@ -1,0 +1,30 @@
+/* Cat theme details (js/ui/cat-decor.js adds the elements): ears on panels/popups, paw pattern, paw headings, ear ring. */
+
+/* ears on the top edge of big panels and popups (drawn behind the frame, so only the ear tips show) */
+.cat-ear { position: absolute; width: 52px; height: 56px; pointer-events: none !important; z-index: 2;   /* !important: #ui > * sets auto */
+    background: url('../img/ui_ear.png') center bottom / contain no-repeat; filter: drop-shadow(0 3px 0 rgba(10,5,2,.45)); }
+.cat-ear.r { transform: scaleX(-1); }
+.dim > .cat-ear { z-index: 2; }
+.dim > .paper.modal { position: relative; z-index: 1; }
+
+/* faint paw prints behind the contents of the big panels */
+.panel.win { isolation: isolate; }
+.paw-bg { position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: url('../img/ui_pawtile_faint.png') 0 0 / 180px 180px repeat; }
+.paper .paw-bg { background-image: url('../img/ui_pawtile_soft.png'); filter: brightness(.55); }
+
+/* a small gold paw before panel headings and popup titles */
+.win h2::before, .modal > .title-t::before, .modal > h2::before { content: ''; display: inline-block; width: .9em; height: .9em;
+    margin-right: .35em; vertical-align: -.08em; background: url('../img/ui_paw.png') center / contain no-repeat; }
+
+/* hero portraits: gold ring with cat ears around the round avatar */
+.portrait.cat-frame { overflow: visible; box-shadow: none; background: none; }
+.portrait.cat-frame > img, .portrait.cat-frame > canvas { border-radius: 50%; background: #3a2412; clip-path: circle(50%); }
+.portrait.cat-frame::after { content: ''; position: absolute; left: -11%; top: -24%; width: 122%; height: 128%; pointer-events: none;
+    background: url('../img/ui_avatar_frame.png') center / 100% 100% no-repeat; }
+.portrait.cat-frame .dead { border-radius: 50%; z-index: 1; }
+
+/* small round avatars (top bar chip, deployed-hero picker, skin picker): gold rim like the frame */
+.chip img.icon, .heropick .hp img, .skinpick .sk img { box-shadow: 0 0 0 2px #f2c14e, 0 0 0 4px #6b3e12; }
+/* currency chips: item icons (stone, ticket) sized like the silver/gem icons, without the portrait ring */
+.chip.curchip img.icon { width: 28px; height: 28px; object-fit: contain; object-position: center; border-radius: 0; box-shadow: none; }

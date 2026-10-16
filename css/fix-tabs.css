@@ -1,0 +1,90 @@
+/* Rewards / Challenge tab layout fixes for phones and long translations (kept separate so parallel edits do not collide) */
+/* loads before modes.css, so rules that compete with it carry an extra class */
+
+/* ---- desktop equivalents of styles that used to be inline in js/ui/challenge.js ---- */
+.inset.raidleft { width: 320px; display: flex; flex-direction: column; align-items: center; gap: 4px; overflow: hidden; }
+.raidtiers .rt-nm { width: 120px; }
+.dg-row .dg-nm { width: 62px; }
+.dg-row .dg-btns { display: flex; flex-direction: column; gap: 4px; }
+.inset.cupleft { width: 360px; display: flex; flex-direction: column; gap: 8px; padding: 10px; }
+
+/* subtab buttons size to their label; the "!" badge stays inside the button box so UI.fitAll does not read it as text overflow */
+.subtabs .btn { flex: none; }
+.subtabs > .btn > .badge { right: 0; }
+
+/* tab headers (h2 + chip + explanation): title and chip stay on one line, the explanation takes the rest */
+.tabhead > h2, .tabhead > .chip { white-space: nowrap; flex: none; }
+.tabhead > .tip { flex: 1 1 0; min-width: 0; }
+
+/* growth pass track: fade whichever edge has more tiers so it reads as scrollable */
+.ptrack.more-r { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 44px), transparent); }
+.ptrack.more-l { -webkit-mask-image: linear-gradient(90deg, transparent, #000 44px); mask-image: linear-gradient(90deg, transparent, #000 44px); }
+.ptrack.more-l.more-r { -webkit-mask-image: linear-gradient(90deg, transparent, #000 44px, #000 calc(100% - 44px), transparent); mask-image: linear-gradient(90deg, transparent, #000 44px, #000 calc(100% - 44px), transparent); }
+.pbtns > .btn { flex: 0 1 auto; min-width: 0; }
+
+/* ================= phones ================= */
+/* reward cells in list rows: the global 76px phone cell made every row ~110px tall */
+#app.mobile .mrow .cell { width: 58px; height: 58px; border-width: 8px; border-image-width: 8px; }
+#app.mobile .mrow .cell canvas, #app.mobile .mrow .cell img { width: 38px; height: 38px; }
+#app.mobile .mrow .btn.small { min-height: 52px; }
+#app.mobile .rw-col h3 { font-size: 19px; white-space: nowrap; flex-wrap: wrap; row-gap: 0; }
+#app.mobile .rw-col h3 img.icon { width: 28px; height: 28px; }
+#app.mobile .rw-col { gap: 6px; }
+
+/* Daily · Pass: whole pass panel (both rows, hint, buttons) fits the column */
+#app.mobile .rw-pass .pcell .cell { width: 60px; height: 60px; border-width: 8px; border-image-width: 8px; }
+#app.mobile .rw-pass .pcell .cell canvas, #app.mobile .rw-pass .pcell .cell img { width: 40px; height: 40px; }
+#app.mobile .rw-pass .plabels span:nth-child(2), #app.mobile .rw-pass .plabels span.paid { height: 64px; }
+#app.mobile .rw-pass .ptrack { padding-bottom: 4px; }
+#app.mobile .rw-pass .pbtns > .btn, #app.mobile .rw-side > .btn { min-height: 54px; font-size: 20px; }
+#app.mobile .rw-side { width: 252px; }
+#app.mobile .rw-side h3 { font-size: 17px; }
+
+/* tab headers on phones: compact so the content below keeps its room */
+#app.mobile .tabhead { margin-bottom: 6px !important; }
+#app.mobile .tabhead > h2 { font-size: 26px; }
+#app.mobile .tabhead > .chip { height: 36px; font-size: 18px; }
+#app.mobile .tabhead > .tip { font-size: 15px; line-height: 1.25; }
+
+/* Boss raid: left column fits, tier list rows compact (all tiers visible) */
+#app.mobile .inset.raidleft { width: 340px; gap: 2px; padding: 6px 8px; overflow-y: auto; }
+#app.mobile .raidleft > .title-t { font-size: 22px !important; white-space: nowrap; }
+#app.mobile .raidleft > canvas { max-height: 84px !important; }
+#app.mobile .raidleft > div { text-align: center; line-height: 1.25; }
+#app.mobile .raidleft > .btn { min-height: 56px; flex: none; }
+#app.mobile .raidtiers.inset { padding: 6px; gap: 4px 8px; }
+#app.mobile .raidtiers .mrow { padding: 2px 6px; min-height: 0; }
+#app.mobile .raidtiers .rt-nm { width: auto; flex: 1; min-width: 0; line-height: 1.15; }
+#app.mobile .raidtiers .rt-nm .tip { white-space: nowrap; }
+#app.mobile .raidtiers .mrow .cell { width: 50px; height: 50px; border-width: 7px; border-image-width: 7px; }
+#app.mobile .raidtiers .mrow .cell canvas, #app.mobile .raidtiers .mrow .cell img { width: 32px; height: 32px; }
+#app.mobile .raidtiers .mrow > span:empty { display: none; }
+
+/* Daily challenge: all difficulty rows fit; buttons side by side so a Sweep button does not double the row */
+#app.mobile .dg-cols .dg-col { gap: 4px; padding: 6px 8px; }
+.dg-cols .dg-col > * { flex-shrink: 0; }   /* when a column scrolls (Sunday: all open) its title must not be squeezed to nothing */
+#app.mobile .dg-cols .dg-col h3 { font-size: 20px; }
+#app.mobile .dg-cols .dg-rows { gap: 5px 8px; }
+#app.mobile .dg-cols .dg-row { padding: 2px 4px; gap: 4px; }
+#app.mobile .dg-row .dg-nm { width: auto; min-width: 56px; white-space: nowrap; line-height: 1.15; }
+#app.mobile .dg-row .dg-btns { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; gap: 3px; flex: 0 1 auto; min-width: 0; }
+#app.mobile .dg-row .dg-btns .btn.small { min-height: 50px; font-size: 16px; padding: 0 3px; border-width: 11px; border-image-width: 11px; }
+#app.mobile .dg-cols .dg-col.closed { flex: 0.36; min-width: 0; }
+#app.mobile .dg-cols .dg-col.wide .dg-rows { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+#app.mobile .dg-cols .dg-row { min-width: 0; }
+#app.mobile .dg-cols .dg-rw .cell { width: 52px; height: 52px; }
+#app.mobile .dg-cols .dg-rw .cell canvas, #app.mobile .dg-cols .dg-rw .cell img { width: 34px; height: 34px; }
+
+/* Weekly cup: left column fits (and scrolls rather than slicing if a translation still runs long) */
+#app.mobile .inset.cupleft { width: 480px; gap: 5px; padding: 8px 10px; overflow-y: auto; }
+#app.mobile .cupleft > .rulecard { font-size: 16px; padding: 4px 10px; }
+#app.mobile .cupleft > div { line-height: 1.2; }
+#app.mobile .cupleft > .btn { min-height: 54px; flex: none; }
+#app.mobile .cupleft > .cup-rw { grid-template-columns: repeat(3, auto); justify-content: space-between; gap: 3px 6px; }
+#app.mobile .cupleft > .cup-rw b { width: auto; white-space: nowrap; }
+
+/* item / skin rewards carry a word ("Legendary", "Skin") instead of a number: in the smaller phone cells keep it inside the cell */
+#app.mobile :is(.pcell, .mrow, .dg-rw) .cell:is(.r0, .r1, .r2, .r3, .r4, .r5) .cnt { font-size: 11px; right: 50%; transform: translateX(50%); }
+#app.mobile .cupleft > .cup-rw { font-size: 15px; }
+#app.mobile .dg-cols .dg-col.closed h3 { font-size: 16px; }
+#app.mobile .dg-cols .dg-col.closed .tip, #app.mobile .dg-cols .dg-col.closed .muted { font-size: 15px; }

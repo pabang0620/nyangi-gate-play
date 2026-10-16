@@ -1,0 +1,108 @@
+/* Summon reveal: card aura / sparks / shine, best-of-10 highlight, and the grade clip (vfx/summon_*.mp4)
+   that plays on the revealed card. --c / --c2 (grade colour) are set per element from RARITY in js/ui/hero.js. */
+.cards.sm-wait { visibility: hidden; }
+.cards.sm-deal .card { animation: sm-deal .38s cubic-bezier(.2,1.4,.5,1) backwards; }
+.card, .sm-best { position: relative; }
+/* 영웅+ backs glow with their grade before the flip; a click charges them */
+.card.hi::before { content: ''; position: absolute; inset: -34px; z-index: -1; pointer-events: none; border-radius: 50%;
+    background: repeating-conic-gradient(var(--c) 0 10deg, transparent 10deg 30deg); opacity: .7; -webkit-mask: radial-gradient(circle, #000 30%, transparent 70%); mask: radial-gradient(circle, #000 30%, transparent 70%); animation: spin 4s linear infinite; }
+.card.hi .b { box-shadow: 0 0 18px 4px var(--c); border-radius: 10px; }
+.card.hi.charging .b { animation: shake .12s infinite; box-shadow: 0 0 34px 12px var(--c); filter: brightness(1.5) drop-shadow(0 4px 0 rgba(0,0,0,.5)); }
+.card.hi.charging::before { animation-duration: 1s; inset: -50px; }
+/* sparks fly out of a revealed rare+ card */
+.sm-spark { position: absolute; left: 50%; top: 50%; z-index: 3; width: 9px; height: 9px; margin: -4px; border-radius: 50%; pointer-events: none; background: #fff; box-shadow: 0 0 8px 3px var(--c); animation: sm-spark .8s ease-out forwards; }
+/* shine sweep over the front of rare+ cards (legend / myth keep shimmering) */
+.card.open:not(.r0) .f::after { content: ''; position: absolute; inset: -16px; border-radius: 10px; pointer-events: none;
+    background: linear-gradient(110deg, transparent 38%, rgba(255,255,255,.8) 50%, transparent 62%) 150% 0 / 250% 100% no-repeat; animation: sm-shine .9s .35s ease-out backwards; }
+.card.open.r3 .f::after, .card.open.r4 .f::after { animation: sm-shine 2.4s .35s ease-in-out infinite; }
+.card.open.r2 .f, .card.open.r3 .f, .card.open.r4 .f { filter: drop-shadow(0 0 10px var(--c)); }
+/* best of a 10x pull */
+.cards .card.best { z-index: 2; animation: sm-best .5s ease-out forwards; }
+.card.best .f { filter: drop-shadow(0 0 16px var(--c)) drop-shadow(0 0 4px #fff); }
+.card.best::after { content: '★'; position: absolute; top: -16px; left: 50%; z-index: 4; width: 34px; height: 34px; margin-left: -17px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #fff7d0; background: radial-gradient(circle, #ffd65a, #c27a10); box-shadow: 0 0 0 3px #4a2a0e, 0 0 14px 4px var(--c); text-shadow: 0 1px 0 #6a3a00; }
+
+@keyframes sm-deal { from { transform: translateY(-60px) scale(.4) rotate(-12deg); opacity: 0; } }
+@keyframes sm-spark { from { transform: translate(0, 0) scale(1.4); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) scale(.2); opacity: 0; } }
+@keyframes sm-shine { from { background-position: 150% 0; } 60%, to { background-position: -60% 0; } }
+@keyframes sm-best { 50% { transform: scale(1.18); } to { transform: scale(1.1); } }
+
+.calm .card.hi::before, .calm .sm-spark { display: none; }
+.calm .cards .card, .calm .card.hi .b, .calm .card.best, .calm .card .f::after { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .card.hi::before, .card .f::after, .card.best { animation: none !important; } }
+/* gear-type picker above the rates row */
+.sm-slots { display: flex; gap: 8px; justify-content: center; flex-wrap: nowrap; }
+.sm-slots .btn.small { min-height: 42px; padding: 0 10px; font-size: 16px; gap: 4px; }
+.sm-slots .btn.small canvas { width: 30px !important; height: 30px !important; }
+#app.mobile .sm-slots .btn.small { min-height: 38px; font-size: 15px; border-width: 10px; }
+
+/* summon tab: banner tabs on top, rates on the left, buttons on the right (fits a landscape phone) */
+.summonwin.sm2 { justify-content: flex-start; gap: 8px; padding-top: 8px; }
+.sm-top { display: flex; gap: 8px; align-items: center; width: 100%; }
+.sm-tab { display: flex; align-items: center; gap: 8px; height: 50px; padding: 0 18px 0 8px; border-radius: 12px; cursor: pointer; font-family: 'BlackHan'; font-size: 22px; color: #d8c4a0;
+    background: rgba(30,16,6,.65); box-shadow: inset 0 0 0 2px #6b4a24; text-shadow: var(--stroke-s); }
+.sm-tab.on { color: #fff7e2; background: linear-gradient(#f8cb55, #c97f1e); box-shadow: inset 0 0 0 2px #4a2a0e, 0 0 12px rgba(248,203,85,.5); }
+.sm-tab canvas { width: 36px !important; height: 36px !important; }
+.sm-tabpic { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: top; background: #3a2412; }
+.sm-body { display: flex; gap: 12px; width: 100%; flex: 1 1 auto; min-height: 0; align-items: stretch; }
+.sm-left { flex: 1.3; min-width: 0; display: flex; flex-direction: column; gap: 8px; align-items: center; justify-content: center; padding: 8px; }
+.sm-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+.sm-rates { display: flex; gap: 10px; justify-content: center; }
+.sm-rate { text-align: center; font-size: 14px; text-shadow: var(--stroke-s); }
+.sm-rate .rn { margin-top: 8px; }
+.sm-rate .cell img.sm-pic, .sm-list .cell img, .sm-bestrow .cell img { border-radius: 50%; object-fit: cover; object-position: top; }
+.sm-pair { display: flex; gap: 10px; }
+.sm-pair > .btn { flex: 1 1 0; min-width: 0; }
+.sm-big { font-size: 22px; min-height: 64px; }
+.sm-big .ico { flex: none; }
+.sm-small { flex-wrap: wrap; gap: 8px; }
+.sm-small > .btn { flex: 1 1 40%; }
+.sm-dup { font-size: 14px; }
+#app.mobile .sm-tab { height: 46px; font-size: 21px; }
+#app.mobile .sm-left .tip, #app.mobile .sm-right .tip { font-size: 15px; line-height: 1.25; }
+#app.mobile .sm-rate { font-size: 15px; }
+#app.mobile .summonwin.sm2 .sm-rate .cell { width: 66px; height: 66px; }
+#app.mobile .summonwin.sm2 .sm-rate .cell canvas, #app.mobile .summonwin.sm2 .sm-rate .cell img { width: 48px; height: 48px; }
+#app.mobile .sm-big { font-size: 21px; min-height: 60px; }
+#app.mobile .sm-small > .btn { font-size: 15px; }
+
+/* skin cards in the reveal */
+.card .f img.sm-cardpic { width: 62px; height: 62px; border-radius: 50%; object-fit: cover; object-position: top; background: #3a2412; box-shadow: 0 0 0 2px var(--c); }
+.card .f .nm { font-size: 12px; line-height: 1.1; text-align: center; padding: 0 2px; }
+.card .f .sm-tag { font-size: 11px; line-height: 1.1; color: #8a3a12; font-family: 'BlackHan'; text-align: center; }
+
+/* 연속 소환 popup + summary */
+.sm-contpop { min-width: 560px; }
+.sm-budrow { display: flex; gap: 10px; align-items: center; justify-content: center; }
+.sm-budrow .btn.small { min-width: 54px; font-size: 20px; }
+.sm-budget { display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 170px; font-size: 30px; }
+.sm-slider { width: 86%; height: 30px; accent-color: #d8902a; }
+.sm-stops { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+.sm-contres { width: 880px; gap: 8px; }
+.sm-sum { font-size: 18px; line-height: 1.35; }
+.sm-counts { display: flex; gap: 10px; justify-content: center; font-family: 'BlackHan'; font-size: 19px; }
+.sm-cnt { padding: 2px 12px; border-radius: 8px; background: #2a170a; box-shadow: inset 0 0 0 2px #6b4a24; }
+.sm-cnt b { color: #fff3d6; }
+.sm-bestrow { display: flex; gap: 14px; justify-content: center; min-height: 100px; }
+.sm-best { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 96px; font-size: 12px; line-height: 1.1; }
+.sm-best .cell { filter: drop-shadow(0 0 8px var(--c)) drop-shadow(0 0 3px #fff); }
+.sm-bestrow.sm-deal .sm-best { animation: sm-deal .38s cubic-bezier(.2,1.4,.5,1) backwards; }
+.sm-bestrow.sm-deal .sm-best:nth-child(2) { animation-delay: .06s; } .sm-bestrow.sm-deal .sm-best:nth-child(3) { animation-delay: .12s; }
+.sm-list { display: flex; flex-wrap: wrap; gap: 12px 8px; justify-content: center; align-content: flex-start; width: 100%; max-height: 200px; overflow-y: auto; padding: 8px 4px 12px; border-radius: 8px; background: rgba(90,55,20,.12); }
+.sm-list .cell { width: 58px; height: 58px; border-width: 8px; border-image-width: 8px; }
+.sm-list .cell canvas, .sm-list .cell img { width: 40px; height: 40px; }
+.cell.dup > img, .cell.dup > canvas { opacity: .55; }
+.cell .eq.gemtag { color: #7fe0ff; display: flex; align-items: center; gap: 1px; }
+#app.mobile .sm-contres .sm-list { max-height: 150px; }
+#app.mobile .sm-contres .sm-bestrow .cell { width: 64px; height: 64px; }
+#app.mobile .sm-contres .sm-bestrow .cell img, #app.mobile .sm-contres .sm-bestrow .cell canvas { width: 46px; height: 46px; }
+#app.mobile .sm-list .cell { width: 58px; height: 58px; }
+#app.mobile .sm-list .cell canvas, #app.mobile .sm-list .cell img { width: 40px; height: 40px; }
+.calm .sm-bestrow .sm-best { animation: none !important; }
+/* high-grade reveal clip: light only (black = transparent via screen blend), never blocks taps */
+.vfx-clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: screen; pointer-events: none; z-index: 50; animation: smVfxIn .15s ease-out; }
+/* ...on a single card or best-of cell: centred on it, spilling a little past the edges */
+.vfx-clip.vfx-spot { inset: -50% -65%; width: auto; height: auto; object-fit: contain; }
+/* the enhance stamp is a wide row, so its clip needs a tighter box or it washes out the whole popup */
+.enh-stamp > .vfx-clip.vfx-spot { inset: -30% -18%; }
+@keyframes smVfxIn { from { opacity: 0; } to { opacity: 1; } }
