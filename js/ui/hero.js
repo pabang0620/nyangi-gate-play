@@ -61,12 +61,7 @@
         right.appendChild(h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
             h('div', { style: { fontSize: '20px', color: '#f5c451', fontFamily: 'BlackHan' } }, L('가방 {0}/{1}', p.items.length, BAG_MAX)), h('div', { style: { flex: 1 } }),
             h('button.btn.small.gold', { onclick: () => { click(); bestGearPreview(cls); } }, L('최적 장착')),
-            h('button.btn.small', { onclick: () => {
-                click();
-                const n = p.items.filter(it => !isEquipped(it) && it.r <= 1 && it.enh === 0).length;
-                if (!n) { toast(L('분해할 일반·희귀 장비가 없습니다')); return; }
-                confirmBox(L('장착하지 않은 일반·희귀 장비 {0}개를 분해합니다.\n(강화한 장비는 제외)', n), () => { const r = bulkSalvage(1); toast(L('{0}개 분해 · 은화 +{1}', r.n, fmt(r.gain))); S.selItem = null; showHub('hero'); });
-            } }, L('일괄 분해'))));
+            h('button.btn.small', { onclick: () => { click(); salvageModal(); } }, L('일괄 분해'))));
         const items = p.items.slice().sort((a, b2) => (isEquipped(b2) - isEquipped(a)) || (b2.r - a.r) || (b2.ilvl - a.ilvl) || (b2.enh - a.enh));
         right.appendChild(h('div.grid', items.map(it => itemCell(it, { sel: S.selItem === it.id, onclick: () => { click(); it.isNew = false; S.selItem = it.id; Save.save(); showHub('hero'); } }))));
         win.appendChild(h('div.hero-wrap', left, right));
@@ -179,7 +174,7 @@
             itemCell(it, { noNew: true }),
             h('div', { style: { flex: 1 } },
                 h('div', { style: { fontSize: '19px', color: RARITY[it.r].color } }, `${itemName(it)}${it.enh ? ' +' + it.enh : ''}`),
-                h('div.muted', L('{0} {1} · 아이템 레벨 {2}', RARITY[it.r].name, SLOT_NAME[it.slot], it.ilvl)),
+                h('div.muted', L('{0} {1} · 아이템 레벨 {2}', RARITY[it.r].name, SLOT_NAME[it.slot], itemLv(it))),
                 h('div', { style: { color: '#f5c451' } }, fmtOpt(main.name, main.v, main.pct), cmp),
                 it.subs.map(sb => h('div', fmtOpt(SUB_OPTS[sb.k].name, sb.v, SUB_OPTS[sb.k].pct))),
             ),
@@ -188,18 +183,25 @@
                 it.enh >= ENHANCE.max ? h('button.btn.small.off', L('최대 강화')) :
                     h('button.btn.small' + (p.silver < cost || ((p.mats && p.mats.stone) || 0) < enhanceStones(it.enh) ? '.off' : ''), { onclick: e => enhanceAnim(it, e.currentTarget) }, L('강화 {0} · ', pct(rate)), ico('silver', 16), fmt(cost),
                         enhanceStones(it.enh) ? h('span', ' · ', img('i_stone', '.icon'), enhanceStones(it.enh)) : null),
-                it.enh >= ENHANCE.dropFrom && it.enh < ENHANCE.max ? h('div', { style: { fontSize: '12px', color: '#ff9090' } }, L('실패하면 1단계 하락')) : null,
+                it.enh >= ENHANCE.dropFrom && it.enh < ENHANCE.max ? h('div', { style: { fontSize: '12px', color: '#ff9090' } }, L('실패 시 하락 · 파괴 {0}', destroyPct(it.enh))) : null,
+                it.enh >= ENHANCE.dropFrom && it.enh < ENHANCE.max ? guardToggle() : null,
+                it.enh >= ENHANCE.destroyFrom && it.enh < ENHANCE.max ? shieldToggle() : null,
+                it.enh < ENHANCE.max ? h('button.btn.small', { onclick: () => { click(); autoEnhanceModal(it); } }, L('자동 강화')) : null,
                 isEquipped(it) ? null : h('button.btn.small.red', { onclick: () => { click(); confirmBox(L('{0}을(를) 분해할까요?\n은화 +{1}', itemName(it), fmt(salvageValue(it))), () => { p.items = p.items.filter(i => i !== it); p.silver += salvageValue(it); Save.save(); S.selItem = null; showHub('hero'); }); } },
                     L('분해 '), ico('silver', 16), fmt(salvageValue(it))),
             )));
         return box;
     }
 
-    // three hammer hits, then the result
+    // hammer hits, then the result. Low levels are quick (1 hit), high levels slow (up to 3 slow hits);
+    // from +10 (a failure drops a level) the result waits for a tap
     function enhanceAnim(it, btn) {
         const p = Save.p;
+        if (it.enh >= ENHANCE.max) return;
         if (p.silver < enhanceCost(it)) { toast(L('은화가 부족합니다')); Sfx.play('click'); return; }
         if (((p.mats && p.mats.stone) || 0) < enhanceStones(it.enh)) { toast(L('강화석이 {0}개 필요합니다 (요일 도전 강화석 채굴장)', enhanceStones(it.enh))); Sfx.play('click'); return; }
+        const risky = it.enh >= ENHANCE.dropFrom;
+        const hits = it.enh < 5 ? 1 : it.enh < ENHANCE.dropFrom ? 2 : 3, gap = it.enh < 5 ? 160 : it.enh < ENHANCE.dropFrom ? 260 : 420;
         const d = modal([h('div.title-t', L('강화 중...')), h('div#anvil', { style: { transition: 'transform .08s' } }, itemCell(it, { noNew: true })), h('div#ehit', { style: { fontSize: '30px', height: '36px' } }, '')]);
         const cellBox = d.querySelector('#anvil'), hit = d.querySelector('#ehit');
         let n = 0;
@@ -209,22 +211,130 @@
             hit.textContent = L('쾅!').repeat(1);
             cellBox.style.transform = `rotate(${n % 2 ? -8 : 8}deg) scale(1.1)`;
             setTimeout(() => { cellBox.style.transform = ''; }, 90);
-            if (n >= 3) {
+            if (n >= hits) {
                 clearInterval(iv);
-                setTimeout(() => {
+                const reveal = () => {
                     const was = it.enh;
-                    const r = tryEnhance(it);
+                    const r = tryEnhance(it, risky && !!p.set.useGuard, false, risky && !!p.set.useShield);
                     d.remove();
                     if (!r) return;
+                    if (r.destroyed) { S.selItem = null; showHub('hero'); Sfx.play('enhanceFail'); Game.buzz([80, 40, 160]); enhanceDestroyed(it, was); return; }
                     // showHub() clears the screen, so it has to run BEFORE the result popup is built
                     showHub('hero');
                     const flash = h('div.burst', { style: { background: r.ok ? 'radial-gradient(circle, rgba(255,224,138,.9), transparent 70%)' : 'radial-gradient(circle, rgba(120,120,140,.7), transparent 70%)' } });
                     root().appendChild(flash); setTimeout(() => flash.remove(), 800);
                     if (r.ok) { Sfx.play('enhanceOk'); enhanceResult(it, true, false, was); }
-                    else { Sfx.play('enhanceFail'); enhanceResult(it, false, r.dropped, was); }
-                }, 280);
+                    else { Sfx.play('enhanceFail'); enhanceResult(it, false, r.dropped, was, r.guarded, r.shielded); }
+                };
+                if (!risky) { setTimeout(reveal, gap); return; }
+                // the tense part: the item glows and shakes until the player taps
+                setTimeout(() => {
+                    hit.textContent = L('터치해서 결과 보기');
+                    cellBox.classList.add('enh-wait');
+                    let done = false;
+                    const go = e => { if (e) e.stopPropagation(); if (done) return; done = true; click(); reveal(); };
+                    d.addEventListener('click', go);
+                }, gap);
             }
-        }, 280);
+        }, gap);
+    }
+
+    // 하락방지권 on/off for risky tries (kept in settings), with the count owned
+    function guardToggle() {
+        const p = Save.p, n = (p.mats && p.mats.guard) || 0;
+        const on = !!p.set.useGuard && n > 0;
+        return h('div.btn.small' + (on ? '.gold' : ''), { onclick: () => {
+            click();
+            if (!n) { toast(L('하락방지권이 없어요 (상점)')); return; }
+            p.set.useGuard = !p.set.useGuard; Save.save(); showHub('hero');
+        } }, (on ? '\u2713 ' : '') + L('하락방지권 {0}개', n));
+    }
+
+    function shieldToggle() {
+        const p = Save.p, n = (p.mats && p.mats.shield) || 0;
+        const on = !!p.set.useShield && n > 0;
+        return h('div.btn.small' + (on ? '.gold' : ''), { onclick: () => {
+            click();
+            if (!n) { toast(L('파괴방지권이 없어요 (상점)')); return; }
+            p.set.useShield = !p.set.useShield; Save.save(); showHub('hero');
+        } }, (on ? '\u2713 ' : '') + L('파괴방지권 {0}개', n));
+    }
+    function enhanceDestroyed(it, was) {
+        const d = modal([
+            h('div.ribbon.lose', h('span', L('장비 파괴'))),
+            h('div.enh-stamp.fail', { style: { filter: 'grayscale(1) brightness(.6)' } }, itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '44px' } }, '+' + was)),
+            h('div.bad', L('{0}이(가) 부서졌어요', itemName(it))),
+            h('div.tip', L('파괴방지권을 켜면 막을 수 있어요 (상점)')),
+            h('button.btn', { onclick: () => { click(); d.remove(); } }, L('확인'))]);
+    }
+
+    // 자동 강화: target level + silver / stone caps, then one summary
+    function autoEnhanceModal(it) {
+        const p = Save.p, A = p.set.autoEnh = p.set.autoEnh || {};
+        let target = Math.min(ENHANCE.max, Math.max(it.enh + 1, A.target || it.enh + 1));
+        const SILVER = [100000, 500000, 2000000, 10000000, Infinity], STONE = [0, 10, 30, 100, Infinity];
+        let si = SILVER.indexOf(A.silver) >= 0 ? SILVER.indexOf(A.silver) : 1, ti = STONE.indexOf(A.stones) >= 0 ? STONE.indexOf(A.stones) : 2;
+        const lbl = v => v === Infinity ? L('제한 없음') : fmtShort(v);
+        const tgt = h('div.num', { style: { fontSize: '30px', minWidth: '70px', textAlign: 'center' } });
+        const sRow = h('div.row'), tRow = h('div.row');
+        const draw = () => {
+            tgt.textContent = '+' + target;
+            sRow.innerHTML = ''; SILVER.forEach((v, i) => sRow.appendChild(h('div.btn.small' + (i === si ? '.gold' : ''), { onclick: () => { click(); si = i; draw(); } }, lbl(v))));
+            tRow.innerHTML = ''; STONE.forEach((v, i) => tRow.appendChild(h('div.btn.small' + (i === ti ? '.gold' : ''), { onclick: () => { click(); ti = i; draw(); } }, lbl(v))));
+        };
+        const step = k => { target = Math.max(it.enh + 1, Math.min(ENHANCE.max, target + k)); draw(); };
+        const d = modal([h('div.title-t', L('자동 강화')),
+            h('div', { style: { display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'center' } }, itemCell(it, { noNew: true }), h('span.muted', L('목표')),
+                h('button.btn.small', { onclick: () => { click(); step(-1); } }, '\u2212'), tgt, h('button.btn.small', { onclick: () => { click(); step(1); } }, '+')),
+            h('div.muted', L('은화 최대')), sRow,
+            h('div.muted', L('강화석 최대')), tRow,
+            target > ENHANCE.dropFrom || it.enh >= ENHANCE.dropFrom ? guardToggle() : null,
+            target > ENHANCE.destroyFrom || it.enh >= ENHANCE.destroyFrom ? shieldToggle() : null,
+            target > ENHANCE.destroyFrom ? h('div.tip', L('+{0}부터는 파괴방지권이 있을 때만 자동으로 해요', ENHANCE.destroyFrom)) : null,
+            h('div.row',
+                h('button.btn.gold', { onclick: () => {
+                    click(); d.remove();
+                    Object.assign(A, { target, silver: SILVER[si], stones: STONE[ti] }); Save.save();
+                    const run = autoEnhance(it, target, SILVER[si], STONE[ti], !!p.set.useGuard, !!p.set.useShield);
+                    showHub('hero');
+                    if (!run.tries) { toast(run.why === 'stoneCap' || run.why === 'short' && enhanceStones(it.enh) > ((p.mats && p.mats.stone) || 0) ? L('강화석이 부족해요') : L('은화가 부족해요')); return; }
+                    Sfx.play(it.enh > run.start ? 'enhanceOk' : 'enhanceFail');
+                    const why = { done: L('목표 달성!'), silverCap: L('은화 한도에서 멈춤'), stoneCap: L('강화석 한도에서 멈춤'), short: L('재화가 부족해 멈춤'), risk: L('파괴 위험 구간에서 멈춤') }[run.why] || '';
+                    const m = modal([h('div.ribbon' + (it.enh > run.start ? '' : '.lose'), h('span', why)),
+                        h('div.enh-stamp', itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '44px' } }, '+' + it.enh)),
+                        h('div.enh-step' + (it.enh > run.start ? '.up' : '.same'), h('span', '+' + run.start), h('b', ' \u25B6 '), h('span', '+' + it.enh)),
+                        h('div', L('{0}번 시도 · 성공 {1} · 하락 {2}', run.tries, run.ok, run.drops) + (run.guards ? L(' · 방지권 {0}개 사용', run.guards) : '') + (run.shields ? L(' · 파괴방지 {0}개 사용', run.shields) : '')),
+                        h('div', ico('silver', 18), ' ', fmt(run.silver), run.stones ? h('span', '  ', img('i_stone', '.icon'), ' ', run.stones) : null),
+                        h('button.btn.gold', { onclick: () => { click(); m.remove(); } }, L('확인'))]);
+                } }, L('시작')),
+                h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기')))], { dismiss: true });
+        draw();
+    }
+
+    // 일괄 분해 설정: up to which grade, enhanced gear too or not (saved; the summon auto-salvage uses the same grade)
+    function salvageModal() {
+        const p = Save.p, cfg = salvageSet(p);
+        const gRow = h('div.row'), info = h('div.tip'), enhT = h('div.btn.small'), go = h('button.btn.red');
+        const draw = () => {
+            gRow.innerHTML = '';
+            [0, 1, 2].forEach(r => gRow.appendChild(h('div.btn.small' + (r === cfg.max ? '.gold' : ''), { onclick: () => { click(); cfg.max = r; draw(); } },
+                h('span', { style: { color: RARITY[r].color, textShadow: 'var(--stroke-s)' } }, RARITY[r].name), L(' 이하'))));
+            enhT.classList.toggle('gold', cfg.enh); enhT.textContent = (cfg.enh ? '\u2713 ' : '') + L('강화한 장비도 분해');
+            const list = salvageTargets(p, cfg.max, cfg.enh);
+            info.textContent = L('장착 중인 장비는 빼고 {0}개 · 은화 +{1}', list.length, fmt(list.reduce((s, it) => s + salvageValue(it), 0)));
+            go.classList.toggle('off', !list.length);
+        };
+        enhT.addEventListener('click', () => { click(); cfg.enh = !cfg.enh; draw(); });
+        go.textContent = L('분해');
+        go.addEventListener('click', () => {
+            p.set.salvage = { max: cfg.max, enh: cfg.enh }; Save.save();
+            if (!salvageTargets(p, cfg.max, cfg.enh).length) { toast(L('분해할 장비가 없어요')); return; }
+            click(); d.remove();
+            const r = bulkSalvage(cfg.max, cfg.enh); toast(L('{0}개 분해 · 은화 +{1}', r.n, fmt(r.gain))); S.selItem = null; showHub('hero');
+        });
+        const d = modal([h('div.title-t', L('일괄 분해')), gRow, enhT, info,
+            h('div.row', go, h('button.btn.ghost', { onclick: () => { click(); p.set.salvage = { max: cfg.max, enh: cfg.enh }; Save.save(); d.remove(); } }, L('설정만 저장')))], { dismiss: true });
+        draw();
     }
 
 
@@ -237,7 +347,18 @@
             h('h2', { style: { margin: 0 } }, L('별 연구')), h('div.chip', ico('star'), L('남은 별 {0}', free)), h('div', { style: { flex: 1 } }),
             h('div.tip.rs-tip', L('스테이지에서 얻은 별로 영구 강화를 연구합니다. 위에서부터 차례로 엽니다.')),
             UI.helpBtn(L('별 연구'), L('스테이지에서 얻은 별로 영구 강화를 연구합니다. 위에서부터 차례로 엽니다.') + '\n' + L('연구를 모두 초기화하고 별을 돌려받습니다. (무료)'), '.mob-q'),
+            h('button.btn.small.gold', { onclick: () => { click(); autoPick(false); } }, L('자동 찍기')),
+            h('button.btn.small', { onclick: () => { click(); confirmBox(L('초기화하고 별을 골고루 다시 찍어요. (무료)'), () => autoPick(true)); } }, L('다시 배분')),
             h('button.btn.small.ghost', { onclick: () => { click(); confirmBox(L('연구를 모두 초기화하고 별을 돌려받습니다. (무료)'), () => { p.research = {}; Save.save(); showHub('research'); }); } }, L('초기화'))));
+        // 자동 찍기 / 다시 배분 (reset first: research refunds are free)
+        function autoPick(reset) {
+            if (reset) p.research = {};
+            const got = autoResearch(p);
+            Save.save();
+            if (got.length) { Sfx.play('upgrade'); toast(L('연구 {0}개 완료', got.length)); }
+            else toast(reset ? L('연구 {0}개 완료', 0) : L('지금 찍을 수 있는 연구가 없어요'));
+            showHub('research');
+        }
         win.appendChild(h('div.tree', RESEARCH.map(col => h('div.inset.tcol', h('h3', col.col), col.nodes.map((n, i) => {
             const have = !!p.research[n.id];
             const prevOk = i === 0 || p.research[col.nodes[i - 1].id];
@@ -358,7 +479,7 @@
     function runSummon(n, slot, pay) {
         const res = doSummon(n, slot, pay);
         if (!res) { toast(L('보석이 부족합니다')); Sfx.play('click'); return false; }
-        reveal(res.map(it => ({ r: it.r, face: () => [Art.domCanvas(Art.icon(it.slot), 4)], name: itemName(it) })),
+        reveal(res.map(it => ({ r: it.r, face: () => [Art.domCanvas(Art.itemIcon(it), 4)], name: itemName(it) })),
             false, () => runSummon(n, slot, pay));
         return true;
     }
@@ -470,7 +591,7 @@
             go.textContent = L('보석 {0}개로 시작', fmt(k * cost));
             stops.querySelectorAll('.btn').forEach(b => b.classList.toggle('gold', b.stop === S.contStop));
             salv.classList.toggle('gold', !!S.contSalvage);
-            salv.textContent = (S.contSalvage ? '\u2713 ' : '') + L('일반·희귀 장비 자동 분해');
+            salv.textContent = (S.contSalvage ? '\u2713 ' : '') + L('{0} 이하 자동 분해', RARITY[salvageSet(p).max].name);
         };
         const set = v => { k = Math.max(1, Math.min(max, v)); draw(); };
         slider.addEventListener('input', () => set(+slider.value));
@@ -479,7 +600,7 @@
         salv.addEventListener('click', () => { click(); S.contSalvage = !S.contSalvage; draw(); });
         go.addEventListener('click', () => {
             click(); d.remove(); S.contSteps = k;
-            const run = summonRun(kind, k * cost, S.contStop, slot, kind !== 'skin' && S.contSalvage ? 1 : -1);
+            const run = summonRun(kind, k * cost, S.contStop, slot, kind !== 'skin' && S.contSalvage ? salvageSet(p).max : -1);   // same grade as 일괄 분해 설정
             if (!run.rolls) { toast(L('보석이 부족합니다')); return; }
             contResult(run);
         });
@@ -530,7 +651,7 @@
         });
     }
 
-    function enhanceResult(it, ok, dropped, was) {
+    function enhanceResult(it, ok, dropped, was, guarded, shielded) {
         const main = itemMain(it);
         // the step before -> after, so success and failure are never mistaken for each other
         const step = was === undefined ? null : h('div.enh-step' + (ok ? '.up' : dropped ? '.down' : '.same'),
@@ -541,13 +662,24 @@
             step,
             h('div', fmtOpt(main.name, main.v, main.pct)),
             dropped ? h('div.bad', L('1단계 하락했습니다')) : null,
-            h('button.btn.gold', { onclick: () => { click(); d.remove(); } }, L('확인'))]);
-        // risky levels get the power-up burst, but on the item itself - over the whole popup it hid the result
+            guarded ? h('div', { style: { color: '#3a7a2a' } }, L('하락방지권으로 단계를 지켰어요')) : null,
+            shielded ? h('div', { style: { color: '#3a7a2a' } }, L('파괴방지권으로 장비를 지켰어요')) : null,
+            h('div.row',
+                h('button.btn', { onclick: () => { click(); d.remove(); } }, L('확인')),
+                it.enh < ENHANCE.max ? h('button.btn.gold', { onclick: () => { d.remove(); enhanceAnim(it); } }, L('한 번 더 강화')) : null)]);
+        // risky levels get the power-up burst over the item. The clip sits in the popup itself, not inside the stamp:
+        // the stamp's pop animation (a transform) makes its own compositing group, where the screen blend has nothing
+        // to blend with and the clip's black background showed as a dark box
         if (ok && it.enh >= ENHANCE.dropFrom) {
-            const v = UI.vfx('vfx/enhance.mp4', d.querySelector('.enh-stamp') || d, { z: 6, opacity: 0.8 });
-            if (v) v.classList.add('vfx-spot');
+            const box = d.querySelector('.modal'), st = d.querySelector('.enh-stamp');
+            const v = box && st && UI.vfx('vfx/enhance.mp4', box, { z: 6, opacity: 0.8 });
+            if (v) {
+                v.classList.add('vfx-spot', 'enh-clip');
+                const place = () => { Object.assign(v.style, { left: st.offsetLeft - st.offsetWidth * 0.18 + 'px', top: st.offsetTop - st.offsetHeight * 0.3 + 'px', width: st.offsetWidth * 1.36 + 'px', height: st.offsetHeight * 1.6 + 'px' }); };
+                place(); requestAnimationFrame(place);
+            }
         }
     }
 
-    Object.assign(UI, { tabHero, itemDetail, enhanceAnim, enhanceResult, tabResearch, tabSummon, runSummon, runSkinSummon, bigReveal, skinBook, skinPreview });
+    Object.assign(UI, { tabHero, itemDetail, enhanceAnim, enhanceResult, autoEnhanceModal, salvageModal, tabResearch, tabSummon, runSummon, runSkinSummon, bigReveal, skinBook, skinPreview });
 })();

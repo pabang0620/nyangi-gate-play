@@ -62,7 +62,7 @@
         root().appendChild(heroPanel);
         hud.spells = B.spells.map((sp, i) => {
             const cd = h('div.cd'), cdt = h('div.cdt');
-            const el = h('div.skill', { title: `${sp.name}: ${sp.desc}`, onclick: () => { if (el._lp) { el._lp = false; return; } pressSpell(i); } }, Art.domCanvas(Art.icon(sp.id), 3.4), cd, cdt, h('span.key', i === 0 ? 'Q' : 'W'));
+            const el = h('div.skill', { title: `${sp.name}: ${sp.desc}`, onclick: () => { if (el._lp) { el._lp = false; return; } pressSpell(i); } }, Art.domCanvas(Art.icon(sp.icon || sp.id), 3.4), cd, cdt, h('span.key', 'QWE'[i]));
             holdInfo(el, () => skillCard(sp));
             return { el, cd, cdt };
         });
@@ -99,11 +99,12 @@
                 const c = hud.cond.getBoundingClientRect(), cb = (c.bottom - a.top) / k, cl = (c.left - a.left) / k - 50, cr = (c.right - a.left) / k + 50;
                 for (const w of hud.waveBtns) { const x = parseFloat(w.el.style.left), y = parseFloat(w.el.style.top); if (x > cl && x < cr && y - 46 < cb) w.el.style.top = cb + 48 + 'px'; }
             }
+            UI.lesson(B);   // 1-1 ~ 1-3: step-by-step cards (js/ui/tutorial.js)
         });
         // first-battle guide
         if (!B.endless && B.stageIdx === 0 && !p.seenTips.battle) {
             p.seenTips.battle = true; Save.save();
-            S.guide = [L('길가의 돌 발판을 눌러 탑을 세우세요'), L('뿔피리 버튼을 눌러 첫 웨이브를 부르세요'), L('땅을 누르면 영웅이 그곳으로 갑니다 (3초 뒤 AUTO 복귀)'), L('아래 스킬 버튼으로 영웅 스킬, 오른쪽 아래 유성 냥펀치!')];
+            S.guide = [L('돌 발판을 눌러 탑을 지어요'), L('뿔피리를 눌러 적을 불러요'), L('땅을 누르면 영웅이 달려가요'), L('스킬 버튼도 눌러 보세요')];
             S.guideT = 0;
         } else S.guide = null;
     }
@@ -232,7 +233,7 @@
         if (S.aim && S.aim.kind === 'spell' && S.aim.i === i) { cancelAim(); return; }
         cancelAim();
         S.aim = { kind: 'spell', i }; showAimCancel(`${sp.name} · ` + L('지도를 눌러 사용할 위치를 고르세요'));
-        Render.view.aim = { r: sp.r || 36, color: i === 0 ? '#ff7030' : '#f2c14e' };
+        Render.view.aim = { r: sp.r || 36, color: ['#ff7030', '#f2c14e', '#ffe08a'][i] };
     }
 
     function cancelAim() { S.aim = null; Render.view.aim = null; S.rally = null; root().querySelectorAll('.aim-cancel, .aim-hint').forEach(c => c.remove()); }
@@ -279,12 +280,10 @@
         const hud = S.hud; if (hud && hud[key]) hud[key].classList.toggle('on', on);
         if (key === 'autoHero') {
             toast(on ? L('영웅 AUTO 켜짐') : L('영웅 AUTO 꺼짐 (직접 조작)'));
-            if (!tipSeen('tog_autoHero')) coach(L('영웅 자동'), [L('켜면 영웅이 알아서 적을 찾아 싸워요.'), L('끄면 영웅은 마지막으로 누른 곳을 지켜요.'),
-                L('땅을 누르면 3초 동안 직접 조작. 그동안 영웅이 잡은 적은 금화 1.25배!')], 7500);
+            if (!tipSeen('tog_autoHero')) coach(L('영웅 자동'), [L('켜면 알아서 싸우고, 끄면 누른 곳을 지켜요.'), L('직접 움직인 3초 동안 잡으면 금화 1.25배')], 6000);
         } else {
             toast(on ? L('자동 웨이브 켜짐') : L('자동 웨이브 꺼짐 (뿔피리로 직접 시작)'));
-            if (!tipSeen('tog_autoWave')) coach(L('자동 웨이브'), [L('켜면 첫 웨이브는 2.5초 뒤, 다음 웨이브는 남은 적이 3마리 이하가 되면 바로 불러요.'),
-                L('끄면 뿔피리를 눌러 직접 시작해요 (15초가 지나면 자동 시작).'), L('일찍 부른 만큼 보너스 금화를 받아요.')], 7500);
+            if (!tipSeen('tog_autoWave')) coach(L('자동 웨이브'), [L('켜면 적이 3마리 이하일 때 다음 웨이브를 불러요.'), L('일찍 부를수록 금화 보너스')], 6000);
         }
     }
 

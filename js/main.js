@@ -28,7 +28,7 @@ const Game = {
         const cfg = {
             skin: p.shop.skin[p.hero],
             stageIdx: opt.stageIdx, endless: opt.endless, hard: !!opt.hard,
-            heroCls: p.hero, heroStats: heroStats(p, p.hero), bonuses: b, dmgMul: codexDmgMul(p),
+            heroCls: p.hero, heroStats: heroStats(p, p.hero), party: Object.keys(HEROES).filter(c => c !== p.hero).map(c => ({ cls: c, skin: p.shop && p.shop.skin[c], ...heroStats(p, c) })), bonuses: b, dmgMul: codexDmgMul(p),
             autoHero: () => Save.p.set.autoHero, autoWave: () => Save.p.set.autoWave, shakeOn: () => !Save.p.set.noShake, cutinOn: () => !Save.p.set.noCutin,
             seed: (Date.now() & 0xffff),
             on: (ev, data) => this.onEvent(ev, data),
@@ -96,8 +96,9 @@ const Game = {
                 this.ended = true;
                 {
                     const ended = B;
-                    // first defeat: offer a continue (ad or gems) before the result screen; never in ranked modes (fair records)
-                    if (!d && !B.revived && B.mode !== 'cup' && B.mode !== 'endless' && B.mode !== 'raid') setTimeout(() => { if (this.battle === ended) UI.showRevive(B, () => this.onBattleEnd(false)); }, 900);
+                    // first defeat: offer a continue (ad or gems) before the result screen; never in ranked modes (fair records),
+                    // on boss stages or after a boss/elite got through (the continue would skip the must-kill enemy)
+                    if (!d && !B.revived && !B.hasBoss && !B.mustKillLost && B.mode !== 'cup' && B.mode !== 'endless' && B.mode !== 'raid') setTimeout(() => { if (this.battle === ended) UI.showRevive(B, () => this.onBattleEnd(false)); }, 900);
                     else setTimeout(() => { if (this.battle === ended) this.onBattleEnd(d); }, 1300);
                 }
                 break;
@@ -238,6 +239,7 @@ const Game = {
         if (e.key >= '1' && e.key <= '4') UI.pressSkill(+e.key - 1);
         else if (e.key === 'q' || e.key === 'Q' || e.key === 'ㅂ') UI.pressSpell(0);
         else if (e.key === 'w' || e.key === 'W' || e.key === 'ㅈ') UI.pressSpell(1);
+        else if ((e.key === 'e' || e.key === 'E' || e.key === 'ㄷ') && Game.battle && Game.battle.spells[2]) UI.pressSpell(2);
         else if (e.key === ' ') { e.preventDefault(); if ((B.state === 'prep' || B.countdown > 0)) { B.callWave(); } }
         else if (e.key === 'Tab') { e.preventDefault(); UI.toggleAuto('autoHero'); }
         else if (e.key === 'f' || e.key === 'F' || e.key === 'ㄹ') UI.cycleSpeed();
@@ -251,7 +253,7 @@ const Game = {
     window.addEventListener('beforeunload', () => Save.save());
     // back from the background without a restart (Android keeps the WebView alive): idle supply, server clock, inbox, purchases
     Game.onResume = () => {
-        if (Online.on) { Online.syncClock().catch(() => {}); Online.claimRewards().catch(() => {}); }
+        if (Online.on) { Online.syncClock().catch(() => {}); Online.refreshMail().catch(() => {}); }
         Rewards.restorePurchases().catch(() => {});
         if (UI.resumeSupply) UI.resumeSupply();
     };

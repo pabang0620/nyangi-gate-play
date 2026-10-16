@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.2.6';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.2.7';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-14';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
@@ -103,13 +103,22 @@
         const off = offlineReward(p);
         if (off && off.silver > 0) {
             p.silver += off.silver; Save.save();
+            const cell = rewardCell('silver', fmt(off.silver)), left = Rewards.adLeft(p, 'offline');
+            const ok = h('button.btn', { onclick: () => { click(); d.remove(); } }, L('받기'));
+            // 냥이의 가호: the x2 is applied right away while today's count lasts (no button)
+            const auto = !!(p.shop && p.shop.premium) && left > 0;
+            if (auto) { p.daily.ads.offline = (p.daily.ads.offline || 0) + 1; Rewards.track('ad'); p.silver += off.silver; Save.save(); UI.markDouble(cell, fmt(off.silver * 2)); }
+            const dbl = auto || (p.shop && p.shop.premium) ? null : h('button.btn.gold' + (left ? '' : '.off'), { onclick: async () => {
+                if (dbl.used) return;
+                if (!Rewards.adLeft(p, 'offline')) { toast(L('오늘 2배 횟수를 다 썼어요 (하루 {0}번)', AD_LIMITS.offline)); return; } click();
+                if (await Rewards.watchAd('offline')) { dbl.used = true; p.silver += off.silver; Save.save(); UI.markDouble(cell, fmt(off.silver * 2)); dbl.remove(); ok.textContent = L('닫기'); }
+            } }, img('i_ad', '.icon'), L('광고 보고 2배') + ' ' + L('(오늘 {0}번 남음)', left));
             const d = modal([
                 h('div.title-t', L('수비대 보급')),
-                h('div', L('자리를 비운 {0} 동안 병사들이 보급을 모았습니다.', off.hours >= 1 ? off.hours.toFixed(1) + L('시간') : Math.round(off.hours * 60) + L('분'))),
-                h('div.row', rewardCell('silver', fmt(off.silver))),
-                h('div.tip', L('최고 스테이지가 높을수록 보급이 늘어납니다 (최대 {0}시간)', p.shop && p.shop.premium ? 24 : 12)),
-                h('div.row', h('button.btn', { onclick: () => { click(); d.remove(); } }, L('받기')),
-                    h('button.btn.gold', { onclick: async () => { if (!Rewards.adLeft(p, 'offline')) { toast(L('오늘 2배 보상 횟수를 다 썼습니다')); return; } click(); if (await Rewards.watchAd('offline')) { p.silver += off.silver; Save.save(); d.remove(); toast(L('보급 2배! 은화 +{0}', fmt(off.silver))); } } }, img('i_ad', '.icon'), L('광고 보고 2배'))),
+                h('div', L('비운 {0} 동안 모은 보급', off.hours >= 1 ? off.hours.toFixed(1) + L('시간') : Math.round(off.hours * 60) + L('분'))),
+                h('div.row', cell),
+                h('div.tip', L('최고 스테이지가 높을수록 많아져요 (최대 {0}시간)', p.shop && p.shop.premium ? 24 : 12)),
+                h('div.row', ok, dbl),
             ]);
         }
     }
@@ -131,6 +140,7 @@
             ...currencyBar(),
             h('div.sp'),
             h('div.chip.curchip', { onclick: () => { click(); UI.currencyInfo('ticket'); } }, img('i_ticket', '.icon'), fmtShort(p.tickets || 0)),
+            UI.mailButton(),
             h('div.iconbtn', { onclick: () => { click(); showHub('settings'); } }, img('nav_settings')),
             h('div.chip.herochip', { style: { cursor: 'pointer' }, onclick: () => { click(); showHub('hero'); } },
                 img(heroPortrait(p.hero, p.shop && p.shop.skin[p.hero]), '.icon'), h('span.hc', h('b', HERO_NAMES[p.hero]), h('i', `Lv.${p.heroes[p.hero].lv}`))),
@@ -163,11 +173,12 @@
     function howToModal() {
         const sec = (t, ...lines) => h('div.howto-sec', h('b', t), lines.map(x => h('div', x)));
         UI.infoModal(L('게임 방법'), h('div.howto', [
-            sec(L('탑'), L('길가의 빈 자리를 눌러 탑을 세웁니다. 궁수탑은 빠르고 하늘의 적도 쏘고, 마법탑은 갑옷을 무시하고, 대포탑은 땅의 적을 광역으로 터뜨리고, 병영은 병사로 길을 막습니다.'), L('탑을 다시 누르면 업그레이드 · 최고 단계에서는 두 가지 전문화 중 하나를 고릅니다.')),
-            sec(L('영웅'), L('땅을 누르면 영웅이 그곳으로 갑니다. AUTO가 켜져 있으면 스스로 싸우고, 직접 조작하면 3초 동안 수동이 됩니다(그동안 영웅이 잡은 적은 금화 1.25배).'), L('영웅 탭에서 장비를 끼우고 강화해 더 강해집니다. 레벨이 오르면 새 스킬이 열립니다.')),
-            sec(L('스킬'), L('영웅 스킬 4개와 유성 냥펀치·증원 2개를 씁니다. 버튼을 누르고 지도에서 위치를 고르세요. 버튼을 길게 누르면 설명이 나옵니다.')),
-            sec(L('별'), L('스테이지를 이기면 별 1~3개. 목숨을 2 이하로 잃고 이기면 별 3개입니다. 처음 얻는 별마다 보석 15개.'), L('별은 연구(영구 강화)에 쓰고, 모은 별 수로 성장 패스 보상이 열립니다.')),
-            sec(L('재화'), L('은화: 장비 강화 · 보석: 소환과 스킨 · 소환권: 무료 1회 소환 · 강화석: +11 이상 강화. 위쪽 재화 칸을 누르면 얻는 곳을 볼 수 있습니다.')),
+            sec(L('탑'), L('궁수탑: 빠름, 하늘 공격 · 마법탑: 갑옷 무시'), L('대포탑: 여러 명, 땅만 · 병영: 길 막기'), L('탑을 다시 누르면 업그레이드')),
+            sec(L('영웅'), L('땅을 누르면 영웅이 달려가요. 영웅 탭에서 장비로 강해져요.')),
+            sec(L('스킬·아이템'), L('누르고 쓸 곳을 골라요. 길게 누르면 설명.')),
+            sec(L('자동·배속'), L('영웅 자동: 알아서 싸움 · 자동 웨이브: 알아서 시작'), L('배속: 게임 속도')),
+            sec(L('별'), L('목숨을 2 이하로 잃고 이기면 별 3개. 별은 연구에 써요.')),
+            sec(L('재화'), L('은화: 강화 · 보석: 소환 · 강화석: +11 이상 강화')),
             sec(L('영웅 난이도'), L('장 보스를 물리치면 그 장의 영웅 난이도가 열립니다. 적 체력 {0}% · 별마다 보석 {1}개 · 별 3개는 특별 조건까지 지켜야 합니다.', Math.round(HARD.hpMul * 100), HARD.gemsPerStar)),
         ]));
     }
@@ -209,6 +220,7 @@
             h('button.btn.small.gold', { onclick: () => { click(); UI.profileModal(); } }, L('프로필 · 계정')), h('span.tip', UI.onlineStatusText())));
         colR.appendChild(h('div.set-help',
             h('button.btn.small.gold', { onclick: () => { click(); howToModal(); } }, L('게임 방법')),
+            h('button.btn.small', { onclick: () => { click(); UI.openMail(); } }, L('쿠폰 입력')),
             h('button.btn.small', { onclick: () => { click(); confirmBox(L('처음 했을 때 나오던 안내와 설명을 다시 보여 줍니다.'), () => { p.seenTips = {}; Save.save(); toast(L('안내를 다시 볼 수 있습니다. 지도에서 시작하세요')); }); } }, L('튜토리얼 다시 보기')),
             h('button.btn.small.touch-help', { onclick: () => { click(); touchHelpModal(); } }, L('조작 방법'))));
         const pol = (file, name) => h('button.btn.small', { onclick: () => { click(); UI.policyModal(file, name); } }, name);
@@ -289,6 +301,18 @@
         win.appendChild(h('div.tip', { style: { margin: '0 6px 4px' } }, L('결제는 Google Play로 진행됩니다. 구매 후 7일 이내 사용하지 않은 상품은 청약철회(환불)할 수 있으며, 지급된 재화를 사용했거나 효과가 바로 적용되는 상품은 청약철회가 제한될 수 있습니다. 미성년자는 법정대리인의 동의가 필요합니다.')));
         win.appendChild(sec(L('추천'), ['starter', 'monthly', 'pass', 'premium', 'speed3'].map(card)));   // best value first (월간 보급권 = 3,300 gems)
         win.appendChild(sec(L('보석'), GEM_PRODUCTS.map(card)));
+        // 강화 도구 (bought with gems): 하락방지권 keeps the level when a try at +10 or more fails
+        const guardCard = (g, i) => h('div.pcard.guard',
+            h('div.guard-ico', h('span', '+10'), h('b', '\u25B2')),
+            h('div.pn', L('하락방지권 {0}개', g.n)),
+            h('div.pd', L('+10 이상 실패해도 단계 유지')),
+            h('button.btn.gold.small' + (p.gems < g.gems ? '.off' : ''), { onclick: () => { click(); UI.gemGate(g.gems, L('보석 {0}개로 하락방지권 {1}개를 살까요?', fmt(g.gems), g.n), () => { if (buyGuards(i)) { Sfx.play('coin'); showHub('shop'); toast(L('하락방지권 {0}개 (보유 {1})', g.n, p.mats.guard)); } }); } }, img('i_gem', '.icon'), fmt(g.gems)));
+        const shieldCard = (g, i) => h('div.pcard.guard',
+            h('div.guard-ico.shield', h('span', '+10'), h('b', '\u2726')),
+            h('div.pn', L('파괴방지권 {0}개', g.n)),
+            h('div.pd', L('+10 이상 실패해도 파괴되지 않음')),
+            h('button.btn.gold.small' + (p.gems < g.gems ? '.off' : ''), { onclick: () => { click(); UI.gemGate(g.gems, L('보석 {0}개로 파괴방지권 {1}개를 살까요?', fmt(g.gems), g.n), () => { if (buyGuards(i, true)) { Sfx.play('coin'); showHub('shop'); toast(L('파괴방지권 {0}개 (보유 {1})', g.n, p.mats.shield)); } }); } }, img('i_gem', '.icon'), fmt(g.gems)));
+        win.appendChild(sec(L('강화 도구'), [...GUARD_SHOP.map(guardCard), ...SHIELD_SHOP.map(shieldCard)]));
         // skins (bought with gems, some only from the growth pass; the recoloured ones only come from 스킨 소환)
         const skins = [];
         for (const cls in SKINS) for (const s of SKINS[cls]) {

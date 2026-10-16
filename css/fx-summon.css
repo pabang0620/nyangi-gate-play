@@ -102,7 +102,15 @@
 /* high-grade reveal clip: light only (black = transparent via screen blend), never blocks taps */
 .vfx-clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: screen; pointer-events: none; z-index: 50; animation: smVfxIn .15s ease-out; }
 /* ...on a single card or best-of cell: centred on it, spilling a little past the edges */
-.vfx-clip.vfx-spot { inset: -50% -65%; width: auto; height: auto; object-fit: contain; }
+.vfx-clip.vfx-spot { inset: auto; left: -65%; top: -50%; width: 230%; height: 200%; object-fit: contain; }   /* a <video> keeps its own pixel size with width:auto, so the box is set explicitly */
 /* the enhance stamp is a wide row, so its clip needs a tighter box or it washes out the whole popup */
-.enh-stamp > .vfx-clip.vfx-spot { inset: -30% -18%; }
+.enh-stamp > .vfx-clip.vfx-spot { left: -18%; top: -30%; width: 136%; height: 160%; }
 @keyframes smVfxIn { from { opacity: 0; } to { opacity: 1; } }
+/* enhance: the risky try waits for a tap (glow + shake), the clip is placed over the stamp from js (enhanceResult) */
+#anvil.enh-wait { animation: shake .14s infinite; filter: drop-shadow(0 0 14px #ffd040) brightness(1.25); }
+.vfx-clip.enh-clip { inset: auto; }
+/* shop: 하락방지권 card icon (no image asset) */
+.pcard.guard .guard-ico { width: 84px; height: 84px; margin: 6px auto; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 40% 35%, #8fe0ff, #2a6aa8 70%); box-shadow: inset 0 0 0 4px #e8f6ff, 0 3px 0 rgba(0,0,0,.35); font-family: 'Lilita'; color: #fff; text-shadow: var(--stroke-s); }
+.pcard.guard .guard-ico span { font-size: 22px; line-height: 1; }
+.pcard.guard .guard-ico b { font-size: 26px; line-height: 1; }
+.pcard.guard .guard-ico.shield { background: radial-gradient(circle at 40% 35%, #ffb0a0, #a8302a 70%); box-shadow: inset 0 0 0 4px #fff0e8, 0 3px 0 rgba(0,0,0,.35); }

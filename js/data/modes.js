@@ -107,12 +107,15 @@ const ACHIEVEMENTS = (() => {
     return A;
 })();
 
-// 성장 패스 확장: 별 48~324 (보통 + 영웅 별), 12개마다
+// 성장 패스 확장: 별 117~324 (보통 + 영웅 별), 9개마다 (2026-10-17: 3개마다였던 앞 단계가 너무 쉬워 전체를 9개 간격으로)
 (function extendPass() {
     const free = [{ silver: 3000 }, { gems: 40 }, { stones: 2 }];
     const paid = [{ gems: 200 }, { tickets: 3 }, { item: 3 }, { stones: 5 }];
-    const top = STAGES.length * 6;
-    for (let s = 48, i = 0; s <= top; s += 12, i++) PASS_TIERS.push({ stars: s, free: free[i % 3], paid: s === top || s === 252 ? { item: 4 } : paid[i % 4] });
+    const top = STAGES.length * 6, STEP = 9;
+    for (let i = 0; STEP * (PASS_TIERS.length + 1) <= top; i++) {
+        const s = STEP * (PASS_TIERS.length + 1);
+        PASS_TIERS.push({ stars: s, free: free[i % 3], paid: s === top || s === 252 ? { item: 4 } : paid[i % 4] });
+    }
 })();
 
 // 주간 공방전 (docs/PLAN_ONLINE_RELEASE.md 3): every player gets the same map, waves (seeded by the week) and restriction.

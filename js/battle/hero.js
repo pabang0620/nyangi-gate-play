@@ -129,6 +129,14 @@ Object.assign(Battle.prototype, {
                     this.bigBoom(x, y, sp.r, '#ff8030'); this.addShake(10);
                 } });
             this.on('spell', id);
+        } else if (id === 'party') {
+            this.party.forEach((m, k) => {
+                const ax = x + (k ? 34 : -34), ay = y + (k ? 10 : -10);
+                this.allies.push({ cls: m.cls, skin: m.skin, x: ax, y: ay, atk: m.atk * sp.atkMul, crit: m.crit, cd: 0.2 * k, until: this.t + sp.dur, dir: 1, lunge: 0 });
+                this.ringFx(ax, ay, 46, '#ffe08a');
+            });
+            this.text(x, y - 60, sp.name + '!', '#ffe08a', 24, true);
+            this.on('spell', id);
         } else {
             // snap to nearest path point
             let best = null;
@@ -145,6 +153,30 @@ Object.assign(Battle.prototype, {
         return true;
     },
 
+
+    // 냥이 총출동 allies: walk to the nearest enemy in reach and attack the way their hero does, then leave
+    updateAllies(dt) {
+        for (const a of this.allies) {
+            a.lunge = Math.max(0, a.lunge - dt);
+            const H0 = HEROES[a.cls], reach = Math.max(70, H0.range);
+            let tgt = null, bd = 260 * 260;
+            for (const e of this.enemies) { if (e.dead || e.burrowUntil > this.t) continue; const dd = dist2(e.x, e.y, a.x, a.y); if (dd < bd) { bd = dd; tgt = e; } }
+            if (!tgt) continue;
+            a.dir = tgt.x >= a.x ? 1 : -1;
+            const d = Math.sqrt(bd);
+            if (d > reach * 0.85) { const k = Math.min(1, 160 * dt / d); a.x += (tgt.x - a.x) * k; a.y += (tgt.y - a.y) * k; continue; }
+            a.cd -= dt;
+            if (a.cd > 0) continue;
+            a.cd = H0.rate * 0.6; a.lunge = 0.14;
+            const crit = Math.random() < a.crit;
+            if (a.cls === 'knight') { this.damage(tgt, a.atk, 'phys', { hero: true, crit, critMul: 2, kb: 4 }); this.slash(a.x + a.dir * 14, a.y - 14, a.dir, crit); this.on('hit', 'hero'); }
+            else if (a.cls === 'mage') { this.projs.push({ kind: 'heroorb', x: a.x, y: a.y - 22, target: tgt, tx: tgt.x, ty: tgt.y, speed: 520, dmg: a.atk, type: 'magic', hero: true, crit, splash: 30 }); this.on('shoot', 'magic'); }
+            else { this.projs.push({ kind: 'arrow', x: a.x, y: a.y - 18, target: tgt, tx: tgt.x, ty: tgt.y, speed: 760, dmg: a.atk, type: 'phys', hero: true, crit }); this.on('shoot', 'arrow'); }
+        }
+        const gone = this.allies.filter(a => this.t >= a.until);
+        for (const a of gone) this.ringFx(a.x, a.y, 30, '#ffe08a');
+        if (gone.length) this.allies = this.allies.filter(a => this.t < a.until);
+    },
 
     updateHero(dt) {
         const h = this.hero;

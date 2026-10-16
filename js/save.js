@@ -53,6 +53,24 @@ function spentStars(p) {
     for (const col of RESEARCH) for (const n of col.nodes) if (p.research[n.id]) s += n.cost;
     return s;
 }
+// 자동 찍기: keep buying the cheapest node that is next in its column; ties go to 전역 (helps every tower), then the
+// towers that also hit flyers (archer, mage), then barracks, cannon. Cheapest-first opens the most nodes for the stars.
+const RESEARCH_PREF = ['w', 'a', 'm', 'b', 'c'];
+function autoResearch(p) {
+    const opened = [];
+    for (;;) {
+        const free = totalStars(p) - spentStars(p);
+        let best = null;
+        for (const col of RESEARCH) {
+            const n = col.nodes.find(x => !p.research[x.id]);
+            if (!n || n.cost > free) continue;
+            if (!best || n.cost < best.cost || (n.cost === best.cost && RESEARCH_PREF.indexOf(n.id[0]) < RESEARCH_PREF.indexOf(best.id[0]))) best = n;
+        }
+        if (!best) return opened;
+        p.research[best.id] = true;
+        opened.push(best);
+    }
+}
 function highestCleared(p) { let hi = -1; for (const k in p.stars) if (p.stars[k] > 0) hi = Math.max(hi, +k); return hi; }
 function stageUnlocked(p, idx) { return idx === 0 || (p.stars[idx - 1] || 0) > 0; }
 
@@ -62,14 +80,16 @@ function makeItem(slot, rarity, ilvl, rng = Math.random) {
     const subKeys = Object.keys(SUB_OPTS);
     const subs = [];
     const pool = subKeys.slice();
-    for (let i = 0; i < rarity; i++) {
+    // mythic: one extra option and stronger rolls (2026-10-17, "신화가 압도적으로")
+    const nSubs = rarity >= 4 ? rarity + 1 : rarity, subMul = rarity >= 4 ? 2.0 : 1 + 0.15 * rarity;
+    for (let i = 0; i < nSubs; i++) {
         const k = pool.splice(Math.floor(rng() * pool.length), 1)[0];
         const o = SUB_OPTS[k];
-        let v = (o.min + (o.max - o.min) * rng()) * (1 + 0.15 * rarity);
+        let v = (o.min + (o.max - o.min) * rng()) * subMul;
         v = o.pct ? Math.round(v * 1000) / 1000 : Math.round(v);
         subs.push({ k, v });
     }
-    const it = { id: p.nextId++, slot, r: rarity, ilvl: Math.max(1, Math.round(ilvl)), enh: 0, subs, isNew: true, t: Date.now() };
+    const it = { id: p.nextId++, slot, r: rarity, ilvl: Math.max(1, Math.round(ilvl)), enh: 0, subs, art: Math.floor(rng() * ITEM_ARTS), isNew: true, t: Date.now() };
     p.items.push(it);
     while (p.items.length > BAG_MAX && bagOverflow(p)) { }
     return it;
@@ -93,11 +113,17 @@ function bagOverflow(p) {
     return true;
 }
 function itemName(it) { return ITEM_NAMES[it.slot][it.r]; }
+// gear grows with progress: the level used for stats is the item's own level or what a summon gives right now, whichever is higher.
+// So gear bought or summoned early (a day-1 purchase) never falls behind new drops of the same grade.
+function itemLv(it) { const p = Save.p; return Math.max(it.ilvl, p && p.stars ? Math.round(summonIlvl(p)) : 0); }
+// picture variant for the high-grade item images (img/it_{slot}_{r}_{n}.png); older items get one from their id
+const ITEM_ARTS = 4;
+function itemArt(it) { return it.art !== undefined ? it.art : it.id % ITEM_ARTS; }
 function itemMain(it) {
-    const m = RARITY[it.r].mul * (1 + ENHANCE.perLv * it.enh);
-    if (it.slot === 'weapon') return { k: 'atk', name: L('영웅 공격력'), v: Math.round((4 + it.ilvl * 1.2) * m) };
-    if (it.slot === 'armor') return { k: 'hp', name: L('영웅 체력'), v: Math.round((30 + it.ilvl * 8) * m) };
-    return { k: 'towerDmg', name: L('모든 탑 피해'), v: Math.round((0.03 + it.ilvl * 0.002) * m * 1000) / 1000, pct: true };
+    const m = RARITY[it.r].mul * (1 + ENHANCE.perLv * it.enh), lv = itemLv(it);
+    if (it.slot === 'weapon') return { k: 'atk', name: L('영웅 공격력'), v: Math.round((4 + lv * 1.2) * m) };
+    if (it.slot === 'armor') return { k: 'hp', name: L('영웅 체력'), v: Math.round((30 + lv * 8) * m) };
+    return { k: 'towerDmg', name: L('모든 탑 피해'), v: Math.round((0.03 + lv * 0.002) * m * 1000) / 1000, pct: true };
 }
 function itemScore(it) {
     // rough comparable value used by "최적 장착"
@@ -109,21 +135,58 @@ function itemScore(it) {
 function fmtOpt(name, v, isPct) { return name + ' +' + (isPct ? (v * 100).toFixed(1).replace(/\.0$/, '') + '%' : fmt(v)); }
 function itemById(id) { return Save.p.items.find(i => i.id === id) || null; }
 function isEquipped(it) { return Save.p.equip[it.slot] === it.id; }
+// salvage keeps the item's own level (old gear grown by progress is not a silver mine); enhance cost follows the level it fights at
 function salvageValue(it) { return Math.round(30 * [1, 3, 10, 40, 150][it.r] * (1 + it.ilvl / 15) + it.enh * 40); }
-function enhanceCost(it) { return Math.round(60 * Math.pow(1.35, it.enh) * (1 + 0.5 * it.r) * (1 + it.ilvl / 20)); }
+function enhanceCost(it) { return Math.round(60 * Math.pow(1.35, it.enh) * (1 + 0.5 * it.r) * (1 + itemLv(it) / 20)); }
 
-function tryEnhance(it) {
+// useGuard: spend one 하락방지권 (p.mats.guard) when a failure would drop the level.
+// useShield: spend one 파괴방지권 (p.mats.shield) when a failure would destroy the item. noSave: auto enhance saves once at the end
+function tryEnhance(it, useGuard, noSave, useShield) {
     const p = Save.p, cost = enhanceCost(it), stones = enhanceStones(it.enh);
     p.mats = p.mats || { stone: 0 };
-    if (it.enh >= ENHANCE.max || p.silver < cost || p.mats.stone < stones) return null;
+    if (it.enh >= ENHANCE.max || p.silver < cost || (p.mats.stone || 0) < stones) return null;
     p.silver -= cost; p.mats.stone -= stones;
     const ok = Math.random() < ENHANCE.rate[it.enh];
     if (typeof Rewards !== 'undefined') Rewards.track('enhance');
-    let dropped = false;
+    let dropped = false, guarded = false, destroyed = false, shielded = false;
     if (ok) it.enh++;
-    else if (it.enh >= ENHANCE.dropFrom) { it.enh--; dropped = true; }
+    else if (it.enh >= ENHANCE.destroyFrom && Math.random() < (ENHANCE.destroy[it.enh - ENHANCE.destroyFrom] || 0) && !(useShield && (p.mats.shield || 0) > 0 && (p.mats.shield--, shielded = true))) {
+        destroyed = true;
+        p.items = p.items.filter(x => x !== it);
+        for (const k in p.equip) if (p.equip[k] === it.id) p.equip[k] = null;
+    }
+    else if (it.enh >= ENHANCE.dropFrom) {
+        if (useGuard && (p.mats.guard || 0) > 0) { p.mats.guard--; guarded = true; }
+        else { it.enh--; dropped = true; }
+    }
+    if (!noSave) Save.save();
+    return { ok, dropped, guarded, destroyed, shielded, cost, stones };
+}
+// 자동 강화: try until the target level or a spending cap (silver / stones) is reached
+// in the destroy zone it only goes on while a 파괴방지권 is switched on and owned (never destroys an item unattended)
+function autoEnhance(it, target, silverCap, stoneCap, useGuard, useShield) {
+    const p = Save.p, start = it.enh, run = { tries: 0, ok: 0, drops: 0, guards: 0, shields: 0, silver: 0, stones: 0, start, why: '' };
+    while (it.enh < Math.min(target, ENHANCE.max)) {
+        if (it.enh >= ENHANCE.destroyFrom && !(useShield && ((p.mats && p.mats.shield) || 0) > 0)) { run.why = 'risk'; break; }
+        const cost = enhanceCost(it), st = enhanceStones(it.enh);
+        if (run.silver + cost > silverCap) { run.why = 'silverCap'; break; }
+        if (run.stones + st > stoneCap) { run.why = 'stoneCap'; break; }
+        const r = tryEnhance(it, useGuard, true);
+        if (!r) { run.why = 'short'; break; }
+        run.tries++; run.silver += r.cost; run.stones += r.stones;
+        if (r.ok) run.ok++; if (r.dropped) run.drops++; if (r.guarded) run.guards++; if (r.shielded) run.shields++;
+        if (run.tries >= 5000) break;
+    }
+    if (!run.why && it.enh >= target) run.why = 'done';
     Save.save();
-    return { ok, dropped };
+    return run;
+}
+function buyGuards(i, shield) {
+    const p = Save.p, g = (shield ? SHIELD_SHOP : GUARD_SHOP)[i], k = shield ? 'shield' : 'guard';
+    if (!g || p.gems < g.gems) return false;
+    p.gems -= g.gems; p.mats = p.mats || { stone: 0 }; p.mats[k] = (p.mats[k] || 0) + g.n;
+    Save.save();
+    return true;
 }
 
 function equipBest() {
@@ -137,11 +200,14 @@ function equipBest() {
     for (const s of SLOTS) { const it = itemById(p.equip[s]); if (it) it.isNew = false; }
     Save.save();
 }
-function bulkSalvage(maxRarity) {
+// 일괄 분해 설정 (p.set.salvage): up to which grade (0 일반, 1 희귀, 2 영웅) and whether enhanced gear goes too
+function salvageSet(p) { const s = (p.set && p.set.salvage) || {}; return { max: s.max === undefined ? 1 : s.max, enh: !!s.enh }; }
+function salvageTargets(p, maxRarity, withEnh) { return p.items.filter(it => !isEquipped(it) && it.r <= maxRarity && (withEnh || it.enh === 0)); }
+function bulkSalvage(maxRarity, withEnh) {
     const p = Save.p;
     let gain = 0, n = 0;
     p.items = p.items.filter(it => {
-        if (isEquipped(it) || it.r > maxRarity || it.enh > 0) return true;
+        if (isEquipped(it) || it.r > maxRarity || (it.enh > 0 && !withEnh)) return true;
         gain += salvageValue(it); n++; return false;
     });
     p.silver += gain;

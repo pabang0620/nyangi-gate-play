@@ -248,7 +248,7 @@ Object.assign(Battle.prototype, {
                 this.text(e.x - 30, e.y - 30, '-' + e.def.lives, '#ff6060', 22, true);
                 if (this.bossRef === e) this.bossRef = null;
                 // a boss or elite getting through loses the stage outright
-                if ((e.def.boss || e.def.elite) && !this.raid) { this.lives = 0; this.text(W / 2, 200, e.def.boss ? L('보스를 놓쳤다!') : L('정예를 놓쳤다!'), '#ff4040', 30, true); }
+                if ((e.def.boss || e.def.elite) && !this.raid) { this.lives = 0; this.mustKillLost = true; this.text(W / 2, 200, e.def.boss ? L('보스를 놓쳤다!') : L('정예를 놓쳤다!'), '#ff4040', 30, true); }
                 this.on('leak', e);
             }
         }

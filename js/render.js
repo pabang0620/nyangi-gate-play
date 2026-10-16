@@ -218,6 +218,7 @@ const Render = (() => {
         for (const s of B.soldiers) ents.push({ y: s.y, k: 's', o: s });
         for (const e of B.enemies) ents.push({ y: e.y, k: 'e', o: e });
         if (B.heroAlive) ents.push({ y: B.hero.y, k: 'h', o: B.hero });
+        for (const a of B.allies || []) ents.push({ y: a.y, k: 'a', o: a });
         for (const d of B.drops) ents.push({ y: d.y, k: 'd', o: d });
         ents.sort((a, b) => a.y - b.y);
         for (const it of ents) {
@@ -225,6 +226,7 @@ const Render = (() => {
             else if (it.k === 's') drawSoldier(B, it.o, T);
             else if (it.k === 'e') drawEnemy(B, it.o, T, now);
             else if (it.k === 'h') drawHero(B, it.o, T, now);
+            else if (it.k === 'a') drawAlly(B, it.o, T, now);
             else drawDrop(it.o, now);
         }
         if (!B.heroAlive) {
@@ -545,6 +547,17 @@ const Render = (() => {
             x.strokeStyle = 'rgba(127,212,255,.6)'; x.lineWidth = 1; x.setLineDash([3, 4]);
             x.beginPath(); x.moveTo(h.x, h.y); x.lineTo(h.moveTo.x, h.moveTo.y); x.stroke(); x.setLineDash([]);
         }
+    }
+
+    // 냥이 총출동 ally: the hero's own look, a little see-through, with a golden ring that fades in its last second
+    function drawAlly(B, a, T, now) {
+        const fade = Math.min(1, (a.until - T) / 1);
+        shadow(a.x, a.y, 12);
+        x.strokeStyle = `rgba(255,224,138,${0.8 * fade})`; x.lineWidth = 2;
+        x.beginPath(); x.ellipse(a.x, a.y, 16 + Math.sin(now * 8) * 2, 6, 0, 0, TAU); x.stroke();
+        const hs = a.skin ? heroSprite(a.cls, a.skin) : Art.hero(a.cls, 0);
+        const lg = a.lunge > 0 ? Math.sin((a.lunge / 0.14) * Math.PI) * 9 * a.dir : 0;
+        spr(hs, a.x + lg, a.y, 2, a.dir < 0, 0, 0.85 * fade);
     }
 
     function drawDrop(d, now) {

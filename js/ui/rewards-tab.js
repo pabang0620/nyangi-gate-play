@@ -19,7 +19,7 @@
 
     // small gold "claim all" for a mission list header; greyed out while nothing is ready
     function claimAllBtn(can, claim) {
-        return h('button.btn.small.claimall' + (can ? '.gold' : '.off'), { onclick: () => { if (!can) { toast(L('받을 보상이 없습니다')); return; } click(); claim(); } }, L('모두 받기'));
+        return h('button.btn.small.claimall' + (can ? '.gold.rw-pulse' : '.off'), { onclick: () => { if (!can) { toast(L('받을 보상이 없습니다')); return; } click(); claim(); } }, L('모두 받기'));
     }
 
     // a 받기 button that is not ready yet says how far along it is
@@ -46,7 +46,7 @@
         const ms = h('div.inset.rw-col', h('h3', img('i_mission', '.icon'), L('오늘의 임무'),
             claimAllBtn(dayCan, () => { const g = Rewards.claimAllMissions(p); Save.save(); showHub('rewards'); showGot(L('임무 보상'), g); })));
         byReady(MISSIONS, m => Rewards.missionState(p, m)).forEach(({ m, st }) => {
-            ms.appendChild(h('div.mrow' + (st.claimed ? '.claimed' : ''),
+            ms.appendChild(h('div.mrow' + (st.claimed ? '.claimed' : st.done ? '.ready' : ''),
                 h('div', { style: { flex: 1 } }, h('div', m.name), h('div.bar', h('i', { style: { width: (st.v / m.goal * 100) + '%' } })), h('div.num.tip', `${st.v} / ${m.goal}`)),
                 ...rewardIcons(m.reward),
                 st.claimed ? h('span.claimed-t', L('완료')) : h('button.btn.small' + (st.done ? '.gold' : '.off'), { onclick: () => { if (!st.done) { notYet(st.v, m.goal); return; } click(); const g = Rewards.claimMission(p, m.id); showHub('rewards'); showGot(L('임무 보상'), g); } }, L('받기'))));
@@ -57,7 +57,7 @@
         // side: login + free gems by ad
         const side = h('div.inset.rw-col.rw-side', h('h3', img('i_calendar', '.icon'), L('출석')),
             h('div.tip', L('누적 {0}일 · {1}', p.login.count, Rewards.loginAvailable(p) ? L('오늘 보상 대기 중') : L('오늘 받음'))),
-            h('button.btn' + (Rewards.loginAvailable(p) ? '.gold' : ''), { onclick: () => { click(); loginModal(); } }, L('출석부 보기')),
+            h('button.btn' + (Rewards.loginAvailable(p) ? '.gold.rw-pulse' : ''), { onclick: () => { click(); loginModal(); } }, Rewards.loginAvailable(p) ? L('출석 보상 받기') : L('출석부 보기')),
             h('h3', img('i_ad', '.icon'), L('무료 보석')),
             h('div.tip', L('광고를 보고 보석 {0}개 (오늘 {1}번 남음)', AD_FREE_GEMS, Rewards.adLeft(p, 'freeGems'))),
             h('button.btn' + (Rewards.adLeft(p, 'freeGems') ? '.gold' : '.off'), { onclick: async () => {
@@ -65,7 +65,11 @@
                 if (await Rewards.watchAd('freeGems')) { const g = Rewards.grant(p, { gems: AD_FREE_GEMS }); showHub('rewards'); showGot(L('무료 보석'), g); }
             } }, p.shop.premium ? L('바로 받기 (가호)') : L('광고 보기')));
         // growth pass
-        const ps = h('div.inset.rw-col.rw-pass', h('h3', img('shop_pass', '.icon'), L('성장 패스'), h('span.tip', { style: { marginLeft: '8px' } }, L('별 {0}개', totalStars(p)))));
+        // how many pass rewards can be taken right now (free row, and the paid row when the pass is owned)
+        const passCan = PASS_TIERS.reduce((n, t, i) => n + (Rewards.passTierOpen(p, i) ? (!p.passClaimed.free.includes(i) ? 1 : 0) + (p.shop.pass && !p.passClaimed.paid.includes(i) ? 1 : 0) : 0), 0);
+        const ps = h('div.inset.rw-col.rw-pass', h('h3', img('shop_pass', '.icon'), L('성장 패스'), h('span.tip', { style: { marginLeft: '8px' } }, L('별 {0}개', totalStars(p))),
+            passCan ? h('span.rw-count', L('받을 보상 {0}', passCan)) : null));
+        const nextTier = PASS_TIERS.findIndex(t => totalStars(p) < t.stars);
         const track = h('div.ptrack');
         PASS_TIERS.forEach((t, i) => {
             const open = Rewards.passTierOpen(p, i);
@@ -78,7 +82,9 @@
                     click(); const g = Rewards.claimPass(p, i, paid); showHub('rewards'); showGot(L('성장 패스'), g); });
                 return c;
             };
-            track.appendChild(h('div.ptier' + (open ? '.open' : ''), h('div.pstar', img('i_star', '.star'), h('span.num', t.stars)), cell(false), cell(true)));
+            // the next tier to open shows how far along it is
+            const star = i === nextTier ? h('span.num', `${totalStars(p)}/${t.stars}`) : h('span.num', t.stars);
+            track.appendChild(h('div.ptier' + (open ? '.open' : '') + (i === nextTier ? '.nexttier' : ''), h('div.pstar', img('i_star', '.star'), star), cell(false), cell(true)));
         });
         const lab = h('div.plabels', h('span', ''), h('span', L('무료')), h('span.paid', L('유료')));
         ps.appendChild(h('div.pwrap', lab, track));
@@ -93,7 +99,7 @@
         const next = PASS_TIERS.find(t => totalStars(p) < t.stars);
         ps.appendChild(h('div.tip', next ? L('다음 보상까지 별 {0}개', next.stars - totalStars(p)) : L('모든 단계를 열었습니다')));
         ps.appendChild(h('div.row.pbtns', { style: { display: 'flex', gap: '8px' } },
-            h('button.btn.gold', { onclick: () => { click(); const g = Rewards.claimAllPass(p); showHub('rewards'); if (g.length) showGot(L('성장 패스'), g); else toast(L('받을 보상이 없습니다')); } }, L('모두 받기')),
+            h('button.btn' + (passCan ? '.gold.rw-pulse' : '.off'), { onclick: () => { click(); const g = Rewards.claimAllPass(p); showHub('rewards'); if (g.length) showGot(L('성장 패스'), g); else toast(L('받을 보상이 없습니다')); } }, passCan ? L('모두 받기 ({0})', passCan) : L('모두 받기')),
             p.shop.pass ? h('span.claimed-t', L('유료 패스 보유')) : h('button.btn', { onclick: () => { click(); buyProduct('pass'); } }, L('유료 패스 {0}', priceLabel('pass')))));
         cols.appendChild(ms); cols.appendChild(ps); cols.appendChild(side);
         win.appendChild(cols);
@@ -113,7 +119,7 @@
                 Save.save(); showHub('rewards'); showGot(L('주간 임무'), got);
             })));
         byReady(WEEKLY_MISSIONS, m => Meta.weeklyState(p, m)).forEach(({ m, st }) => {
-            ms.appendChild(h('div.mrow' + (st.claimed ? '.claimed' : ''),
+            ms.appendChild(h('div.mrow' + (st.claimed ? '.claimed' : st.done ? '.ready' : ''),
                 h('div', { style: { flex: 1 } }, h('div', m.name), h('div.bar', h('i', { style: { width: (st.v / m.goal * 100) + '%' } })), h('div.num.tip', `${st.v} / ${m.goal}`)),
                 ...rewardIcons(m.reward),
                 st.claimed ? h('span.claimed-t', L('완료')) : h('button.btn.small' + (st.done ? '.gold' : '.off'), { onclick: () => { if (!st.done) { notYet(st.v, m.goal); return; } click(); const g = Meta.claimWeekly(p, m.id); Save.save(); showHub('rewards'); showGot(L('주간 임무'), g); } }, L('받기'))));
@@ -138,7 +144,7 @@
             h('button.btn.small.gold', { onclick: () => { click(); const got = []; for (const a of ACHIEVEMENTS) { const g = Meta.claimAch(p, a.id); if (g) got.push(...g); } Save.save(); showHub('rewards'); if (got.length) showGot(L('업적 보상'), got); else toast(L('받을 업적 보상이 없습니다')); } }, L('모두 받기'))));
         // unclaimed-done first, then in progress, then claimed
         const order = ACHIEVEMENTS.map(a => ({ a, st: Meta.achState(p, a) })).sort((x, y) => (y.st.done && !y.st.claimed) - (x.st.done && !x.st.claimed) || x.st.claimed - y.st.claimed);
-        win.appendChild(h('div.achgrid', order.map(({ a, st }) => h('div.mrow' + (st.claimed ? '.claimed' : ''),
+        win.appendChild(h('div.achgrid', order.map(({ a, st }) => h('div.mrow' + (st.claimed ? '.claimed' : st.done ? '.ready' : ''),
             h('div', { style: { flex: 1 } }, h('div', h('span.muted', `[${a.group}] `), a.name), h('div.bar', h('i', { style: { width: (st.v / a.goal * 100) + '%' } })), h('div.num.tip', `${fmt(st.v)} / ${fmt(a.goal)}`)),
             ...rewardIcons(a.reward),
             st.claimed ? h('span.claimed-t', L('완료')) : h('button.btn.small' + (st.done ? '.gold' : '.off'), { onclick: () => { if (!st.done) { notYet(st.v, a.goal); return; } click(); const g = Meta.claimAch(p, a.id); Save.save(); showHub('rewards'); showGot(L('업적 보상'), g); } }, L('받기'))))));

@@ -117,3 +117,19 @@
 .tcol h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rnode { min-width: 0; }
 .dg-col h3 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* rewards tab: what can be taken now stands out, taken rows fade (js/ui/rewards-tab.js) */
+.mrow.ready { background: rgba(245,196,81,.22); box-shadow: inset 0 0 0 2px var(--gold); }
+.mrow.claimed { opacity: .45; filter: grayscale(.5); }
+.rw-pulse { animation: rwpulse .9s ease-in-out infinite alternate; }
+@keyframes rwpulse { to { filter: brightness(1.18); box-shadow: 0 0 14px rgba(255,208,64,.85); } }
+.rw-count { margin-left: auto; padding: 1px 10px; border-radius: 10px; font-size: .8em; color: #fff; background: #d8402a; box-shadow: 0 2px 0 #7a1c10; }
+.ptier.nexttier .pstar .num { color: #fff3d6; }
+.ptier.nexttier .pcell { box-shadow: 0 0 0 2px rgba(255,243,214,.55); }
+.pcell.got { opacity: .6; }
+/* challenge tab: locked contents (js/ui/challenge.js) */
+.subtabs .btn.ch-locked { filter: grayscale(.6) brightness(.8); }
+.subtabs .btn.ch-locked .icon { width: 22px; height: 22px; margin-right: 4px; vertical-align: -3px; }
+.ch-lockwin { align-items: center; justify-content: center; gap: 10px; text-align: center; }
+.ch-lockimg { width: 88px; height: 88px; object-fit: contain; opacity: .9; }
+.ch-lockline { font-family: 'BlackHan'; font-size: 26px; color: #ff9a7a; text-shadow: var(--stroke-s); }
+#app.mobile .ch-lockline { font-size: 32px; }

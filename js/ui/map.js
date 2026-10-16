@@ -18,6 +18,13 @@
     function tabMap() {
         const p = Save.p;
         metaEnsure(p);
+        // the map opens where the player last played (chapter and 보통/영웅), the first time per session and after each battle
+        if (!S.mapInit || S.mapFollow) {
+            S.mapInit = true; S.mapFollow = false;
+            const lm = p.set.lastMap;
+            if (lm && lm.ch >= 0 && lm.ch < CHAPTERS.length && stageUnlocked(p, CH_START[lm.ch])) { S.chapter = lm.ch; S.hard = !!lm.hard; }
+            else { let c = 0; while (c + 1 < CHAPTERS.length && stageUnlocked(p, CH_START[c + 1])) c++; S.chapter = c; S.hard = false; }
+        }
         const ch = S.chapter, n = CH_LEN[ch], pos = NODE_POS[n], base = CH_START[ch];
         const chOpen = c => stageUnlocked(p, CH_START[c]);
         const hardOpen = chapterCleared(p, ch);
@@ -125,6 +132,7 @@
 
     function startStage(idx, hard) {
         const p = Save.p, st = STAGES[idx], ch = st.ch;
+        p.set.lastMap = { ch, hard: !!hard }; S.mapFollow = true; Save.save();
         const run = () => Game.startBattle({ stageIdx: idx, hard });
         if (hard) return run();
         const kind = idx === CH_START[ch] ? 'intro' : st.boss ? 'boss' : null;
@@ -160,11 +168,29 @@
             h('div', { style: { fontFamily: 'BlackHan', fontSize: '17px', color: '#5a2a0a' } }, L('출전 영웅')),
             heroPick,
             h('button.btn' + (hard ? '.red' : '.gold'), { style: { fontSize: '24px', minHeight: '64px', width: '100%' }, onclick: () => { click(); d.remove(); startStage(idx, hard); } }, L('전투 시작')),
+            have >= 3 ? sweepRow(idx, hard, () => { d.remove(); stageInfo(idx, hard); }) : null,
             h('button.btn.ghost', { style: { width: '100%' }, onclick: () => { click(); d.remove(); } }, L('닫기')));
         const d = modal([h('div.si', left, right)
         ], { dismiss: true });
         // long enemy names / tags (German compounds) shrink to their 78px column instead of breaking mid-word
         d.querySelectorAll('.si-enemy > div:not(:first-child)').forEach(e => UI.fitText(e, () => e.clientWidth, 9));
+    }
+
+    // 소탕: 별 3개 스테이지는 전투 없이 승리 보상 (하루 횟수 제한)
+    function sweepRow(idx, hard, redraw) {
+        const p = Save.p, left = Rewards.sweepLeft(p);
+        const go = n => {
+            if (!left) { toast(L('오늘 소탕 횟수를 다 썼어요')); return; }
+            click();
+            const got = Rewards.sweepStage(p, idx, hard, n);
+            if (!got) return;
+            redraw();
+            UI.showGot(L('{0} 소탕 {1}회', stageLabel(idx), Math.min(n, left)), got);
+        };
+        return h('div.sweep-row',
+            h('button.btn.small' + (left ? '' : '.off'), { onclick: () => go(1) }, L('소탕 1회')),
+            h('button.btn.small' + (left > 1 ? '' : '.off'), { onclick: () => go(Math.min(10, left)) }, L('소탕 {0}회', Math.max(1, Math.min(10, left)))),
+            h('div.tip', L('오늘 남은 소탕 {0}회', left)));
     }
 
     Object.assign(UI, { tabMap, playStory, startStage, stageInfo });

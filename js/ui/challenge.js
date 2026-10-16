@@ -22,14 +22,49 @@
     const profileModal = (...a) => UI.profileModal(...a);
 
 
+    // what each challenge needs and how it is introduced the first time (need = stage index that must be cleared).
+    // 랭킹 opens with the wall (it shows the wall/cup/raid boards).
+    const CH_MODES = [
+        { id: 'wall', need: ENDLESS.unlockStage, open: p => (p.stars[ENDLESS.unlockStage] || 0) > 0, name: () => L('무한의 성벽'), cards: () => [
+            [img('i_skull'), L('무한의 성벽'), L('끝없이 오는 적을 몇 웨이브까지 버티는지 겨뤄요.')],
+            [img('i_gem'), L('보상'), L('웨이브마다 은화, 10웨이브 기록마다 보석!')],
+            [img('i_league'), L('시즌 리그'), L('2주마다 기록으로 순위를 겨뤄요.')]] },
+        { id: 'dungeon', need: DUNGEON.tiers[0].need, open: p => Meta.dungeonUnlocked(p), name: () => L('요일 도전'), cards: () => [
+            [img('i_calendar'), L('요일 도전'), L('요일마다 은화·강화석·보석 던전이 열려요.')],
+            [img('i_stone'), L('하루 {0}번', DUNGEON.entries), L('별 3개로 깬 단계는 소탕으로 바로 받아요.')]] },
+        { id: 'raid', need: RAID.unlockStage, open: p => Meta.raidUnlocked(p), name: () => L('보스 토벌전'), cards: () => [
+            [img('i_skull'), L('보스 토벌전'), L('3분 동안 거대 보스에게 피해를 최대한 줘요.')],
+            [img('i_gem'), L('주 {0}번', RAID.tries), L('피해량만큼 단계 보상. 보스는 매주 바뀌어요.')]] },
+        { id: 'cup', need: CUP.unlockStage, open: p => Meta.cupUnlocked(p), name: () => L('주간 공방전'), cards: () => [
+            [img('i_league'), L('주간 공방전'), L('모두 같은 지도·같은 제한으로 점수를 겨뤄요.')],
+            [img('i_ticket'), L('하루 {0}번', CUP.attempts), L('매주 월요일 순위대로 보상!')]] },
+        { id: 'rank', need: ENDLESS.unlockStage, open: p => (p.stars[ENDLESS.unlockStage] || 0) > 0, name: () => L('랭킹'), cards: () => [
+            [img('i_league'), L('랭킹'), L('다른 냥이들과 기록을 비교해요.')]] },
+    ];
+
     // endless ---------------------------------------------------
     // 도전 tab: 무한의 성벽 · 요일 도전 · 보스 토벌전 (PLAN_V2 1.3)
     function tabEndless() {
         const p = Save.p; metaEnsure(p);
         S.ctab = S.ctab || 'wall';
-        const sub = h('div.subtabs', [['wall', L('무한의 성벽')], ['dungeon', L('요일 도전 {0}/{1}', Meta.dungeonLeft(p), DUNGEON.entries)], ['raid', L('보스 토벌전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries)], ['cup', L('주간 공방전 {0}/{1}', Meta.cupLeft(p), CUP.attempts)], ['rank', L('랭킹')]].map(([id, nm]) =>
-            h('button.btn.small' + (S.ctab === id ? '.gold' : '.ghost'), { onclick: () => { click(); S.ctab = id; showHub('endless'); } }, nm)));
+        const names = { wall: L('무한의 성벽'), dungeon: L('요일 도전 {0}/{1}', Meta.dungeonLeft(p), DUNGEON.entries), raid: L('보스 토벌전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries), cup: L('주간 공방전 {0}/{1}', Meta.cupLeft(p), CUP.attempts), rank: L('랭킹') };
+        const seen = p.seenTips || {};
+        const sub = h('div.subtabs', CH_MODES.map(m => {
+            const open = m.open(p);
+            const b = h('button.btn.small' + (S.ctab === m.id ? '.gold' : '.ghost') + (open ? '' : '.ch-locked'), { onclick: () => { click(); S.ctab = m.id; showHub('endless'); } },
+                open ? null : img('i_lock', '.icon'), open ? names[m.id] : m.name());
+            if (open && !seen['ch_' + m.id]) b.appendChild(h('span.badge', 'N'));   // opened but its intro not seen yet
+            return b;
+        }));
         root().appendChild(sub);
+        // locked: one line saying what opens it. Opened for the first time: a few short cards, then the content
+        const mode = CH_MODES.find(m => m.id === S.ctab) || CH_MODES[0];
+        if (!mode.open(p)) {
+            root().appendChild(h('div.panel.win.ch-lockwin', img('i_lock', '.ch-lockimg'), h('div.title-t', mode.name()),
+                h('div.ch-lockline', L('{0} 클리어하면 열려요', stageLabel(mode.need))), h('div.tip', mode.cards()[0][2])));
+            return;
+        }
+        if (!seen['ch_' + mode.id]) setTimeout(() => UI.cardsOnce('ch_' + mode.id, mode.cards(), () => { if (S.screen === 'hub' && S.tab === 'endless') showHub('endless'); }), 60);
         if (S.ctab === 'dungeon') return tabDungeon();
         if (S.ctab === 'raid') return tabRaid();
         if (S.ctab === 'cup') return tabCup();

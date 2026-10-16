@@ -23,20 +23,20 @@ const MISSIONS = [
 ];
 const MISSION_BONUS = { gems: 50, tickets: 1 };
 
-// growth pass: tiers unlock by total stars. Free row for everyone, paid row after buying the pass.
+// growth pass: tiers unlock by total stars, one tier every 9 stars (js/data/modes.js extends it to 324 = every normal and hero star). Free row for everyone, paid row after buying the pass.
 const PASS_TIERS = [
-    { stars: 3,  free: { silver: 500 },  paid: { gems: 100 } },
-    { stars: 6,  free: { gems: 20 },     paid: { tickets: 2 } },
-    { stars: 9,  free: { silver: 800 },  paid: { gems: 150 } },
-    { stars: 12, free: { tickets: 1 },   paid: { item: 3 } },
-    { stars: 15, free: { silver: 1200 }, paid: { gems: 200 } },
-    { stars: 18, free: { gems: 30 },     paid: { skin: 'mage_witch' } },
-    { stars: 21, free: { silver: 1600 }, paid: { tickets: 3 } },
-    { stars: 24, free: { tickets: 1 },   paid: { gems: 250 } },
-    { stars: 27, free: { silver: 2000 }, paid: { item: 3 } },
-    { stars: 30, free: { gems: 50 },     paid: { gems: 300 } },
-    { stars: 33, free: { silver: 3000 }, paid: { tickets: 5 } },
-    { stars: 36, free: { tickets: 2 },   paid: { skin: 'ranger_forest' } },
+    { stars: 9,   free: { silver: 500 },  paid: { gems: 100 } },
+    { stars: 18,  free: { gems: 20 },     paid: { tickets: 2 } },
+    { stars: 27,  free: { silver: 800 },  paid: { gems: 150 } },
+    { stars: 36,  free: { tickets: 1 },   paid: { item: 3 } },
+    { stars: 45,  free: { silver: 1200 }, paid: { gems: 200 } },
+    { stars: 54,  free: { gems: 30 },     paid: { skin: 'mage_witch' } },
+    { stars: 63,  free: { silver: 1600 }, paid: { tickets: 3 } },
+    { stars: 72,  free: { tickets: 1 },   paid: { gems: 250 } },
+    { stars: 81,  free: { silver: 2000 }, paid: { item: 3 } },
+    { stars: 90,  free: { gems: 50 },     paid: { gems: 300 } },
+    { stars: 99,  free: { silver: 3000 }, paid: { tickets: 5 } },
+    { stars: 108, free: { tickets: 2 },   paid: { skin: 'ranger_forest' } },
 ];
 
 // skins: looks + one small option + projectile/slash tint. r = grade (RARITY 0..3: 일반/희귀/영웅/전설).
@@ -104,6 +104,8 @@ const PRODUCTS = {
     gem7500:  { name: L('보석 산더미'), price: 65000, img: 'shop_gem5', gems: 7500 },
 };
 const GEM_PRODUCTS = ['gem80', 'gem500', 'gem1150', 'gem2600', 'gem7500'];
+// 소탕 (Rewards.sweepStage): stages cleared with 3 stars, this many times a day (냥이의 가호 +10)
+const SWEEP = { perDay: 30, premiumBonus: 10 };
 const AD_LIMITS = { freeGems: 3, freeSummon: 1, double: 10, offline: 3, speed3: 5 };
 const SPEED3_AD_MIN = 30;   // 광고 한 번 = 30분 동안 3배속
 const AD_FREE_GEMS = 30;
@@ -172,6 +174,8 @@ const Rewards = {
         if (g.gems) { p.gems += g.gems; got.push({ icon: 'gem', n: g.gems }); }
         if (g.tickets) { p.tickets += g.tickets; got.push({ icon: 'i_ticket', n: g.tickets }); }
         if (g.stones) { p.mats = p.mats || { stone: 0 }; p.mats.stone += g.stones; got.push({ icon: 'i_stone', n: g.stones }); }
+        if (g.shields) { p.mats = p.mats || { stone: 0 }; p.mats.shield = (p.mats.shield || 0) + g.shields; got.push({ text: L('파괴방지권 {0}개', g.shields) }); }
+        if (g.guards) { p.mats = p.mats || { stone: 0 }; p.mats.guard = (p.mats.guard || 0) + g.guards; got.push({ text: L('하락방지권 {0}개', g.guards) }); }
         if (g.item !== undefined) {
             const it = makeItem(SLOTS.includes(g.slot) ? g.slot : SLOTS[Math.floor(Math.random() * 3)], g.item, Math.max(summonIlvl(p), g.ilvlMin || 0));
             got.push({ item: it });
@@ -258,6 +262,28 @@ const Rewards = {
         if (MISSIONS.some(m => { const s = this.missionState(p, m); return s.done && !s.claimed; })) return true;
         if (typeof Meta !== 'undefined' && (Meta.pending(p) || Meta.att28Due(p))) return true;
         return PASS_TIERS.some((t, i) => this.passTierOpen(p, i) && (!p.passClaimed.free.includes(i) || (p.shop.pass && !p.passClaimed.paid.includes(i))));
+    },
+    // ---- 소탕: a 3-star stage pays its win rewards without the battle. A daily count keeps it from being an endless farm
+    sweepLeft(p) { this.ensure(p); return Math.max(0, SWEEP.perDay + (p.shop && p.shop.premium ? SWEEP.premiumBonus : 0) - (p.daily.sweeps || 0)); },
+    sweepStage(p, idx, hard, n) {
+        const st = STAGES[idx], have = (hard ? p.hstars : p.stars)[idx] || 0;
+        n = Math.min(n, this.sweepLeft(p));
+        if (have < 3 || n <= 0) return null;
+        const rw = stageRewards(idx, 3, false), prem = p.shop && p.shop.premium ? 1.1 : 1;
+        const silver = Math.round(rw.silver * (hard ? HARD.silverMul : 1) * prem) * n, xp = Math.round(rw.xp * (hard ? 1.5 : 1)) * n;
+        const ilvl = 1 + idx * 2.5 + (hard ? HARD.ilvlAdd : 0);
+        // gear: about what a won battle drops (one elite roll, the boss rolls on boss stages; 영웅 난이도 +1 roll)
+        const items = [];
+        for (let k = 0; k < n; k++) {
+            const rolls = [['elite', DROP.rolls.elite + (hard ? 1 : 0)]].concat(st.boss ? [['boss', DROP.rolls.boss + (hard ? 1 : 0)]] : []);
+            for (const [tier, cnt] of rolls) for (let i = 0; i < cnt; i++) if (Math.random() < DROP.chance[tier]) items.push(makeItem(SLOTS[Math.floor(Math.random() * 3)], pickWeighted(DROP.table[tier]), ilvl));
+        }
+        p.daily.sweeps = (p.daily.sweeps || 0) + n;
+        p.silver += silver;
+        grantBattleXp(p, p.hero, xp);
+        this.track('clear', n);
+        Save.save();
+        return [{ icon: 'silver', n: silver }, { icon: 'i_xp', n: xp }, ...items.map(item => ({ item }))];
     },
     // ---- ads
     // 3배속: 구매(냥이 3배속·냥이의 가호) 또는 광고 1회 = 30분

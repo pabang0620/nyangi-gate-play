@@ -28,3 +28,142 @@
 .chip img.icon, .heropick .hp img, .skinpick .sk img { box-shadow: 0 0 0 2px #f2c14e, 0 0 0 4px #6b3e12; }
 /* currency chips: item icons (stone, ticket) sized like the silver/gem icons, without the portrait ring */
 .chip.curchip img.icon { width: 28px; height: 28px; object-fit: contain; object-position: center; border-radius: 0; box-shadow: none; }
+/* ===== phone text size pass (+30%, generated; phones land at ~0.57 scale) ===== */
+#app.mobile .win { font-size: 26px; }
+#app.mobile .modal { font-size: 21px; }
+#app.mobile [style*="font-size: 12px"], #app.mobile [style*="font-size: 13px"], #app.mobile [style*="font-size: 14px"], #app.mobile [style*="font-size: 15px"] { font-size: 21px !important; }
+#app.mobile [style*="font-size: 16px"], #app.mobile [style*="font-size: 17px"], #app.mobile [style*="font-size: 18px"] { font-size: 23px !important; }
+#app.mobile .tip { font-size: 21px; }
+#app.mobile .btn { font-size: 26px; }
+#app.mobile .btn.small { font-size: 22px; }
+#app.mobile .tog { font-size: 21px; }
+#app.mobile .cell .enh { font-size: 17px; }
+#app.mobile .cell .cnt { font-size: 17px; }
+#app.mobile .cell .eq { font-size: 15px; }
+#app.mobile .win h2 { font-size: 36px; }
+#app.mobile .tinfo { font-size: 18px; }
+#app.mobile .tinfo b { font-size: 23px; }
+#app.mobile .auto-next { font-size: 29px; }
+#app.mobile .auto-next .btn.small { font-size: 21px; }
+#app.mobile .leaks > b { font-size: 29px; }
+#app.mobile .leak { font-size: 25px; }
+#app.mobile .statline { font-size: 21px; }
+#app.mobile .statline span:last-child { font-size: 22px; }
+#app.mobile .detail { font-size: 22px; }
+#app.mobile .tcol h3 { font-size: 23px; }
+#app.mobile .rnode { font-size: 18px; }
+#app.mobile .rnode.have::after { font-size: 14px; }
+#app.mobile .rnode .c { font-size: 20px; }
+#app.mobile .rnode .nm { font-size: 20px; }
+#app.mobile .card .f { font-size: 17px; }
+#app.mobile .detail-pop .x { font-size: 26px; }
+#app.mobile .info-body { font-size: 25px; }
+#app.mobile .info-body > .tip { font-size: 22px; }
+#app.mobile .howto { font-size: 22px; }
+#app.mobile .howto-sec b { font-size: 25px; }
+#app.mobile .mapcoach .mc-text { font-size: 25px; }
+#app.mobile .skillrow .sr-l { font-size: 22px; }
+#app.mobile .skillrow .sr-more { font-size: 20px; }
+#app.mobile .si-hint { font-size: 17px; }
+#app.mobile .set-help .btn { font-size: 20px; }
+#app.mobile .mail-txt { font-size: 23px; }
+#app.mobile .mail-txt b { font-size: 27px; }
+#app.mobile .mail-done { font-size: 22px; }
+#app.mobile .coupon-in { font-size: 26px; }
+#app.mobile .win .tip { font-size: 22px; }
+#app.mobile .heropick .hp b { font-size: 21px; }
+#app.mobile .heropick .hp .tip { font-size: 22px; }
+#app.mobile .hero-left { font-size: 22px; }
+#app.mobile .testtag { font-size: 16px; }
+#app.mobile .gotext { font-size: 23px; }
+#app.mobile .day .dn { font-size: 20px; }
+#app.mobile .rw-col h3 { font-size: 25px; }
+#app.mobile .rw-col h3 .claimall { font-size: 23px; }
+#app.mobile .pstar { font-size: 20px; }
+#app.mobile .skinpick .sk { font-size: 16px; }
+#app.mobile .shop-sec h3 { font-size: 26px; }
+#app.mobile .pcard .pn { font-size: 21px; }
+#app.mobile .pcard .pd { font-size: 18px; }
+#app.mobile .pcard .pg { font-size: 26px; }
+#app.mobile .rnode > div:nth-child(2) { font-size: 16px; }
+#app.mobile .plabels span { font-size: 18px; }
+#app.mobile .legal-line { font-size: 17px; }
+#app.mobile .title-legal { font-size: 17px; }
+#app.mobile .consent-note { font-size: 17px; }
+#app.mobile .policy-row .btn { font-size: 18px; }
+#app.mobile .eqprev-a { font-size: 26px; }
+#app.mobile .sm-bonus { font-size: 26px; }
+#app.mobile .pcard > .pbtn { font-size: 20px; }
+#app.mobile .rw-pass .pbtns > .btn { font-size: 24px; }
+#app.mobile .rw-side > .btn { font-size: 24px; }
+#app.mobile .rw-side h3 { font-size: 22px; }
+#app.mobile .tabhead > h2 { font-size: 34px; }
+#app.mobile .tabhead > .tip { font-size: 20px; }
+#app.mobile .dg-cols .dg-col h3 { font-size: 26px; }
+#app.mobile .dg-row .dg-btns .btn.small { font-size: 19px; }
+#app.mobile .cupleft > .rulecard { font-size: 21px; }
+#app.mobile :is(.pcell, .mrow, .dg-rw) .cell:is(.r0, .r1, .r2, .r3, .r4, .r5) .cnt { font-size: 13px; }
+#app.mobile .cupleft > .cup-rw { font-size: 20px; }
+#app.mobile .dg-cols .dg-col.closed h3 { font-size: 21px; }
+#app.mobile .dg-cols .dg-col.closed .tip { font-size: 20px; }
+#app.mobile .dg-cols .dg-col.closed .muted { font-size: 20px; }
+#app.mobile .chname { font-size: 31px; }
+#app.mobile .rulecard { font-size: 23px; }
+#app.mobile .dg-col h3 { font-size: 29px; }
+#app.mobile .cxn { font-size: 18px; }
+#app.mobile .story-t { font-size: 29px; }
+#app.mobile .story-t .tip { font-size: 18px; }
+#app.mobile .story-n { font-size: 26px; }
+#app.mobile .rnode .nm .c { font-size: 18px; }
+#app.mobile .rnode .rd { font-size: 16px; }
+#app.mobile .leaguecard { font-size: 23px; }
+#app.mobile .lg-row { font-size: 22px; }
+#app.mobile .lg-ai { font-size: 13px; }
+#app.mobile .lg-rw { font-size: 18px; }
+#app.mobile .leaguecard .tip .cell .cnt { font-size: 13px; }
+#app.mobile .lg-rw .cell .cnt { font-size: 14px; }
+#app.mobile .tierbadge { font-size: 14px; }
+#app.mobile .nick { font-size: 26px; }
+#app.mobile .cup-rw { font-size: 17px; }
+#app.mobile .cup-rw .cell .cnt { font-size: 13px; }
+#app.mobile .prob { font-size: 20px; }
+#app.mobile .lang-row { font-size: 22px; }
+#app.mobile .lang-sel { font-size: 22px; }
+#app.mobile .skbadge { font-size: 13px; }
+#app.mobile .skinpick .sk > .skbadge { font-size: 12px; }
+#app.mobile .sknote { font-size: 16px; }
+#app.mobile .pcard > .skbadge { font-size: 14px; }
+#app.mobile .pcard .pd.sknote { font-size: 16px; }
+#app.mobile .cell > .skbadge { font-size: 12px; }
+#app.mobile .hero-left > .skopt { font-size: 20px; }
+#app.mobile .skc { font-size: 16px; }
+#app.mobile .skc-g { font-size: 17px; }
+#app.mobile .skc-n { font-size: 17px; }
+#app.mobile .skc-t { font-size: 13px; }
+#app.mobile .skp-n { font-size: 27px; }
+#app.mobile .sm-slots .btn.small { font-size: 18px; }
+#app.mobile .sm-tab { font-size: 27px; }
+#app.mobile .sm-rate { font-size: 20px; }
+#app.mobile .sm-big { font-size: 27px; }
+#app.mobile .sm-dup { font-size: 18px; }
+#app.mobile .sm-left .tip { font-size: 20px; }
+#app.mobile .sm-right .tip { font-size: 20px; }
+#app.mobile .sm-small > .btn { font-size: 18px; }
+#app.mobile .card .f .nm { font-size: 16px; }
+#app.mobile .card .f .sm-tag { font-size: 14px; }
+#app.mobile .sm-budrow .btn.small { font-size: 24px; }
+#app.mobile .sm-sum { font-size: 23px; }
+#app.mobile .sm-counts { font-size: 25px; }
+#app.mobile .sm-best { font-size: 14px; }
+/* layout follow-ups for the bigger text: research nodes take their own height and the tree scrolls */
+#app.mobile .tree { overflow-y: auto; align-items: flex-start; }
+#app.mobile .tcol { flex: 1 1 0; }
+#app.mobile .rnode { flex: none; min-height: 66px; padding-top: 2px; padding-bottom: 2px; }
+#app.mobile .rnode .rd { -webkit-line-clamp: 2; line-clamp: 2; font-size: 16px !important; line-height: 1.15; }
+#app.mobile .rnode > div:nth-child(2) { font-size: 16px !important; }
+/* centred windows (summon, endless) that grew past their frame: centre with auto margins so the top can still be scrolled to */
+.summonwin { justify-content: flex-start; }
+.summonwin > :first-child { margin-top: auto; }
+.summonwin > :last-child { margin-bottom: auto; }
+#app.mobile .pcard { width: 196px; height: 316px; }
+#app.mobile .node .nm { font-size: 23px; top: -42px; }

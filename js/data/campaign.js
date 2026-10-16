@@ -156,7 +156,7 @@ const HARD_COND = [
     { id: 'noCannon', name: L('대포탑 없이'), tower: 'cannon' },
     { id: 'noBarracks', name: L('병영 없이'), tower: 'barracks' },
     { id: 'max8', name: L('탑 8개 이하') },
-    { id: 'noSpell', name: L('주문(봉화·증원) 없이') },
+    { id: 'noSpell', name: L('아이템(냥펀치·증원·총출동) 없이') },
     { id: 'noLeak', name: L('목숨을 하나도 잃지 않기') },
 ];
 function hardCond(idx) {

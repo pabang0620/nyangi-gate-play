@@ -117,8 +117,11 @@ class Battle {
         // game feel: hit sparks, death pops, coins flying to the gold counter, kill combo, screen flash, zoom punch
         this.sparks = []; this.corpses = []; this.coins = []; this.combo = { n: 0, t: 0, best: 0 }; this.flash = 0; this.zoom = 0;
         this.uid = 1;
-        this.spells = SPELLS.map(s => ({ ...s, left: 0, cdMax: s.id === 'beacon' ? s.cd * this.b.beaconCdMul : s.cd }));
+        this.party = cfg.party || [];    // 냥이 총출동: the other heroes' stats [{cls, skin, atk, crit}]
+        this.allies = [];
+        this.spells = SPELLS.filter(s => s.id !== 'party' || this.party.length).map(s => ({ ...s, left: 0, cdMax: s.id === 'beacon' ? s.cd * this.b.beaconCdMul : s.cd }));
         this.bossRef = null;
+        this.hasBoss = !this.endless && !this.raid && !!st.boss;   // boss stages get no continue (the boss is gone after a gate loss)
         this.initHero(cfg.heroCls, cfg.heroStats);
     }
 
@@ -249,6 +252,7 @@ class Battle {
         this.updateTowers(dt);
         this.updateSoldiers(dt);
         this.updateHero(dt);
+        if (this.allies.length) this.updateAllies(dt);
         this.updateProjs(dt);
         this.updateZones(dt);
         this.updateTeles();

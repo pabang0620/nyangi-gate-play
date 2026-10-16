@@ -86,7 +86,7 @@ const UI = {};
     // ------------------------------------------------------------ item cells
     function itemCell(it, opts = {}) {
         const c = h('div.cell.r' + it.r, { title: itemName(it) });
-        c.appendChild(Art.domImg(Art.icon(it.slot), 3));   // <img>, not a canvas each: bags can hold thousands
+        c.appendChild(Art.domImg(Art.itemIcon(it), 3));   // <img>, not a canvas each: bags can hold thousands
         if (it.enh) c.appendChild(h('span.enh', '+' + it.enh));
         if (isEquipped(it)) c.appendChild(h('span.eq', L('장착##배지')));
         else if (it.isNew && !opts.noNew) c.appendChild(h('span.eq', { style: { color: '#ff8a6a' } }, L('새##배지')));
@@ -109,6 +109,12 @@ const UI = {};
             info ? currencyInfo(info) : toast(`${nm}: ${amount}`);
         });
         return c;
+    }
+    // a reward that was just doubled by an ad: new amount + an x2 badge on the icon
+    function markDouble(c, amount) {
+        if (!c) return;
+        const n = c.querySelector('.cnt'); if (n) n.textContent = amount;
+        if (!c.querySelector('.x2')) c.appendChild(h('span.x2', 'x2'));
     }
     const INFO_OF = { silver: 'silver', gem: 'gem', i_gem: 'gem', i_ticket: 'ticket', i_stone: 'stone', star: 'star', i_star: 'star' };
     const REWARD_NAMES = () => ({ silver: L('은화'), gem: L('보석'), i_gem: L('보석'), i_ticket: L('소환권'), i_stone: L('강화석'), i_xp: L('경험치'), star: L('별'), i_star: L('별') });
@@ -232,5 +238,5 @@ const UI = {};
         const pr = v.play(); if (pr && pr.catch) pr.catch(done);
         return v;
     }
-    Object.assign(UI, { vfx, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, modal, confirmBox, longPress, showGot, rewardIcons, testPurchase, testAd });
+    Object.assign(UI, { vfx, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, markDouble, modal, confirmBox, longPress, showGot, rewardIcons, testPurchase, testAd });
 })();

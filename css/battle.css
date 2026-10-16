@@ -108,3 +108,18 @@
 .leak .gn { font-family: 'BlackHan'; color: #8a3a12; }
 #app.mobile .leak { font-size: 19px; }
 #app.mobile .leaks > b { font-size: 22px; }
+/* step-by-step lessons at the start of 1-1 ~ 1-3 (js/ui/tutorial.js) */
+.lesson-dim { position: absolute; inset: 0; z-index: 40; background: rgba(10,5,0,.45); cursor: pointer; }
+.lesson { position: absolute; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 41; display: flex; align-items: center; gap: 16px; min-width: 420px; max-width: 620px; padding: 16px 22px; border-radius: 14px; background: rgba(30,16,6,.96); box-shadow: inset 0 0 0 3px #c08a3a, var(--hard); text-shadow: var(--stroke-s); word-break: keep-all; cursor: pointer; animation: coachin .2s; }
+.lesson-pic { flex: none; width: 84px; height: 84px; display: flex; align-items: center; justify-content: center; }
+.lesson-pic img, .lesson-pic canvas { max-width: 84px; max-height: 84px; object-fit: contain; }
+.lesson-txt { flex: 1; font-size: 19px; line-height: 1.4; color: #fff3d6; }
+.lesson-txt b { display: block; font-family: 'BlackHan'; font-weight: normal; font-size: 24px; color: var(--gold); margin-bottom: 2px; }
+.lesson-foot { flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.lesson-n { font-family: 'Lilita'; font-size: 15px; color: #c8a878; }
+#app.mobile .lesson { min-width: 520px; max-width: 760px; }
+#app.mobile .lesson-txt { font-size: 24px; }
+#app.mobile .lesson-txt b { font-size: 29px; }
+.hud-top .tut-hl, .hud-hero .tut-hl { position: relative; }
+.tut-hl { z-index: 42 !important; outline: 4px solid #ffd040; outline-offset: 3px; border-radius: 10px; animation: tuthl .8s ease-in-out infinite alternate; }
+@keyframes tuthl { to { outline-color: #fff3d6; box-shadow: 0 0 22px rgba(255,208,64,.9); } }

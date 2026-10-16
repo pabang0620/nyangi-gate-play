@@ -24,7 +24,7 @@ const Online = {
             this.profile = (await this.sb.from('profiles').select('*').eq('uid', this.user.id).maybeSingle()).data;
             this.status = 'online'; this.emit();
             await this.pullSave();
-            await this.claimRewards();
+            await this.refreshMail();
             if (typeof window !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.hidden) this.pushSave(true); });
         } catch (e) {
             console.warn('online init failed', e);
@@ -101,26 +101,64 @@ const Online = {
         return error ? null : data;
     },
 
-    // ---------------------------------------------------------------- reward inbox (league / weekly settlements)
+    // ---------------------------------------------------------------- mailbox (reward_inbox: league / weekly settlements, operator mail, coupons)
+    mail: [], mailOk: false,               // mailOk: the server has the mailbox RPCs (20261017000000_mail_coupon.sql)
+    get mailCount() { return this.mail.filter(m => !m.claimed_at).length; },
+    mailTitle(r) {
+        const P = r.payload || {};
+        if (r.kind === 'league') return L('리그 시즌 {0}위', P.rank) + (P.newTier > P.tier ? L(' · 승급!') : P.newTier < P.tier ? L(' · 강등') : '');
+        if (r.kind === 'cup' || r.kind === 'raid') return L('{0} {1}위 (상위 {2}%)', r.kind === 'cup' ? L('주간 공방전') : L('토벌전 랭킹'), P.rank, Math.max(1, Math.round(P.top * 100)));
+        if (r.kind === 'coupon') return L('쿠폰: {0}', P.title || r.ref);
+        return P.title || L('우편');
+    },
+    // grant one claimed row (also the league achievements the offline AI league counts in Meta.claimLeague)
+    applyMail(r) {
+        const P = r.payload || {};
+        const got = P.reward ? Rewards.grant(Save.p, P.reward) : [];
+        if (r.kind === 'league') {
+            if (this.profile) this.profile.tier = P.newTier;
+            const st = Save.p.stats = Save.p.stats || {};
+            if (P.rank === 1) st.league1 = (st.league1 || 0) + 1;
+            if (P.rank <= 3) st.league3 = (st.league3 || 0) + 1;
+        }
+        return got;
+    },
+    async refreshMail() {
+        if (!this.on) return [];
+        const { data, error } = await this.sb.rpc('list_mail');
+        if (error) { this.mailOk = false; await this.claimRewards(); return []; }   // server without the mailbox yet: old auto-claim
+        this.mailOk = true; this.mail = data || [];
+        this.emit();
+        return this.mail;
+    },
+    async claimMail(id) {
+        if (!this.on) return null;
+        const { data, error } = await this.sb.rpc('claim_mail', { p_id: id });
+        if (error || !data || !data.length) return null;
+        const got = this.applyMail(data[0]);
+        const m = this.mail.find(x => x.id === id); if (m) m.claimed_at = data[0].claimed_at;
+        Save.save(); this.pushSave(true); this.emit();
+        return got;
+    },
+    // claim everything at once (also the fallback when the server has no mailbox yet)
     async claimRewards() {
         if (!this.on) return [];
         const { data, error } = await this.sb.rpc('claim_rewards');
         if (error || !data || !data.length) return [];
         const got = [], lines = [];
-        for (const r of data) {
-            const P = r.payload;
-            if (P.reward) got.push(...Rewards.grant(Save.p, P.reward));
-            if (r.kind === 'league') {
-                lines.push(L('리그 시즌 {0}위', P.rank) + (P.newTier > P.tier ? L(' · 승급!') : P.newTier < P.tier ? L(' · 강등') : ''));
-                if (this.profile) this.profile.tier = P.newTier;
-                const st = Save.p.stats = Save.p.stats || {};   // league achievements (offline AI league counts them in Meta.claimLeague)
-                if (P.rank === 1) st.league1 = (st.league1 || 0) + 1;
-                if (P.rank <= 3) st.league3 = (st.league3 || 0) + 1;
-            } else lines.push(L('{0} {1}위 (상위 {2}%)', r.kind === 'cup' ? L('주간 공방전') : L('토벌전 랭킹'), P.rank, Math.max(1, Math.round(P.top * 100))));
-        }
-        Save.save();
-        if (typeof UI !== 'undefined' && got.length) UI.showGot(lines.join(' · '), got);
+        for (const r of data) { got.push(...this.applyMail(r)); lines.push(this.mailTitle(r)); const m = this.mail.find(x => x.id === r.id); if (m) m.claimed_at = r.claimed_at; }
+        Save.save(); this.pushSave(true); this.emit();
+        if (typeof UI !== 'undefined' && got.length) UI.showGot(lines.slice(0, 3).join(' · ') + (lines.length > 3 ? L(' 외 {0}개', lines.length - 3) : ''), got);
         return got;
+    },
+    // coupon: the reward goes to the mailbox. Returns '' on success or an error message
+    async redeemCoupon(code) {
+        if (!this.on) return L('온라인 연결이 필요합니다');
+        const { data, error } = await this.sb.rpc('redeem_coupon', { p_code: code });
+        if (error) return /too fast/.test(error.message || '') ? L('잠시 후 다시 입력해 주세요') : L('쿠폰을 확인하지 못했어요');
+        if (data && data.error) return { invalid: L('없거나 기간이 끝난 쿠폰이에요'), used_up: L('선착순이 끝난 쿠폰이에요'), already: L('이미 사용한 쿠폰이에요') }[data.error] || L('쿠폰을 확인하지 못했어요');
+        await this.refreshMail();
+        return '';
     },
 
     // ---------------------------------------------------------------- Google account (keeps the same uid: guest progress stays)

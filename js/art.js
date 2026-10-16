@@ -50,6 +50,15 @@ const Art = (() => {
     function tower(type, lv, spec) { return sprite('t_' + type + (spec || lv), 34, 40); }
     function icon(key) { return sprite('i_' + key, 16, 16); }
     function decoSprite(kind) { return sprite('d_' + kind, 16, 20); }
+    // gear picture: 영웅·전설·신화 have their own images (img/it_{slot}_{r}_{n}.png) when they exist, else the slot icon.
+    // The image is shown at the slot icon's size whatever its pixel size.
+    const itemSprites = {};
+    function itemIcon(it) {
+        const name = 'it_' + it.slot + '_' + it.r + '_' + itemArt(it), g = it.r >= 2 && gen(name);
+        if (!g) return icon(it.slot);
+        if (!itemSprites[name]) { const base = icon(it.slot); itemSprites[name] = { img: g.img, white: g.white, w: base.w, h: base.h, hi: true }; }
+        return itemSprites[name];
+    }
 
     function iconURL(key, scale = 2) {
         const s = icon(key);
@@ -142,5 +151,5 @@ const Art = (() => {
         return best;
     }
 
-    return { load, gen, enemy, hero, soldier, tower, icon, iconURL, domCanvas, domImg, background, nearPath, decoSprite };
+    return { load, gen, enemy, hero, soldier, tower, icon, itemIcon, iconURL, domCanvas, domImg, background, nearPath, decoSprite };
 })();

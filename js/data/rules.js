@@ -6,7 +6,7 @@ const RARITY = [
     { name: L('희귀'), color: '#5ec8ff', mul: 1.35 },
     { name: L('영웅##등급'), color: '#b77bff', mul: 1.82 },
     { name: L('전설'), color: '#ffc94a', mul: 2.45 },
-    { name: L('신화'), color: '#ff7a3d', mul: 3.40 },
+    { name: L('신화'), color: '#ff7a3d', mul: 5.00 },   // 2026-10-17: mythic is meant to be far above legend (was 3.40)
 ];
 // per-kill gear roll (haru DESIGN 6.2 table), percent
 const DROP = {
@@ -117,6 +117,8 @@ const SKILLS = {
 const SPELLS = [
     { id: 'beacon', name: L('유성 냥펀치'), cd: 50, r: 100, desc: L('불타는 발바닥 유성을 떨어뜨려 범위 피해와 불바다.') },
     { id: 'militia', name: L('증원'), cd: 25, desc: L('민병 2명을 20초간 부른다.') },
+    // 냥이 총출동: the two heroes not deployed join for a few seconds (battle cfg.party; the balance bot never passes it)
+    { id: 'party', name: L('냥이 총출동'), cd: 60, r: 90, dur: 6, atkMul: 1.5, icon: 'rally', desc: L('쉬는 영웅 둘이 6초 동안 함께 싸워요.') },
 ];
 
 // ---------------------------------------------------------------- research (stars)
@@ -179,8 +181,17 @@ const SUB_OPTS = {
     bountyPct:  { name: L('처치 금화'),   min: 0.03, max: 0.06, pct: true },
     critRate:   { name: L('영웅 치명타'), min: 0.03, max: 0.06, pct: true },
 };
-// +11~+15(v2)는 은화 + 강화석(요일 도전 화·금). 실패해도 파괴는 없다(+6부터 1단계 하락)
-const ENHANCE = { max: 15, rate: [1, 0.95, 0.9, 0.85, 0.75, 0.65, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.28, 0.25, 0.22], dropFrom: 10, perLv: 0.12, stoneFrom: 10 };   // 2026-10-16: +13 and up were unreachable (expected 46,000 tries / 3.8억 silver to +15); now about 900 tries / 1,640만 silver / 770 stones
+// +11~+15(v2)는 은화 + 강화석(요일 도전 화·금). +10부터 실패하면 1단계 하락, 실패 중 일부는 파괴(2026-10-17 사용자 결정)
+// destroy[i]: chance that a FAILED try at +(destroyFrom + i) destroys the item (so the real destroy chance is (1 - rate) * destroy)
+const ENHANCE = { max: 15, rate: [1, 0.95, 0.9, 0.85, 0.75, 0.65, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.28, 0.25, 0.22], dropFrom: 10, perLv: 0.12, stoneFrom: 10, destroyFrom: 10, destroy: [0.1, 0.1, 0.15, 0.15, 0.2] };
+function destroyPct(enh) { return +(destroyChance(enh) * 100).toFixed(2) + '%'; }   // 6.5% / 7% / 10.8% / 11.25% / 15.6% (exact, same as docs/site-probability.md)
+function destroyChance(enh) { return enh >= ENHANCE.destroyFrom ? (1 - ENHANCE.rate[enh]) * (ENHANCE.destroy[enh - ENHANCE.destroyFrom] || 0) : 0; }   // 2026-10-16: +13 and up were unreachable (expected 46,000 tries / 3.8억 silver to +15); now about 900 tries / 1,640만 silver / 770 stones
+// 하락방지권 (gems, shop): a failed try at +10 or more keeps its level; used up only when it actually saves a drop.
+// One saved drop is worth about 1/rate tries again at that level (3~4 tries = ~10만 silver + stones at +12), so 50 gems each, 450 for 10.
+// 파괴방지권 (p.mats.shield): a destroying failure becomes a normal failure; used only when it actually saves the item.
+// Losing a +12 item costs the whole climb again (hundreds of thousands of silver + stones), so twice the 하락방지권.
+const GUARD_SHOP = [{ n: 1, gems: 50 }, { n: 10, gems: 450 }];
+const SHIELD_SHOP = [{ n: 1, gems: 100 }, { n: 10, gems: 900 }];
 function enhanceStones(enh) { return enh >= ENHANCE.stoneFrom ? 1 + (enh - ENHANCE.stoneFrom) : 0; }
 
 const LIVES = 20;
