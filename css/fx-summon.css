@@ -114,3 +114,13 @@
 .pcard.guard .guard-ico span { font-size: 22px; line-height: 1; }
 .pcard.guard .guard-ico b { font-size: 26px; line-height: 1; }
 .pcard.guard .guard-ico.shield { background: radial-gradient(circle at 40% 35%, #ffb0a0, #a8302a 70%); box-shadow: inset 0 0 0 4px #fff0e8, 0 3px 0 rgba(0,0,0,.35); }
+/* 영웅+ card opened: shown big in the middle of the screen (js/ui/hero.js spotlight) */
+.sm-spot { position: fixed; inset: 0; z-index: 120; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: rgba(10,6,20,.72); animation: sm-spot-in .18s ease-out; }
+.sm-spot-in { position: relative; display: flex; align-items: center; justify-content: center; }
+.sm-spot-in > .vfx-clip.vfx-spot { left: -120%; top: -90%; width: 340%; height: 280%; pointer-events: none; }
+.sm-spot-card { transform: scale(1.9); z-index: 1; animation: sm-spot-pop .35s cubic-bezier(.2,1.5,.5,1); }
+.sm-spot-hint { color: #fff4dc; text-shadow: 0 2px 4px #000; margin-top: 90px; }
+@keyframes sm-spot-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sm-spot-pop { from { transform: scale(.9); } to { transform: scale(1.9); } }
+.card.sm-nudge { animation: sm-nudge .4s ease; }
+@keyframes sm-nudge { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }

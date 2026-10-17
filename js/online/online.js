@@ -119,7 +119,7 @@ const Online = {
     mailTitle(r) {
         const P = r.payload || {};
         if (r.kind === 'league') return L('리그 시즌 {0}위', P.rank) + (P.newTier > P.tier ? L(' · 승급!') : P.newTier < P.tier ? L(' · 강등') : '');
-        if (r.kind === 'cup' || r.kind === 'raid') return L('{0} {1}위 (상위 {2}%)', r.kind === 'cup' ? L('주간 공방전') : L('토벌전 랭킹'), P.rank, Math.max(1, Math.round(P.top * 100)));
+        if (r.kind === 'cup' || r.kind === 'raid' || r.kind === 'tower') return L('{0} {1}위 (상위 {2}%)', r.kind === 'cup' ? L('주간 공방전') : r.kind === 'tower' ? L('심연의 탑') : L('토벌전 랭킹'), P.rank, Math.max(1, Math.round(P.top * 100)));
         if (r.kind === 'coupon') return L('쿠폰: {0}', P.title || r.ref);
         if (r.kind === 'world') return L('월드 보스 기여 {0}위 (상위 {1}%)', P.rank, Math.max(1, Math.round(P.top * 100)));
         if (r.kind === 'raidcard') return L('레이드 보상 카드') + (P.pity ? L(' · 천장') : '');

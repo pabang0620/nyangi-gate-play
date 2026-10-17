@@ -29,7 +29,7 @@
             [img(heroPortraitImg(B)), L('영웅'), L('땅을 누르면 영웅이 그곳으로 달려가요.'), q('.hud-hero .portrait')],
             [Art.domCanvas(Art.icon(sk.id), 2.4), L('영웅 스킬'), L('버튼을 누르고 쓸 곳을 골라요. 레벨이 오르면 더 열려요.'), hud.skills[0] && hud.skills[0].el],
             [Art.domCanvas(Art.icon(sp[0].id), 2.4), L('아이템'), L('{0}: 큰 폭발 · {1}: 병사 2명 소환', sp[0].name, sp[1].name), q('.hud-spells')],
-            sp[2] ? [Art.domCanvas(Art.icon(sp[2].icon), 2.4), sp[2].name, L('쉬는 영웅 둘이 6초 동안 함께 싸워요.'), q('.hud-spells .skill:nth-child(3)')] : null,
+            sp[2] ? [Art.domCanvas(Art.icon(sp[2].icon), 2.4), sp[2].name, L('쉬는 영웅 둘이 15초 동안 함께 싸워요.'), q('.hud-spells .skill:nth-child(3)')] : null,
             [null, L('길게 누르기'), L('버튼을 길게 누르면 설명이 나와요.'), null],
         ];
         if (B.stageIdx === 2) return [

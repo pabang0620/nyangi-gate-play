@@ -118,7 +118,7 @@ const SPELLS = [
     { id: 'beacon', name: L('유성 냥펀치'), cd: 50, r: 100, desc: L('불타는 발바닥 유성을 떨어뜨려 범위 피해와 불바다.') },
     { id: 'militia', name: L('증원'), cd: 25, desc: L('민병 2명을 20초간 부른다.') },
     // 냥이 총출동: the two heroes not deployed join for a few seconds (battle cfg.party; the balance bot never passes it)
-    { id: 'party', name: L('냥이 총출동'), cd: 60, r: 90, dur: 6, atkMul: 1.5, icon: 'rally', desc: L('쉬는 영웅 둘이 6초 동안 함께 싸워요.') },
+    { id: 'party', name: L('냥이 총출동'), cd: 60, r: 90, dur: 15, atkMul: 1.5, icon: 'rally', desc: L('쉬는 영웅 둘이 15초 동안 함께 싸워요.') },
 ];
 
 // ---------------------------------------------------------------- research (stars)

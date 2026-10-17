@@ -39,6 +39,10 @@
             [img('i_raid'), L('레이드'), L('다른 냥이들과 함께 거대 보스를 잡아요.')],
             [img('i_skull'), L('세 가지 레이드'), L('파티 레이드 · 월드 보스 · 실시간 협동 디펜스')],
             [img('i_medal'), L('보상 카드'), L('주 1번 카드 4장 중 1장! 훈장으로 신화 장비를 사요.')]] },
+        { id: 'tower', need: TOWER.unlockIdx, open: p => Tower.unlocked(p), name: () => L('심연의 탑'), cards: () => [
+            [img('i_max'), L('심연의 탑'), L('끝없이 이어지는 층을 올라가요. 지면 처음부터!')],
+            [img('i_star'), L('축복'), L('층을 깰 때마다 축복 3개 중 하나를 골라 점점 강해져요.')],
+            [img('i_skull'), L('변이'), L('층마다 변이가 붙어요. 최고 기록을 새로 쓰면 큰 보상!')]] },
         { id: 'cup', need: CUP.unlockStage, open: p => Meta.cupUnlocked(p), name: () => L('주간 공방전'), cards: () => [
             [img('i_league'), L('주간 공방전'), L('모두 같은 지도·같은 제한으로 점수를 겨뤄요.')],
             [img('i_ticket'), L('하루 {0}번', CUP.attempts), L('매주 월요일 순위대로 보상!')]] },
@@ -51,7 +55,7 @@
     function tabEndless() {
         const p = Save.p; metaEnsure(p);
         S.ctab = S.ctab || 'wall';
-        const names = { online: L('레이드'), wall: L('무한의 성벽'), dungeon: L('요일 도전 {0}/{1}', Meta.dungeonLeft(p), DUNGEON.entries), raid: L('보스 토벌전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries), cup: L('주간 공방전 {0}/{1}', Meta.cupLeft(p), CUP.attempts), rank: L('랭킹') };
+        const names = { online: L('레이드'), wall: L('무한의 성벽'), dungeon: L('요일 도전 {0}/{1}', Meta.dungeonLeft(p), DUNGEON.entries), raid: L('보스 토벌전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries), cup: L('주간 공방전 {0}/{1}', Meta.cupLeft(p), CUP.attempts), rank: L('랭킹'), tower: L('심연의 탑') };
         const seen = p.seenTips || {};
         const sub = h('div.subtabs', CH_MODES.map(m => {
             const open = m.open(p);
@@ -73,6 +77,7 @@
         if (S.ctab === 'raid') return tabRaid();
         if (S.ctab === 'online') return UI.tabRaidOn();
         if (S.ctab === 'cup') return tabCup();
+        if (S.ctab === 'tower') return UI.tabTower();
         if (S.ctab === 'rank') return tabRank();
         const un = (p.stars[ENDLESS.unlockStage] || 0) > 0;
         const rule = Meta.endlessRule();
@@ -278,7 +283,7 @@
     function tabRank() {
         const win = h('div.panel.win');
         S.rkind = S.rkind || 'wall';
-        const kinds = [['wall', L('명예의 전당 (무한의 성벽)'), L('웨이브')], ['cup', L('주간 공방전'), L('점')], ['raid', L('토벌전 피해'), L('피해')]];
+        const kinds = [['wall', L('명예의 전당 (무한의 성벽)'), L('웨이브')], ['cup', L('주간 공방전'), L('점')], ['raid', L('토벌전 피해'), L('피해')], ['tower', L('심연의 탑'), L('층')]];
         win.appendChild(h('div.tabhead', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' } },
             h('h2', { style: { margin: 0 } }, L('랭킹')), ...kinds.map(([id, nm]) => h('button.btn.small' + (S.rkind === id ? '.gold' : '.ghost'), { onclick: () => { click(); S.rkind = id; showHub('endless'); } }, nm)),
             Online.on && Online.profile ? h('button.btn.small', { style: { marginLeft: 'auto' }, onclick: () => { click(); profileModal(); } }, L('내 프로필')) : null));

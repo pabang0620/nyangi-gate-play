@@ -63,6 +63,9 @@ const Game = {
                 mate: { cls: b.cls, stats: b.stats, skin: b.skin, bonuses: b.bonuses }, autos: [a.auto, b.auto], names: [a.name, b.name],
                 autoWave: () => false, cutinOn: () => false });
             banner = L('협동 디펜스 · {0}', D.name);
+        } else if (opt.tower) {
+            // 심연의 탑: the run's current floor (js/tower.js builds the stage, its mutators and the run's blessings)
+            banner = Tower.setup(p, cfg); music = Tower.state(p).run.floor % 5 === 0 ? 'boss' : 'endless';
         } else banner = `${opt.hard ? L('[영웅] ') : ''}${stageLabel(opt.stageIdx)} ${STAGES[opt.stageIdx].name}`;
         this.lastOpt = opt; this.lastBanner = banner;
         // limited-entry modes: the entry counts from the start, so restarting or killing the app can't reroll a run
@@ -71,6 +74,7 @@ const Game = {
         this.battle = new Battle(cfg);
         if (opt.coop) Coop.attach(this.battle);
         UI.showBattleHud(this.battle);
+        if (opt.tower && UI.towerHud) UI.towerHud(this.battle);
         Music.play(music);
         UI.banner(banner, true, this.battle.cond ? L('3성 조건: {0}', this.battle.cond.name) : null);
     },
@@ -111,7 +115,7 @@ const Game = {
                     const ended = B;
                     // first defeat: offer a continue (ad or gems) before the result screen; never in ranked modes (fair records),
                     // on boss stages or after a boss/elite got through (the continue would skip the must-kill enemy)
-                    if (!d && !B.revived && !B.hasBoss && !B.mustKillLost && B.mode !== 'cup' && B.mode !== 'endless' && B.mode !== 'raid' && B.mode !== 'coop') setTimeout(() => { if (this.battle === ended) UI.showRevive(B, () => this.onBattleEnd(false)); }, 900);
+                    if (!d && !B.revived && !B.hasBoss && !B.mustKillLost && B.mode !== 'cup' && B.mode !== 'endless' && B.mode !== 'raid' && B.mode !== 'coop' && (B.mode !== 'tower' || Tower.canRevive(Save.p))) setTimeout(() => { if (this.battle === ended) UI.showRevive(B, () => this.onBattleEnd(false)); }, 900);
                     else setTimeout(() => { if (this.battle === ended) this.onBattleEnd(d); }, 1300);
                 }
                 break;
@@ -122,6 +126,7 @@ const Game = {
         const B = this.battle;
         if (!B) return;
         B.revive(5);
+        if (B.mode === 'tower') Tower.onRevive(Save.p);   // one continue per 심연의 탑 run
         this.ended = false;
         Music.play(B.endless ? 'endless' : (B.bossRef ? 'boss' : 'battle'));
         UI.banner(L('다시 일어선다!'), true);
@@ -132,7 +137,7 @@ const Game = {
         if (!B || UI.S.result) return;
         delete p.runLock;   // the finish functions below count the entry
         this.lastHero = B.hero.cls;
-        if (win && !B.endless && B.mode !== 'dungeon' && B.mode !== 'raid' && B.mode !== 'cup') Rewards.track('clear');   // 'stage wins' missions count campaign stages only
+        if (win && !B.endless && B.mode !== 'dungeon' && B.mode !== 'raid' && B.mode !== 'cup' && B.mode !== 'tower') Rewards.track('clear');   // 'stage wins' missions count campaign stages only
         win ? Sfx.play('win') : Sfx.play('lose');
         const items = B.loot.map(l => makeItem(l.slot, l.r, l.ilvl));
         metaEnsure(p);
@@ -185,6 +190,11 @@ const Game = {
             R.got = r.got;
             R.xp = Math.round(stageRewards(B.stageIdx, 1, false).xp * 0.8);
             Online.submit('raid', p.raid.best);
+        } else if (B.mode === 'tower') {
+            R.tower = Tower.finish(p, win, B);
+            R.got = R.tower ? R.tower.got : [];
+            const rw = stageRewards(B.stageIdx, 1, false);
+            R.silver = win ? Math.round(rw.silver * 0.5) : 0; R.xp = win ? Math.round(rw.xp * 0.6) : 0;
         } else if (B.hard) {
             // 영웅 난이도: separate stars, doubled silver, better drops (battle/enemies.js rollDrop), gems per new star
             const idx = B.stageIdx, prev = p.hstars[idx] || 0;
@@ -286,6 +296,7 @@ const Game = {
 
     Save.load();
     Meta.settleRunLock(Save.p);
+    Tower.settle(Save.p);   // a 심연의 탑 floor left by closing the app counts as lost
     Sfx.muted = Save.p.set.muted;
     Music.setEnabled(!Save.p.set.musicOff);
     const fontReady = document.fonts ? Promise.all([document.fonts.load('16px Jua'), document.fonts.load('16px BlackHan')]).catch(() => { }) : Promise.resolve();

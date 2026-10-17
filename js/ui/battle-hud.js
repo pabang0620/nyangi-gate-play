@@ -502,7 +502,7 @@
         }
         // endless / cup / raid keep what was earned so far; stages and 요일 도전 just leave
         const endNow = B.endless || B.raid;
-        const limited = B.mode === 'cup' || B.mode === 'dungeon' || B.mode === 'raid';   // entry already used: no reroll
+        const limited = B.mode === 'cup' || B.mode === 'dungeon' || B.mode === 'raid' || B.mode === 'tower';   // entry already used: no reroll
         const sure = (msg, fn) => UI.confirmBox(msg, () => { if (Game.battle !== B) return; pause(false); fn(); });
         const d = modal([h('div.title-t', L('일시정지')),
             h('div.tip', Game.lastBanner || ''),
@@ -514,6 +514,7 @@
                 h('button.btn.red', { onclick: () => {
                     click();
                     if (endNow) sure(L('여기서 전투를 끝낼까요?\n지금까지의 기록으로 결과를 받습니다.'), () => { B.state = 'lose'; Game.onBattleEnd(false); });
+                    else if (B.mode === 'tower') sure(L('원정을 포기할까요?\n이번 층은 패배로 끝나고 원정이 끝나요.'), () => { B.state = 'lose'; Game.onBattleEnd(false); });
                     else if (B.mode === 'dungeon') sure(L('전투를 포기할까요?\n오늘 도전 횟수 1회가 사용됩니다.'), () => { B.state = 'lose'; Game.onBattleEnd(false); });
                     else sure(L('전투를 포기하고 나갈까요?\n이번 전투의 보상은 받을 수 없습니다.'), () => showHub('map'));
                 } }, endNow ? L('여기서 끝내기') : L('포기하고 나가기')))]);
@@ -536,7 +537,7 @@
         const d = modal([
             h('div.ribbon.lose', h('span', L('성문이 뚫렸다!'))),
             h('div', { style: { marginTop: '22px', fontSize: '18px' } }, L('목숨 5개로 이어서 싸울까요?')),
-            h('div.tip', L('이어하면 이번 판은 별 1개로 기록됩니다')),
+            h('div.tip', B.mode === 'tower' ? L('원정마다 한 번만 이어할 수 있어요') : L('이어하면 이번 판은 별 1개로 기록됩니다')),
             h('div.row',
                 h('button.btn.gold', { onclick: async () => { click(); if (await Ads.show('revive')) { Rewards.track('ad'); d.remove(); Game.revive(); } } }, img('i_ad', '.icon'), p.shop.premium ? L('이어하기 (가호)') : L('광고 보고 이어하기')),
                 h('button.btn' + (p.gems < REVIVE_GEMS ? '.off' : ''), { onclick: () => { if (p.gems < REVIVE_GEMS) { toast(L('보석이 부족합니다')); return; } click(); p.gems -= REVIVE_GEMS; Save.save(); d.remove(); Game.revive(); } }, img('i_gem', '.icon'), L('{0}개로 이어하기', REVIVE_GEMS))),

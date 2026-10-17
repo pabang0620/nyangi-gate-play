@@ -493,24 +493,27 @@
         return true;
     }
 
-    // card reveal: list of { r, face(), name, tag? }; 영웅+ cards wait for a tap, 확인 opens whatever is still closed
+    // card reveal: list of { r, face(), name, tag? }; 영웅+ cards wait for a tap and open big in the middle of the screen.
+    // 다시 소환 / 확인 stay locked until every card has been seen (no 모두 열기)
     function reveal(res, skin, again) {
         const top = Math.max(...res.map(x => x.r));
         const calm = calmFx();
         const cards = h('div.cards.sm-wait' + (skin ? '.sm-skins' : ''));
+        const allSeen = () => els.every(c => c.classList.contains('open')) && !d.querySelector('.sm-spot');
+        const notYet = () => { toast(L('카드를 모두 확인해 주세요')); els.filter(c => !c.classList.contains('open')).forEach(c => { c.classList.remove('sm-nudge'); void c.offsetWidth; c.classList.add('sm-nudge'); }); };
+        const againBtn = again ? h('button.btn.off', { onclick: () => {
+            if (!allSeen()) { notYet(); return; }
+            click(); d.remove();
+            if (!again()) showHub('summon');   // not enough left: back to the banner, the toast says why
+        } }, res.length === 1 ? L('1회 소환') : L('10회 소환'),
+            res.length > 1 && SUMMON.bonus10 ? h('span.sm-bonus', '+' + SUMMON.bonus10) : null) : null;
+        const okBtn = h('button.btn.gold.off', { onclick: () => {
+            if (!allSeen()) { notYet(); return; }
+            click(); d.remove(); showHub('summon');
+        } }, L('확인'));
         const d = modal([h('div.title-t', L('소환 결과')), cards,
             res.some(x => x.dup) ? h('div.tip', L('이미 가진 스킨은 보석으로 바뀌었습니다')) : null,
-            h('div.row', h('button.btn.ghost', { onclick: () => { click(); openAll(); } }, L('모두 열기')),
-                again ? h('button.btn', { onclick: () => {
-                    click(); d.remove();
-                    if (!again()) showHub('summon');   // not enough left: back to the banner, the toast says why
-                } }, res.length === 1 ? L('1회 소환') : L('10회 소환'),
-                    res.length > 1 && SUMMON.bonus10 ? h('span.sm-bonus', '+' + SUMMON.bonus10) : null) : null,
-                h('button.btn.gold', { onclick: () => {
-                    click();
-                    if (els.some(c => !c.classList.contains('open'))) { openAll(); return; }   // first tap shows everything
-                    d.remove(); showHub('summon');
-                } }, L('확인')))]);
+            h('div.row', againBtn, okBtn)]);
         if (calm) d.classList.add('calm');
         const els = res.map((x, i) => {
             const hi = x.r >= 2;
@@ -546,15 +549,28 @@
             const r = c.res.r;
             c.classList.add('open'); c.classList.remove('hi', 'charging');
             if (r >= 1 && !calm) sparkle(c, r >= 3 ? 22 : r >= 2 ? 14 : 6);
-            if (loud && r >= 2) UI.bigReveal(r, c);
+            const newSkin = skin && loud && r >= 2 && !shown && c.res.skin && !c.res.dup;
+            if (loud && r >= 2) { UI.bigReveal(r, null); spotlight(c, r, newSkin ? () => skinPreview(c.res.skin.cls, c.res.skin.id, () => Sfx.play('upgrade')) : null); }
             else if (r === 1) Sfx.play('rare');
             else Sfx.play('drop', r);
-            // a 영웅+ skin: after the clip, show the skin itself big - the small card face does not tell you which one it is
-            if (skin && loud && r >= 2 && !shown && c.res.skin && !c.res.dup) {
-                shown = true;
-                setTimeout(() => skinPreview(c.res.skin.cls, c.res.skin.id, () => Sfx.play('upgrade')), 1200);
-            }
+            if (newSkin) shown = true;   // a 영웅+ skin: after the spotlight, the skin itself big (the card face does not tell which one)
             if (els.every(e => e.classList.contains('open')) && best) best.classList.add('best');
+            unlock();
+        }
+        function unlock() { const ok = allSeen(); okBtn.classList.toggle('off', !ok); if (againBtn) againBtn.classList.toggle('off', !ok); }
+        // a 영웅+ card opens big in the middle of the screen with its clip behind it; tap (or wait) to put it back
+        function spotlight(c, r, after) {
+            const card = c.cloneNode(true); card.classList.remove('best', 'charging', 'hi', 'sm-nudge'); card.classList.add('sm-spot-card'); card.style.animationDelay = '';
+            const stage = h('div.sm-spot-in', card);
+            const spot = h('div.sm-spot', stage, h('div.tip.sm-spot-hint', L('탭하여 계속')));
+            d.appendChild(spot);
+            const src = calm ? null : VFX[Math.min(4, r)];
+            const v = src ? UI.vfx(src, stage, { z: 0, back: true }) : null;
+            if (v) v.classList.add('vfx-spot');
+            let gone = false;
+            const close = () => { if (gone) return; gone = true; spot.remove(); unlock(); if (after) after(); };
+            setTimeout(() => spot.addEventListener('click', close), 250);   // the tap that opened the card must not close it
+            setTimeout(close, r >= 3 ? 3200 : 2400);
         }
         function sparkle(c, k) {
             for (let i = 0; i < k; i++) {
@@ -563,16 +579,6 @@
                 s.style.setProperty('--dx', Math.cos(a) * dist + 'px'); s.style.setProperty('--dy', Math.sin(a) * dist + 'px');
                 c.appendChild(s); setTimeout(() => s.remove(), 1000);
             }
-        }
-        // 모두 열기 / 확인: sound only, every card just flips (the clip is for a tapped card)
-        function openAll() {
-            if (!dealt) { dealt = true; cards.classList.remove('sm-wait'); }
-            const shut = els.filter(c => !c.classList.contains('open'));
-            if (!shut.length) return;
-            const topShut = Math.max(...shut.map(c => c.res.r));
-            shut.forEach(c => { c.pending = false; open(c, false); });
-            if (topShut >= 3) { Sfx.play('fanfare', topShut); Music.duck(2200); }
-            else if (topShut === 2) Sfx.play('epic');
         }
     }
 

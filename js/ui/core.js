@@ -231,7 +231,10 @@ const UI = {};
         if (!parent || (!opt.loop && (Save.p.set.noShake || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)))) return null;
         const v = h('video.vfx-clip', { src, muted: true, playsInline: true, autoplay: true, preload: 'auto', loop: !!opt.loop });
         v.muted = true;
-        if (opt.opacity) v.style.opacity = opt.opacity;
+        // hidden until frames actually move: some WebViews paint an empty box or a play button first
+        v.style.opacity = '0';
+        const show = () => { if (v.currentTime > 0.04) { v.style.opacity = opt.opacity || ''; v.removeEventListener('timeupdate', show); } };
+        v.addEventListener('timeupdate', show);
         if (opt.rate) v.addEventListener('loadedmetadata', () => { v.playbackRate = opt.rate; });
         if (opt.z !== undefined) v.style.zIndex = opt.z;
         const done = () => v.remove();
