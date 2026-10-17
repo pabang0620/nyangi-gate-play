@@ -25,6 +25,7 @@ function makeRng(seed) {
     };
     f.range = (a0, b0) => a0 + f() * (b0 - a0);
     f.int = (a0, b0) => Math.floor(a0 + f() * (b0 - a0 + 1));
+    f.state = v => { if (v !== undefined) a = v >>> 0; return a; };   // co-op resync: the host's position in the sequence
     f.pick = arr => arr[Math.floor(f() * arr.length)];
     return f;
 }

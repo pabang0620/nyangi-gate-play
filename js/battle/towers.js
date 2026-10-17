@@ -4,6 +4,9 @@
 Object.assign(Battle.prototype, {
 
     // ------------------------------------------------------------ towers
+    // 협동 디펜스: only the player who built a tower upgrades, sells or moves its rally point
+    ownsTower(t) { return !this.coop || (t.owner || 0) === (this.actor || 0); },
+
     towerCost(type, lv, spec) {
         const d = TOWERS[type];
         const c = spec !== undefined && spec !== null ? d.specs[spec].cost : d.lv[lv].cost;
@@ -14,7 +17,7 @@ Object.assign(Battle.prototype, {
         const cost = this.towerCost(type, 0);
         if (slot.tower || this.gold < cost || this.ban === type) return false;
         this.gold -= cost;
-        const t = { type, lv: 0, spec: null, spent: cost, cd: 0.3, stunUntil: 0, aim: 0, shots: 0, built: this.t, soldiers: [] };
+        const t = { type, lv: 0, spec: null, spent: cost, cd: 0.3, stunUntil: 0, aim: 0, shots: 0, built: this.t, soldiers: [], owner: this.actor || 0 };
         slot.tower = t;
         if (type === 'barracks') { t.rally = this.defaultRally(slot); this.syncSoldiers(slot); }
         this.debris(slot.x, slot.y + 10, '#c8a070', 10);
@@ -25,7 +28,7 @@ Object.assign(Battle.prototype, {
 
     upgrade(slot, spec) {
         const t = slot.tower;
-        if (!t) return false;
+        if (!t || !this.ownsTower(t)) return false;
         let cost;
         if (spec !== undefined && spec !== null) { if (t.lv !== 2 || t.spec !== null) return false; cost = this.towerCost(t.type, 0, spec); }
         else { if (t.lv >= 2) return false; cost = this.towerCost(t.type, t.lv + 1); }
@@ -41,7 +44,7 @@ Object.assign(Battle.prototype, {
 
     sell(slot) {
         const t = slot.tower;
-        if (!t) return 0;
+        if (!t || !this.ownsTower(t)) return 0;
         const v = Math.round(t.spent * SELL_RATIO);
         this.gold += v;
         for (const s of t.soldiers) { this.releaseBlock(s); s.gone = true; }
@@ -54,7 +57,7 @@ Object.assign(Battle.prototype, {
 
     setRally(slot, x, y) {
         const t = slot.tower;
-        if (!t || t.type !== 'barracks') return false;
+        if (!t || t.type !== 'barracks' || !this.ownsTower(t)) return false;
         const st = this.towerStats(t);
         if (dist(slot.x, slot.y, x, y) > st.range) return false;
         let best = null;
@@ -96,7 +99,7 @@ Object.assign(Battle.prototype, {
     },
 
     towerStats(t) {
-        const d = TOWERS[t.type], b = this.b;
+        const d = TOWERS[t.type], b = this.coop ? this.bs[t.owner || 0] : this.b;   // co-op: the builder's research
         const base = t.spec !== null ? d.specs[t.spec] : d.lv[t.lv];
         const s = { ...base };
         if (t.type === 'barracks') {
@@ -114,16 +117,16 @@ Object.assign(Battle.prototype, {
     },
 
     hurtAlly(a, amt) {
-        if (a === this.hero) {
-            const h = this.hero;
-            if (h.dash || !this.heroAlive) return;
+        if (a.isHero) {
+            const h = a;
+            if (h.dash || h.deadUntil > this.t) return;
             let v = amt * (h.oathUntil > this.t ? 0.5 : 1) * (h.cls === 'knight' ? 0.75 : 1);
             h.hp -= v; h.flash = 0.1;
             this.text(h.x, h.y - 44, Math.round(v), '#ff7070', 14);
             if (h.hp <= 0) {
                 h.hp = 0; h.deadUntil = this.t + HERO_RESPAWN; this.releaseBlock(h); h.moveTo = null;
                 this.burstParts(h.x, h.y - 10, '#c8d0e0', 20, 150);
-                this.on('heroDown');
+                this.on('heroDown', h);
             }
             return;
         }

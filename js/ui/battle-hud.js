@@ -35,8 +35,9 @@
             h('div.hud-box', ico('heart'), hud.lives),
             h('div.hud-box', ico('gold'), hud.gold),
             h('div.hud-box', ico('skull'), hud.wave),
+            B.coop ? (hud.mate = h('div.hud-box.mate', '')) : null,
             h('div.sp'),
-            hud.autoHero, hud.autoWave, hud.speed,
+            hud.autoHero, B.coop ? null : hud.autoWave, hud.speed,
             h('div.iconbtn', { onclick: () => { click(); pause(true); } }, img('i_pause')));
         root().appendChild(top);
         if (B.cond) root().appendChild(hud.cond = h('div.hud-cond.top', { title: L('영웅 난이도 3성 조건') }));
@@ -118,7 +119,8 @@
         set('gold', fmt(B.gold), hud.gold);
         set('wave', B.raid ? L('남은 {0}초 · 피해 {1}', Math.ceil(B.timeLeft), fmt(Math.round(B.raidDamage))) : B.endless ? L('웨이브 {0}', Math.max(0, B.waveIdx + 1)) : L('웨이브 {0} / {1}', Math.max(0, B.waveIdx + 1), B.totalWaves), hud.wave);
         if (Game.speed === 3 && !Rewards.speed3Unlocked(Save.p)) { Game.speed = 2; Save.p.set.speed = 2; toast(L('3배속 시간이 끝났습니다')); }
-        set('speed', Game.speed + L('배'), hud.speedLbl);
+        set('speed', (B.coop ? Coop.speed : Game.speed) + L('배'), hud.speedLbl);
+        if (hud.mate) set('mate', L('{0} · 금화 {1}', Coop.partnerName(), fmt(B.gold2)) + (Coop.partnerGone ? L(' (자동)') : ''), hud.mate);
         if (hud.cond) { set('cond', L('3성: {0} {1}', B.cond.name, B.condBroken ? '✗' : '✓'), hud.cond); hud.cond.classList.toggle('broken', B.condBroken); }
         const hero = B.hero;
         hud.hpBar.style.width = (hero.hp / hero.maxHp * 100) + '%';
@@ -173,6 +175,7 @@
 
 
     function cycleSpeed() {
+        if (Game.battle && Game.battle.coop) { Coop.toggleSpeed(); return; }
         click();
         const p = Save.p;
         const speeds = window.DEV_SPEEDS || [1, 2, 3];   // the test APK (android/dev/dev.js) adds 5x and 10x
@@ -277,6 +280,7 @@
     // HUD auto toggles (also the Tab key): toast every time, a coach card the first time
     function toggleAuto(key) {
         const p = Save.p, on = p.set[key] = !p.set[key]; Save.save();
+        if (key === 'autoHero' && Game.battle && Game.battle.coop) Coop.cmd(['auto', on]);   // co-op: the switch is part of the shared fight
         const hud = S.hud; if (hud && hud[key]) hud[key].classList.toggle('on', on);
         if (key === 'autoHero') {
             toast(on ? L('영웅 AUTO 켜짐') : L('영웅 AUTO 꺼짐 (직접 조작)'));
@@ -396,12 +400,12 @@
             if (t.spec === null && t.lv < 2) {
                 const c = B.towerCost(t.type, t.lv + 1);
                 add(0, -78, img('i_upgrade', '.tico'), c,
-                    () => { if (!B.upgrade(slot)) toast(L('금화가 부족합니다')); else openPopup(B, slot); },
+                    () => { if (!B.upgrade(slot)) toast(B.coop && !B.ownsTower(slot.tower) ? L('친구가 지은 탑이에요') : L('금화가 부족합니다')); else if (B.coop) closePopup(); else openPopup(B, slot); },
                     () => [h('b', L('{0} {1}단계', d.name, t.lv + 2)), statLines(B, { type: t.type, lv: t.lv + 1, spec: null }, t)], '.ok').range = B.towerStats({ type: t.type, lv: t.lv + 1, spec: null }).range;
             } else if (t.spec === null) {
                 d.specs.forEach((sp, i) => {
                     const sb2 = add(i ? 64 : -64, -66, Art.domCanvas(Art.tower(t.type, 2, sp.id), 1.15), B.towerCost(t.type, 0, i),
-                        () => { if (!B.upgrade(slot, i)) toast(L('금화가 부족합니다')); else openPopup(B, slot); },
+                        () => { if (!B.upgrade(slot, i)) toast(B.coop && !B.ownsTower(slot.tower) ? L('친구가 지은 탑이에요') : L('금화가 부족합니다')); else if (B.coop) closePopup(); else openPopup(B, slot); },
                         () => [h('b', sp.name), h('div', sp.desc), statLines(B, { type: t.type, lv: 2, spec: i }, t)]);
                     sb2.appendChild(h('span.nm', sp.name)); sb2.range = B.towerStats({ type: t.type, lv: 2, spec: i }).range;
                 });
@@ -484,9 +488,17 @@
         const Bp = Game.battle;
         if (on && (!Bp || Bp.state === 'win' || Bp.state === 'lose' || S.result)) return;   // outcome already decided
         S.paused = on;
-        Game.paused = on;
+        Game.paused = on && !(Bp && Bp.coop);   // co-op never stops (the partner keeps playing)
         if (!on) { const d = document.getElementById('pausebox'); if (d) d.remove(); return; }
         const B = Game.battle;
+        if (B.coop) {
+            const d = modal([h('div.title-t', L('협동 디펜스')), h('div.tip', L('친구와 함께하는 중이라 멈추지 않아요')),
+                h('div.row', { style: { flexDirection: 'column', display: 'flex', gap: '10px', width: '260px' } },
+                    h('button.btn.gold', { onclick: () => { click(); pause(false); } }, L('계속하기')),
+                    h('button.btn.red', { onclick: () => { click(); UI.confirmBox(L('나가면 이번 판은 패배로 끝나요.\n정말 나갈까요?'), () => { pause(false); Coop.leave(); }); } }, L('나가기')))]);
+            d.id = 'pausebox';
+            return;
+        }
         // endless / cup / raid keep what was earned so far; stages and 요일 도전 just leave
         const endNow = B.endless || B.raid;
         const limited = B.mode === 'cup' || B.mode === 'dungeon' || B.mode === 'raid';   // entry already used: no reroll

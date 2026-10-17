@@ -181,10 +181,12 @@ const SUB_OPTS = {
     bountyPct:  { name: L('처치 금화'),   min: 0.03, max: 0.06, pct: true },
     critRate:   { name: L('영웅 치명타'), min: 0.03, max: 0.06, pct: true },
 };
-// +11~+15(v2)는 은화 + 강화석(요일 도전 화·금). +10부터 실패하면 1단계 하락, 실패 중 일부는 파괴(2026-10-17 사용자 결정)
+// +11~+20은 은화 + 강화석(요일 도전 화·금). +10부터 실패하면 1단계 하락, 실패 중 일부는 파괴(2026-10-17 사용자 결정)
+// +15~+20 (2026-10-17 사용자 요청 "20강까지, 확률은 극악"): 하락·파괴방지권 없이는 사실상 불가(기대 2만 회 이상),
+// 방지권을 쓰면 약 57회 시도 + 하락방지권 50여 장 + 파괴방지권 15장 안팎
 // destroy[i]: chance that a FAILED try at +(destroyFrom + i) destroys the item (so the real destroy chance is (1 - rate) * destroy)
-const ENHANCE = { max: 15, rate: [1, 0.95, 0.9, 0.85, 0.75, 0.65, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.28, 0.25, 0.22], dropFrom: 10, perLv: 0.12, stoneFrom: 10, destroyFrom: 10, destroy: [0.1, 0.1, 0.15, 0.15, 0.2] };
-function destroyPct(enh) { return +(destroyChance(enh) * 100).toFixed(2) + '%'; }   // 6.5% / 7% / 10.8% / 11.25% / 15.6% (exact, same as docs/site-probability.md)
+const ENHANCE = { max: 20, rate: [1, 0.95, 0.9, 0.85, 0.75, 0.65, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.28, 0.25, 0.22, 0.18, 0.14, 0.1, 0.07, 0.05], dropFrom: 10, perLv: 0.12, stoneFrom: 10, destroyFrom: 10, destroy: [0.1, 0.1, 0.15, 0.15, 0.2, 0.25, 0.3, 0.3, 0.35, 0.4] };
+function destroyPct(enh) { return +(destroyChance(enh) * 100).toFixed(2) + '%'; }   // 6.5% / 7% / 10.8% / 11.25% / 15.6% / 20.5% / 25.8% / 27% / 32.55% / 38% (exact, same as docs/site-probability.md)
 function destroyChance(enh) { return enh >= ENHANCE.destroyFrom ? (1 - ENHANCE.rate[enh]) * (ENHANCE.destroy[enh - ENHANCE.destroyFrom] || 0) : 0; }   // 2026-10-16: +13 and up were unreachable (expected 46,000 tries / 3.8억 silver to +15); now about 900 tries / 1,640만 silver / 770 stones
 // 하락방지권 (gems, shop): a failed try at +10 or more keeps its level; used up only when it actually saves a drop.
 // One saved drop is worth about 1/rate tries again at that level (3~4 tries = ~10만 silver + stones at +12), so 50 gems each, 450 for 10.

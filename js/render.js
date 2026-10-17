@@ -218,6 +218,7 @@ const Render = (() => {
         for (const s of B.soldiers) ents.push({ y: s.y, k: 's', o: s });
         for (const e of B.enemies) ents.push({ y: e.y, k: 'e', o: e });
         if (B.heroAlive) ents.push({ y: B.hero.y, k: 'h', o: B.hero });
+        if (B.coop && B.hero2.deadUntil <= B.t) ents.push({ y: B.hero2.y, k: 'h2', o: B.hero2 });   // 협동 디펜스: the partner's hero
         for (const a of B.allies || []) ents.push({ y: a.y, k: 'a', o: a });
         for (const d of B.drops) ents.push({ y: d.y, k: 'd', o: d });
         ents.sort((a, b) => a.y - b.y);
@@ -226,6 +227,7 @@ const Render = (() => {
             else if (it.k === 's') drawSoldier(B, it.o, T);
             else if (it.k === 'e') drawEnemy(B, it.o, T, now);
             else if (it.k === 'h') drawHero(B, it.o, T, now);
+            else if (it.k === 'h2') drawMate(B, it.o, T, now);
             else if (it.k === 'a') drawAlly(B, it.o, T, now);
             else drawDrop(it.o, now);
         }
@@ -479,6 +481,7 @@ const Render = (() => {
         const stunned = t.stunUntil > T;
         const rc = t.recoil > 0 ? t.recoil / 0.12 : 0;
         spr(Art.tower(t.type, t.lv, t.spec), s.x, s.y + 14, sc, false, 0, 1, 1 + rc * 0.05, 1 - rc * 0.07);
+        if (B.coop && (t.owner || 0) !== B.actor) { x.fillStyle = 'rgba(120,200,255,.9)'; x.strokeStyle = '#1a2a40'; x.lineWidth = 2; x.beginPath(); x.arc(s.x + 22, s.y + 8, 6, 0, TAU); x.fill(); x.stroke(); }   // the partner's tower
         if (stunned) {
             x.globalAlpha = 0.45; x.fillStyle = '#2a1708'; x.fillRect(s.x - 30, s.y - 66, 60, 80); x.globalAlpha = 1;
             for (let i = 0; i < 3; i++) {
@@ -547,6 +550,21 @@ const Render = (() => {
             x.strokeStyle = 'rgba(127,212,255,.6)'; x.lineWidth = 1; x.setLineDash([3, 4]);
             x.beginPath(); x.moveTo(h.x, h.y); x.lineTo(h.moveTo.x, h.moveTo.y); x.stroke(); x.setLineDash([]);
         }
+    }
+
+    // the co-op partner's hero: no ring of mine, a blue name tag instead
+    function drawMate(B, h, T, now) {
+        shadow(h.x, h.y, 12);
+        x.strokeStyle = 'rgba(120,200,255,.85)'; x.lineWidth = 2;
+        x.beginPath(); x.ellipse(h.x, h.y, 15, 6, 0, 0, TAU); x.stroke();
+        const f = h.moveTo ? Math.floor(h.walk) % 2 : 0;
+        const hs = h.skin ? heroSprite(h.cls, h.skin) : Art.hero(h.cls, f);
+        const lg = h.lunge > 0 ? Math.sin((h.lunge / 0.14) * Math.PI) * 9 * h.dir : 0;
+        spr(hs, h.x + lg, h.y, 2, h.dir < 0, h.flash, h.dash ? 0.6 : 1);
+        bar(h.x, h.y - hs.h * 2 - 8, 34, h.hp / h.maxHp, '#7fc8ff', 4);
+        x.font = `bold ${Math.round(13 * view.textMul)}px Jua, sans-serif`; x.textAlign = 'center'; x.lineWidth = 3; x.strokeStyle = 'rgba(20,30,50,.85)'; x.fillStyle = '#bfe4ff';
+        const nm = typeof Coop !== 'undefined' ? Coop.partnerName() : '';
+        x.strokeText(nm, h.x, h.y - hs.h * 2 - 14); x.fillText(nm, h.x, h.y - hs.h * 2 - 14);
     }
 
     // 냥이 총출동 ally: the hero's own look, a little see-through, with a golden ring that fades in its last second

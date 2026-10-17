@@ -35,6 +35,10 @@
         { id: 'raid', need: RAID.unlockStage, open: p => Meta.raidUnlocked(p), name: () => L('보스 토벌전'), cards: () => [
             [img('i_skull'), L('보스 토벌전'), L('3분 동안 거대 보스에게 피해를 최대한 줘요.')],
             [img('i_gem'), L('주 {0}번', RAID.tries), L('피해량만큼 단계 보상. 보스는 매주 바뀌어요.')]] },
+        { id: 'online', need: RAID_ON.diffs[0].eq, open: p => (p.stars[RAID_ON.diffs[0].eq] || 0) > 0, name: () => L('레이드'), cards: () => [
+            [img('i_raid'), L('레이드'), L('다른 냥이들과 함께 거대 보스를 잡아요.')],
+            [img('i_skull'), L('세 가지 레이드'), L('파티 레이드 · 월드 보스 · 실시간 협동 디펜스')],
+            [img('i_medal'), L('보상 카드'), L('주 1번 카드 4장 중 1장! 훈장으로 신화 장비를 사요.')]] },
         { id: 'cup', need: CUP.unlockStage, open: p => Meta.cupUnlocked(p), name: () => L('주간 공방전'), cards: () => [
             [img('i_league'), L('주간 공방전'), L('모두 같은 지도·같은 제한으로 점수를 겨뤄요.')],
             [img('i_ticket'), L('하루 {0}번', CUP.attempts), L('매주 월요일 순위대로 보상!')]] },
@@ -47,7 +51,7 @@
     function tabEndless() {
         const p = Save.p; metaEnsure(p);
         S.ctab = S.ctab || 'wall';
-        const names = { wall: L('무한의 성벽'), dungeon: L('요일 도전 {0}/{1}', Meta.dungeonLeft(p), DUNGEON.entries), raid: L('보스 토벌전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries), cup: L('주간 공방전 {0}/{1}', Meta.cupLeft(p), CUP.attempts), rank: L('랭킹') };
+        const names = { online: L('레이드'), wall: L('무한의 성벽'), dungeon: L('요일 도전 {0}/{1}', Meta.dungeonLeft(p), DUNGEON.entries), raid: L('보스 토벌전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries), cup: L('주간 공방전 {0}/{1}', Meta.cupLeft(p), CUP.attempts), rank: L('랭킹') };
         const seen = p.seenTips || {};
         const sub = h('div.subtabs', CH_MODES.map(m => {
             const open = m.open(p);
@@ -67,6 +71,7 @@
         if (!seen['ch_' + mode.id]) setTimeout(() => UI.cardsOnce('ch_' + mode.id, mode.cards(), () => { if (S.screen === 'hub' && S.tab === 'endless') showHub('endless'); }), 60);
         if (S.ctab === 'dungeon') return tabDungeon();
         if (S.ctab === 'raid') return tabRaid();
+        if (S.ctab === 'online') return UI.tabRaidOn();
         if (S.ctab === 'cup') return tabCup();
         if (S.ctab === 'rank') return tabRank();
         const un = (p.stars[ENDLESS.unlockStage] || 0) > 0;

@@ -11,12 +11,13 @@ Object.assign(Battle.prototype, {
             cls, x: guard.x, y: guard.y - 10, hp: hs.hp, maxHp: hs.hp, atk: hs.atk, crit: hs.crit,
             rate: H0.rate, range: H0.range, spd: H0.spd, dmgType: H0.dmgType, air: H0.air, block: H0.block,
             lv: hs.lv, cd: 0, target: null, moveTo: null, deadUntil: 0, manualUntil: -1, dir: 1, walk: 0, flash: 0,
-            skills: SKILLS[cls].map((s, i) => ({ ...s, left: 0, locked: hs.lv < SKILL_UNLOCK[i], cdMax: s.cd * (1 - hs.cdr) })),
+            isHero: true, owner: 0, skills: SKILLS[cls].map((s, i) => ({ ...s, left: 0, locked: hs.lv < SKILL_UNLOCK[i], cdMax: s.cd * (1 - hs.cdr) })),
             oathUntil: 0, galeUntil: 0, dash: null, guard: { x: guard.x, y: guard.y - 10 }, engaged: null, skin: this.cfg.skin || null,
         };
     },
 
-    heroManual() { return this.t < this.hero.manualUntil || !this.cfg.autoHero(); },
+    heroAuto() { return this.coop ? this.hero.auto !== false : this.cfg.autoHero(); },   // co-op: each hero's own AUTO switch, part of the shared state
+    heroManual() { return this.t < this.hero.manualUntil || !this.heroAuto(); },
 
     commandHeroMove(x, y) {
         const h = this.hero;
@@ -41,7 +42,7 @@ Object.assign(Battle.prototype, {
             this.cutin = { cls: h.cls, skin: h.skin, name: s.name, t: 0, dur: 1.1 };
             this.on('cutin', this.cutin);
         }
-        const crit = () => Math.random() < h.crit;
+        const crit = () => this.rand() < h.crit;
         this.on('skill', { i, ult: i === 3 });
         switch (s.id) {
             case 'dash': {
@@ -168,7 +169,7 @@ Object.assign(Battle.prototype, {
             a.cd -= dt;
             if (a.cd > 0) continue;
             a.cd = H0.rate * 0.6; a.lunge = 0.14;
-            const crit = Math.random() < a.crit;
+            const crit = this.rand() < a.crit;
             if (a.cls === 'knight') { this.damage(tgt, a.atk, 'phys', { hero: true, crit, critMul: 2, kb: 4 }); this.slash(a.x + a.dir * 14, a.y - 14, a.dir, crit); this.on('hit', 'hero'); }
             else if (a.cls === 'mage') { this.projs.push({ kind: 'heroorb', x: a.x, y: a.y - 22, target: tgt, tx: tgt.x, ty: tgt.y, speed: 520, dmg: a.atk, type: 'magic', hero: true, crit, splash: 30 }); this.on('shoot', 'magic'); }
             else { this.projs.push({ kind: 'arrow', x: a.x, y: a.y - 18, target: tgt, tx: tgt.x, ty: tgt.y, speed: 760, dmg: a.atk, type: 'phys', hero: true, crit }); this.on('shoot', 'arrow'); }
@@ -188,7 +189,7 @@ Object.assign(Battle.prototype, {
             const k = Math.min(1, h.dash.t / h.dash.dur);
             h.x = lerp(h.dash.fx, h.dash.tx, k); h.y = lerp(h.dash.fy, h.dash.ty, k);
             for (const e of this.enemies) if (!e.dead && !h.dash.hit.has(e) && !e.def.fly && dist2(e.x, e.y, h.x, h.y) < 34 * 34) {
-                h.dash.hit.add(e); this.damage(e, h.dash.dmg, 'phys', { hero: true, crit: Math.random() < h.crit });
+                h.dash.hit.add(e); this.damage(e, h.dash.dmg, 'phys', { hero: true, crit: this.rand() < h.crit });
                 this.burstParts(e.x, e.y - 10, '#ffffff', 6, 160);
             }
             this.parts.push({ x: h.x, y: h.y - 10, vx: 0, vy: 0, life: 0.2, max: 0.2, color: '#7fd4ff', size: 5 });
@@ -198,7 +199,7 @@ Object.assign(Battle.prototype, {
         if (h.hp < h.maxHp && !h.engaged) h.hp = Math.min(h.maxHp, h.hp + h.maxHp * 0.025 * dt);
 
         const manual = this.heroManual();
-        if (!manual && this.cfg.autoHero()) this.heroAI();
+        if (!manual && this.heroAuto()) this.heroAI();
 
         // movement
         if (h.moveTo) {
@@ -232,7 +233,7 @@ Object.assign(Battle.prototype, {
             if (tgt && !h.moveTo) {
                 h.cd = h.rate;
                 h.dir = tgt.x >= h.x ? 1 : -1;
-                const crit = Math.random() < h.crit;
+                const crit = this.rand() < h.crit;
                 h.lunge = 0.14;
                 if (h.cls === 'knight') {
                     this.damage(tgt, h.atk, 'phys', { hero: true, crit, critMul: 2, kb: 4 });
@@ -255,7 +256,7 @@ Object.assign(Battle.prototype, {
         // boss warnings: AUTO dodges each one only half the time (starspire autoBossDodgeChance), hands do better
         for (const tl of this.teles) {
             if (!tl.boss) continue;
-            if (tl.dodge === undefined) tl.dodge = Math.random() < 0.5;
+            if (tl.dodge === undefined) tl.dodge = this.rand() < 0.5;
             if (!tl.dodge || !this.inTele(tl, h.x, h.y)) continue;
             const cx = tl.shape === 'circle' ? tl.x : (tl.x1 + tl.x2) / 2, cy = tl.shape === 'circle' ? tl.y : (tl.y1 + tl.y2) / 2;
             let ang = Math.atan2(h.y - cy, h.x - cx);

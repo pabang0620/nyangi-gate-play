@@ -77,6 +77,9 @@ class Battle {
         this.slots = genSlots(this.mapDef, (this.endless ? 99 : cfg.stageIdx) * 7919 + 13).map((s, i) => ({ ...s, i, tower: null }));
         this.b = cfg.bonuses;
         this.rng = makeRng((cfg.seed || 1234) + (this.endless ? 5 : cfg.stageIdx * 101));
+        // 협동 디펜스: both devices run the same battle, so every roll that changes the fight comes from the seeded rng
+        this.coop = !!cfg.coop;
+        this.rand = this.coop ? () => this.rng() : Math.random;
         this.on = cfg.on || (() => { });
 
         this.t = 0;
@@ -98,6 +101,7 @@ class Battle {
         this.raid = this.mode === 'raid';
         this.totalWaves = this.raid ? Infinity : this.endless ? (this.maxWaves || Infinity) : st.waves;
         this.waves = this.endless || this.raid ? [] : this.genStageWaves(st);
+        if (this.coop) this.coopWaves();
         if (this.raid) {
             // 보스 토벌전: one giant boss walks the road, escorts keep coming; the score is damage dealt in RAID.time seconds
             this.raidKind = cfg.raidKind;
@@ -123,6 +127,7 @@ class Battle {
         this.bossRef = null;
         this.hasBoss = !this.endless && !this.raid && !!st.boss;   // boss stages get no continue (the boss is gone after a gate loss)
         this.initHero(cfg.heroCls, cfg.heroStats);
+        if (this.coop) this.initCoop(cfg);
     }
 
     // ------------------------------------------------------------ waves
@@ -203,7 +208,7 @@ class Battle {
         this.waveIdx++;
         const wave = this.endless ? this.genEndlessWave(this.waveIdx) : this.waves[this.waveIdx];
         if (this.endless) this.hpMul = this.endlessHpMul(this.waveIdx);
-        for (const s of wave) this.queue.push({ t: this.t + s.t, kind: s.kind, path: s.path, hpMul: this.hpMul });
+        for (const s of wave) this.queue.push({ t: this.t + s.t, kind: s.kind, path: s.path, hpMul: this.hpMul * (s.bossMul || 1) });
         this.countdown = -2;            // -2 = spawning in progress
         this.on('wave', this.waveIdx);
     }
@@ -248,10 +253,12 @@ class Battle {
         }
 
         for (const sp of this.spells) sp.left = Math.max(0, sp.left - dt);
+        if (this.coop) for (const sp of this.spells2) sp.left = Math.max(0, sp.left - dt);
         this.updateEnemies(dt);
         this.updateTowers(dt);
         this.updateSoldiers(dt);
         this.updateHero(dt);
+        if (this.coop) this.asActor(1, () => this.updateHero(dt));
         if (this.allies.length) this.updateAllies(dt);
         this.updateProjs(dt);
         this.updateZones(dt);

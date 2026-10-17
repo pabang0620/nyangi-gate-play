@@ -46,6 +46,24 @@ const RAID = {
     ],
 };
 
+// 온라인 레이드 (docs/PLAN_ONLINE_RAID.md, server 20261018000000_raid.sql). The server's game_config 'raid' decides cards, HP and caps;
+// these copies are for display and the battle setup. Points = damage / the 보스 토벌전 reference x 100 (an on-level run is about 150).
+const RAID_ON = {
+    diffs: [{ name: L('일반'), eq: 17 }, { name: L('어려움'), eq: 29 }, { name: L('지옥'), eq: 41 }, { name: L('악몽'), eq: 53 }],
+    medals: [20, 35, 55, 80],
+    party: { hp: 800, runCap: 480, tries: 3, size: 4 },
+    world: { runCap: 600, tries: 3 },
+    pity: { leg: 10, myth: 40 },
+    // 토벌 훈장 상점: the 신화 장비 상자 is the sure ceiling (once a week)
+    shop: [
+        { id: 'guard', cost: 30, reward: { guards: 1 } }, { id: 'shield', cost: 60, reward: { shields: 1 } },
+        { id: 'ticket', cost: 40, reward: { tickets: 1 } }, { id: 'stone', cost: 50, reward: { stones: 10 } },
+        { id: 'leg', cost: 300, reward: { item: 3 }, slot: true }, { id: 'myth', cost: 1200, reward: { item: 4 }, slot: true, weekly: 1 },
+    ],
+    // 협동 디펜스: two roads, 15 waves, a boss at 8 and the raid boss at 15; each player keeps 60% of every kill's gold
+    coop: { waves: 15, midWave: 8, maps: ['m2', 'm8', 'm12', 'm13'], hpMul: 1.7, bossHp: 1.2, goldShare: 0.6, startGold: 0.8, tick: 1 / 30 },
+};
+
 // 도감: kills per enemy kind -> points; each point = all damage +0.2%
 const CODEX = { tiers: [50, 300, 1000], bossTiers: [3, 10, 30], pts: [1, 1, 2], perPt: 0.002 };   // bossTiers: a boss dies once per stage
 
@@ -93,7 +111,7 @@ const ACHIEVEMENTS = (() => {
     [30, 60, 90, 126, 162].forEach((g, i) => add('star' + g, L('별'), L('별 {0}개', g), g, p => normalStars(p), { gems: 40 + i * 30 }));
     [30, 60, 90, 126, 162].forEach((g, i) => add('hstar' + g, L('별'), L('영웅 별 {0}개', g), g, p => hardStars(p), { gems: 80 + i * 40, stones: 3 + i * 2 }));
     [10, 20, 30, 40, 50, 60].forEach((g, i) => add('lv' + g, L('영웅'), L('영웅 레벨 {0}', g), g, p => Math.max(...Object.values(p.heroes).map(x => x.lv)), { gems: 30 + i * 20 }));
-    [5, 10, 13, 15].forEach((g, i) => add('enh' + g, L('강화'), L('장비 +{0} 달성', g), g, p => Math.max(0, ...p.items.map(it => it.enh)), { silver: 3000 * (i + 1), stones: i >= 1 ? 2 + i * 2 : 0 }));
+    [5, 10, 13, 15, 20].forEach((g, i) => add('enh' + g, L('강화'), L('장비 +{0} 달성', g), g, p => Math.max(0, ...p.items.map(it => it.enh)), { silver: 3000 * (i + 1), stones: i >= 1 ? 2 + i * 2 : 0 }));
     add('legend', L('수집'), L('전설 장비 얻기'), 1, p => (p.items.some(it => it.r >= 3) ? 1 : 0), { gems: 80 });
     add('mythic', L('수집'), L('신화 장비 얻기'), 1, p => (p.items.some(it => it.r >= 4) ? 1 : 0), { gems: 200 });
     [3, 6].forEach(g => add('skin' + g, L('수집'), L('냥이 옷 {0}벌', g), g, p => (p.shop ? p.shop.skins.length : 0), { gems: 60 * g / 3 }));

@@ -52,7 +52,7 @@ Object.assign(Battle.prototype, {
             return 0;
         }
         let crit = o.crit;
-        if (o.critChance && Math.random() < o.critChance) crit = true;
+        if (o.critChance && this.rand() < o.critChance) crit = true;
         let v = amt * (crit ? (o.critMul || 2) : 1);
         if (type === 'phys') v *= 1 - e.def.armor;
         else if (type === 'magic') v *= 1 - e.def.mres * (o.tower ? (1 - this.b.mageResIgnore) : 1);
@@ -109,7 +109,7 @@ Object.assign(Battle.prototype, {
         c.n = this.t - c.t < 2.2 ? c.n + 1 : 1; c.t = this.t; c.best = Math.max(c.best, c.n);
         if ([10, 25, 50, 100].includes(c.n)) {
             const bonus = c.n * 2;
-            this.gold += bonus;
+            this.gainGold(bonus);
             this.text(W / 2, 150, L('{0} 연속 처치! +{1}', c.n, bonus), '#ffb22a', 30, true);
             this.on('combo', c.n);
         }
@@ -130,7 +130,7 @@ Object.assign(Battle.prototype, {
         const manual = o.hero && this.t < this.hero.manualUntil;
         const bounty = Math.round(e.def.gold * this.bountyMul * (1 + this.b.bountyPct) * (manual ? 1.25 : 1) * (this.endless ? 1 + this.waveIdx * 0.03 : 1) * (this.hard ? HARD.goldMul : 1) * (this.rule === 'poor' ? 0.7 : 1));
         if (this.raid && e.def.boss) return;                       // raid boss never really dies here
-        this.gold += bounty;
+        this.gainGold(bounty);
         this.text(e.x, e.y - 20, '+' + bounty + (manual ? L(' 수동') : ''), '#ffe08a', 13);
         const col = { slime: '#3fbf5f', goblin: '#6fbf4a', wolf: '#6a7088', orc: '#5a7a3a', bat: '#7a4a9a', shaman: '#a03050',
             skeleton: '#e8e4d8', imp: '#e04a2a', golem: '#8a8a92', cursed: '#5a5a7a' }[e.kind] || '#c060ff';
@@ -155,7 +155,7 @@ Object.assign(Battle.prototype, {
             this.loot.push({ slot, r, ilvl });
             this.drops.push({ x: e.x + i * 18, y: e.y, r, slot, t: 0, life: 3.2 });
             this.on('drop', r);
-            if (r >= 3) this.slowmo = Math.max(this.slowmo, 0.8);
+            if (r >= 3 && !this.coop) this.slowmo = Math.max(this.slowmo, 0.8);   // co-op: loot is each player's own roll, so it must not touch the shared fight
         }
     },
 
@@ -191,8 +191,8 @@ Object.assign(Battle.prototype, {
             if (e.stunUntil > this.t) continue;
             const blocker = e.blockedBy;
             if (blocker && !blocker.def) {
-                const alive = blocker === this.hero ? this.heroAlive : blocker.deadUntil <= this.t && !blocker.gone;
-                const taunted = blocker === this.hero && this.hero.oathUntil > this.t;
+                const alive = blocker.isHero ? blocker.deadUntil <= this.t : blocker.deadUntil <= this.t && !blocker.gone;
+                const taunted = blocker.isHero && blocker.oathUntil > this.t;
                 if (!alive || (blocker.engaged !== e && !taunted)) { e.blockedBy = null; }
             }
             if (e.charge && e.blockedBy) this.releaseBlock(e);
@@ -204,7 +204,7 @@ Object.assign(Battle.prototype, {
                     this.hurtAlly(tgt, e.atk);
                     if (e.def.cleave) {                              // 설인: hits everyone around the blocker
                         for (const s of this.soldiers) if (s !== tgt && s.deadUntil <= this.t && dist2(s.x, s.y, tgt.x, tgt.y) < e.def.cleave ** 2) this.hurtAlly(s, e.atk * 0.6);
-                        if (tgt !== this.hero && this.heroAlive && dist2(this.hero.x, this.hero.y, tgt.x, tgt.y) < e.def.cleave ** 2) this.hurtAlly(this.hero, e.atk * 0.6);
+                        for (const hh of this.heroList()) if (tgt !== hh && hh.deadUntil <= this.t && dist2(hh.x, hh.y, tgt.x, tgt.y) < e.def.cleave ** 2) this.hurtAlly(hh, e.atk * 0.6);
                         this.ringFx(tgt.x, tgt.y, e.def.cleave, '#cfe8ff');
                     }
                 }

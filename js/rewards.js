@@ -175,6 +175,7 @@ const Rewards = {
         if (g.tickets) { p.tickets += g.tickets; got.push({ icon: 'i_ticket', n: g.tickets }); }
         if (g.stones) { p.mats = p.mats || { stone: 0 }; p.mats.stone += g.stones; got.push({ icon: 'i_stone', n: g.stones }); }
         if (g.shields) { p.mats = p.mats || { stone: 0 }; p.mats.shield = (p.mats.shield || 0) + g.shields; got.push({ text: L('파괴방지권 {0}개', g.shields) }); }
+        if (g.medals) { p.mats = p.mats || { stone: 0 }; p.mats.medal = (p.mats.medal || 0) + g.medals; got.push({ icon: 'i_medal', n: g.medals }); }
         if (g.guards) { p.mats = p.mats || { stone: 0 }; p.mats.guard = (p.mats.guard || 0) + g.guards; got.push({ text: L('하락방지권 {0}개', g.guards) }); }
         if (g.item !== undefined) {
             const it = makeItem(SLOTS.includes(g.slot) ? g.slot : SLOTS[Math.floor(Math.random() * 3)], g.item, Math.max(summonIlvl(p), g.ilvlMin || 0));

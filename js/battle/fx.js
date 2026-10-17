@@ -57,7 +57,7 @@ Object.assign(Battle.prototype, {
         for (const e of this.enemies) {
             if (e.dead || e.def.fly) continue;
             if (dist2(e.x, e.y, x, y) <= (r + e.def.size * 0.4) ** 2) {
-                const stun = this.b.cannonStun && Math.random() < this.b.cannonStun ? 0.6 : 0;
+                const stun = this.b.cannonStun && this.rand() < this.b.cannonStun ? 0.6 : 0;
                 this.damage(e, dmg, type, { tower: true, stun, quiet: false, kb: p && p.big ? 16 : 8 });
             }
         }
@@ -71,7 +71,7 @@ Object.assign(Battle.prototype, {
                 if (z.tick <= 0) {
                     z.tick = 0.5;
                     for (const s of this.soldiers) if (s.deadUntil <= this.t && !s.gone && dist2(s.x, s.y, z.x, z.y) < z.r * z.r) this.hurtAlly(s, z.dps * 0.5);
-                    if (this.heroAlive && dist2(this.hero.x, this.hero.y, z.x, z.y) < z.r * z.r) this.hurtAlly(this.hero, z.dps * 0.5);
+                    for (const hh of this.heroList()) if (hh.deadUntil <= this.t && dist2(hh.x, hh.y, z.x, z.y) < z.r * z.r) this.hurtAlly(hh, z.dps * 0.5);
                 }
                 if (Math.random() < 0.4) this.parts.push({ x: z.x + (Math.random() * 2 - 1) * z.r * 0.8, y: z.y + (Math.random() * 2 - 1) * z.r * 0.5, vx: 0, vy: -30, life: 0.6, max: 0.6, color: z.color, size: 4 });
                 continue;
@@ -113,7 +113,7 @@ Object.assign(Battle.prototype, {
         this.coins = this.coins.filter(c => c.t < c.dur);
         for (const e of this.enemies) if (e.squash > 0) e.squash -= dt;
         for (const s of this.slots) if (s.tower && s.tower.recoil > 0) s.tower.recoil -= dt;
-        if (this.hero.lunge > 0) this.hero.lunge -= dt;
+        for (const hh of this.heroList()) if (hh.lunge > 0) hh.lunge -= dt;
         this.flash = Math.max(0, this.flash - dt);
         this.zoom = Math.max(0, this.zoom - dt);
     },

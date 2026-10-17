@@ -32,12 +32,12 @@ Object.assign(Battle.prototype, {
         for (const k of e.def.skills) e.sk[k] -= dt;
         const ready = e.def.skills.filter(k => e.sk[k] <= 0 && (!BOSS_SKILL[k].hpBelow || hpR <= BOSS_SKILL[k].hpBelow));
         if (!ready.length) return false;
-        const k = ready[Math.floor(Math.random() * ready.length)];
+        const k = ready[Math.floor(this.rand() * ready.length)];
         const S = BOSS_SKILL[k];
         e.sk[k] = S.cd * e.cdMul;
         const cast = { k, at: this.t + S.warn };
         const towers = this.slots.filter(s => s.tower && dist2(s.x, s.y, e.x, e.y) < 330 * 330);
-        const pickTower = () => towers.length ? towers[Math.floor(Math.random() * towers.length)] : null;
+        const pickTower = () => towers.length ? towers[Math.floor(this.rand() * towers.length)] : null;
         if (k === 'charge') {
             const a = e.path.at(e.d), b = e.path.at(e.d + 230);
             cast.tele = { shape: 'line', x1: a.x, y1: a.y, x2: b.x, y2: b.y, wid: 60 };
@@ -45,7 +45,7 @@ Object.assign(Battle.prototype, {
             cast.tele = { shape: 'circle', x: e.x, y: e.y, r: S.r };
         } else if (k === 'curseField') {
             const alive = this.soldiers.filter(s => s.deadUntil <= this.t);
-            const tg = this.heroAlive ? this.hero : alive.length ? alive[Math.floor(Math.random() * alive.length)] : e;
+            const tg = this.heroAlive ? this.hero : alive.length ? alive[Math.floor(this.rand() * alive.length)] : e;
             cast.tele = { shape: 'circle', x: tg.x, y: tg.y, r: S.r };
         } else if (k === 'lavaWave' || k === 'tornado') {
             const tw = pickTower() || (this.heroAlive ? this.hero : { x: e.x + 200 * e.dir, y: e.y });
@@ -54,7 +54,7 @@ Object.assign(Battle.prototype, {
         } else if (k === 'darkness' || k === 'lightning') {
             cast.multi = [];
             const pool = towers.slice();
-            for (let i = 0; i < S.n && pool.length; i++) { const tw = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; cast.multi.push({ shape: 'circle', x: tw.x, y: tw.y, r: S.r }); }
+            for (let i = 0; i < S.n && pool.length; i++) { const tw = pool.splice(Math.floor(this.rand() * pool.length), 1)[0]; cast.multi.push({ shape: 'circle', x: tw.x, y: tw.y, r: S.r }); }
             if (!cast.multi.length) cast.tele = { shape: 'circle', x: e.x, y: e.y, r: 60 };
         } else if (k === 'slam' || k === 'frostField') {
             const tw = pickTower() || (this.heroAlive ? this.hero : null);
@@ -67,7 +67,7 @@ Object.assign(Battle.prototype, {
         } else if (k === 'meteor') {
             cast.multi = [];
             for (let i = 0; i < S.n; i++) {
-                const tw = towers.length ? towers[Math.floor(Math.random() * towers.length)] : null;
+                const tw = towers.length ? towers[Math.floor(this.rand() * towers.length)] : null;
                 const pt = tw ? { x: tw.x + this.rng.range(-20, 20), y: tw.y + this.rng.range(-20, 20) } : { x: e.x + this.rng.range(-200, 200), y: e.y + this.rng.range(-120, 120) };
                 cast.multi.push({ shape: 'circle', x: pt.x, y: pt.y, r: S.r });
             }

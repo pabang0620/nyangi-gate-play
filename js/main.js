@@ -47,16 +47,29 @@ const Game = {
                 stageDef: { name: K.name + T.name, seedName: srcOf(K.name) + srcOf(T.name), map: K.map, waves: K.waves, pool: K.pool, ch: STAGES[T.eq].ch } });
             banner = `${K.name} · ${T.name}`;
         } else if (opt.raid) {
-            const kind = Meta.raidBoss(p), si = Meta.raidStage(p, kind);
+            // 보스 토벌전, or an online raid run (opt.raidOn: 파티 레이드 / 월드 보스, boss and strength from the server)
+            const on = opt.raidOn, kind = on ? on.kind : Meta.raidBoss(p), si = on ? on.si : Meta.raidStage(p, kind);
             Object.assign(cfg, { mode: 'raid', stageIdx: si, raidKind: kind, map: RAID.map, theme: CHAPTERS[STAGES[si].ch].theme,
                 escortPool: STAGES[si].pool, stageDef: { name: L('토벌전'), map: RAID.map, waves: 1, pool: STAGES[si].pool, ch: STAGES[si].ch } });
-            banner = L('보스 토벌전 · {0}', ENEMIES[kind].name); music = 'boss';
+            banner = on ? (on.mode === 'party' ? L('파티 레이드 · {0}', ENEMIES[kind].name) : L('월드 보스 · {0}', ENEMIES[kind].name)) : L('보스 토벌전 · {0}', ENEMIES[kind].name); music = 'boss';
+        } else if (opt.coop) {
+            // 협동 디펜스: both devices build the very same battle from the room seed and both players' info (host = player 0)
+            const o = opt.coop, C = RAID_ON.coop, D = RAID_ON.diffs[o.diff], si = D.eq, [a, b] = o.infos;
+            const bosses = RAID.order.filter(k => RAID.bossStage[k] <= si), boss = bosses[bosses.length - 1], mid = bosses[(o.week + o.diff) % Math.max(1, bosses.length - 1)];
+            const map = C.maps[(o.week + o.diff) % C.maps.length];
+            Object.assign(cfg, { mode: 'coop', coop: true, stageIdx: si, map, theme: CHAPTERS[STAGES[si].ch].theme, hpMulExtra: C.hpMul, seed: o.seed,
+                stageDef: { name: L('협동 디펜스'), seedName: 'coop' + o.diff, map, waves: C.waves, pool: STAGES[si].pool, ch: STAGES[si].ch, boss, midBoss: mid !== boss ? mid : null },
+                heroCls: a.cls, heroStats: a.stats, skin: a.skin, bonuses: a.bonuses, dmgMul: (a.dmgMul + b.dmgMul) / 2, party: [],
+                mate: { cls: b.cls, stats: b.stats, skin: b.skin, bonuses: b.bonuses }, autos: [a.auto, b.auto], names: [a.name, b.name],
+                autoWave: () => false, cutinOn: () => false });
+            banner = L('협동 디펜스 · {0}', D.name);
         } else banner = `${opt.hard ? L('[영웅] ') : ''}${stageLabel(opt.stageIdx)} ${STAGES[opt.stageIdx].name}`;
         this.lastOpt = opt; this.lastBanner = banner;
         // limited-entry modes: the entry counts from the start, so restarting or killing the app can't reroll a run
-        if (opt.cup || opt.dungeon || opt.raid) { p.runLock = { cup: !!opt.cup, dungeon: opt.dungeon || null, tier: opt.tier, raid: !!opt.raid }; Save.save(); }
+        if (opt.cup || opt.dungeon || (opt.raid && !opt.raidOn)) { p.runLock = { cup: !!opt.cup, dungeon: opt.dungeon || null, tier: opt.tier, raid: !!opt.raid }; Save.save(); }
         this.leaks = {};   // enemy kind -> lives lost to it (defeat screen)
         this.battle = new Battle(cfg);
+        if (opt.coop) Coop.attach(this.battle);
         UI.showBattleHud(this.battle);
         Music.play(music);
         UI.banner(banner, true, this.battle.cond ? L('3성 조건: {0}', this.battle.cond.name) : null);
@@ -79,14 +92,14 @@ const Game = {
             case 'combo': Sfx.play('coin'); this.buzz(25); break;
             case 'leak': Sfx.play('leak'); this.buzz(35); this.leaks[d.kind] = (this.leaks[d.kind] || 0) + 1; break;
             case 'spawn': UI.foeSpawned(d.kind); break;
-            case 'build': Sfx.play('build'); Rewards.track('towers'); break;
+            case 'build': Sfx.play('build'); if (!B.coop || B.actor === Coop.me) Rewards.track('towers'); break;
             case 'upgrade': Sfx.play('upgrade'); break;
             case 'sell': Sfx.play('sell'); break;
-            case 'skill': Sfx.play(d.ult ? 'ult' : 'skill'); Rewards.track('skills'); break;
+            case 'skill': Sfx.play(d.ult ? 'ult' : 'skill'); if (!B.coop || B.actor === Coop.me) Rewards.track('skills'); break;
             case 'cutin': Sfx.play('cutin'); this.buzz([30, 40, 60]); break;
             case 'spell': Sfx.play('skill'); break;
             case 'earlyBonus': for (const pt of B.spawnPoints()) B.text(pt.x + 40, pt.y - 40, L('+{0} 금화', d), '#ffe08a', 20, true); Sfx.play('coin'); break;
-            case 'heroDown': this.buzz(60); toast(L('영웅이 쓰러졌습니다 · {0}초 뒤 부활', HERO_RESPAWN)); break;
+            case 'heroDown': if (B.coop && d && d.owner !== Coop.me) break; this.buzz(60); toast(L('영웅이 쓰러졌습니다 · {0}초 뒤 부활', HERO_RESPAWN)); break;
             case 'drop':
                 Sfx.play('drop', d);
                 if (d >= 3) { Music.duck(1800); UI.banner(L('{0} 장비 획득!', RARITY[d].name), true); this.buzz([40, 30, 120]); }
@@ -98,7 +111,7 @@ const Game = {
                     const ended = B;
                     // first defeat: offer a continue (ad or gems) before the result screen; never in ranked modes (fair records),
                     // on boss stages or after a boss/elite got through (the continue would skip the must-kill enemy)
-                    if (!d && !B.revived && !B.hasBoss && !B.mustKillLost && B.mode !== 'cup' && B.mode !== 'endless' && B.mode !== 'raid') setTimeout(() => { if (this.battle === ended) UI.showRevive(B, () => this.onBattleEnd(false)); }, 900);
+                    if (!d && !B.revived && !B.hasBoss && !B.mustKillLost && B.mode !== 'cup' && B.mode !== 'endless' && B.mode !== 'raid' && B.mode !== 'coop') setTimeout(() => { if (this.battle === ended) UI.showRevive(B, () => this.onBattleEnd(false)); }, 900);
                     else setTimeout(() => { if (this.battle === ended) this.onBattleEnd(d); }, 1300);
                 }
                 break;
@@ -152,6 +165,19 @@ const Game = {
             R.stars = win ? B.stars() : 0;
             R.got = Meta.finishDungeon(p, o.dungeon, o.tier, R.stars);
             R.xp = win ? Math.round(stageRewards(B.stageIdx, 1, false).xp * 0.6) : 0;
+        } else if (B.mode === 'raid' && this.lastOpt.raidOn) {
+            // online raid run: points to the server (the try was counted when it began)
+            const on = this.lastOpt.raidOn, dmg = Math.round(B.raidDamage), pts = RaidOn.points(B.raidKind, B.stageIdx, dmg);
+            R.win = true; R.raidOn = { mode: on.mode, id: on.id, kind: B.raidKind, dmg, pts, res: null };
+            R.xp = Math.round(stageRewards(B.stageIdx, 1, false).xp * 0.8);
+            (on.mode === 'party' ? RaidOn.partySubmit(on.id, pts) : RaidOn.worldSubmit(pts)).then(x => { R.raidOn.res = x; if (UI.S.result === R && UI.raidResultLine) UI.raidResultLine(R); });
+        } else if (B.mode === 'coop') {
+            const o = this.lastOpt.coop, wave = win ? B.totalWaves : Math.max(0, B.waveIdx);
+            R.coop = { diff: o.diff, room: o.room, wave, res: null };
+            const rw = stageRewards(B.stageIdx, win ? 3 : 1, false);
+            R.silver = Math.round(rw.silver * (win ? 1.5 : 0.4 * wave / B.totalWaves)); R.xp = Math.round(rw.xp * (win ? 1.2 : 0.5 * wave / B.totalWaves));
+            RaidOn.coopFinish(o.room, win, wave).then(x => { R.coop.res = x; if (UI.S.result === R && UI.raidResultLine) UI.raidResultLine(R); });
+            Coop.finished();
         } else if (B.mode === 'raid') {
             const kind = B.raidKind, dmg = Math.round(B.raidDamage);
             const r = Meta.finishRaid(p, kind, dmg);
@@ -245,7 +271,7 @@ const Game = {
         else if (e.key === 'f' || e.key === 'F' || e.key === 'ㄹ') UI.cycleSpeed();
     });
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden && Game.battle && UI.S.screen === 'battle' && !UI.S.paused && !UI.S.result && Game.battle.state !== 'win' && Game.battle.state !== 'lose') UI.pause(true);
+        if (document.hidden && Game.battle && !Game.battle.coop && UI.S.screen === 'battle' && !UI.S.paused && !UI.S.result && Game.battle.state !== 'win' && Game.battle.state !== 'lose') UI.pause(true);
         if (document.hidden) Save.save();
         else Game.onResume();
         if (!Save.p.set.musicOff) Music.setEnabled(!document.hidden);
@@ -277,7 +303,8 @@ const Game = {
         last = now;
         const B = Game.battle;
         if (B && UI.S.screen === 'battle') {
-            if (!Game.paused) {
+            if (B.coop) Coop.frame(dt);              // 협동 디펜스: fixed ticks shared with the partner, never paused
+            else if (!Game.paused) {
                 const steps = Game.speed;
                 for (let i = 0; i < steps; i++) B.update(dt);
             }
