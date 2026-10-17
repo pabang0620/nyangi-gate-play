@@ -7,6 +7,7 @@
     const img = (...a) => UI.img(...a);
     const modal = (...a) => UI.modal(...a);
     const showHub = (...a) => UI.showHub(...a);
+    const confirmBox = (...a) => UI.confirmBox(...a);
 
     const TIER_COLOR = ['#c08050', '#c8d0e0', '#f2c14e', '#7fe0d0', '#9ad0ff', '#ff8ad8'];
     function tierName(t) { const n = (Online.cfg && Online.cfg.league && Online.cfg.league.tiers) || [L('브론즈'), L('실버'), L('골드'), L('플래티넘'), L('다이아'), L('마스터')]; return L(n[t] || n[0]); }   // server config sends Korean names
@@ -23,11 +24,72 @@
         profileModal(then);
     }
 
+    // which logins open this account on another device, for the account lines
+    function accountText() {
+        if (!Online.on) return '-';
+        const names = { google: 'Google', kakao: L('카카오'), id: L('아이디 {0}', Online.loginId()) };
+        const ls = Online.logins();
+        return ls.length ? L('연결됨: {0}', ls.map(k => names[k]).join(' · ')) : L('게스트');
+    }
+    const field = (ph, type, value) => h('input.nick', { type: type || 'text', value: value || '', placeholder: ph, maxLength: type === 'password' ? 64 : 16,
+        autocapitalize: 'off', autocomplete: 'off', spellcheck: false, style: { width: '100%', boxSizing: 'border-box' } });
+    const errLine = () => h('div.tip', { style: { color: '#a8401a', minHeight: '20px' } });
+    async function run(err, fn) { try { await fn(); } catch (e) { err.textContent = (e && e.message) || String(e); } }
+
+    // buttons to attach a login to this account (Google, Kakao when set up, game id). after(): redraw the caller
+    function linkButtons(err, after) {
+        if (!Online.on) return null;
+        const ls = Online.logins(), row = h('div.row', { style: { gap: '8px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '6px' } });
+        if (Online.googleOn() && !ls.includes('google')) row.appendChild(h('button.btn.small', { onclick: () => { click(); run(err, async () => {
+            await Online.linkGoogle(); if (Online.logins().includes('google')) { toast(L('Google 계정을 연동했습니다')); after && after(); } }); } }, L('Google 계정 연동')));
+        if (Online.kakaoOn() && !ls.includes('kakao')) row.appendChild(h('button.btn.small', { onclick: () => { click(); run(err, () => Online.linkKakao()); } }, L('카카오 계정 연동')));
+        row.appendChild(h('button.btn.small', { onclick: () => { click(); idModal(after); } }, ls.includes('id') ? L('비밀번호 바꾸기') : L('아이디·비밀번호 만들기')));
+        return row;
+    }
+
+    // make (or change) the game id + password of this account
+    function idModal(after) {
+        const has = Online.loginId();
+        const id = field(L('아이디 (영어 소문자·숫자 4~16자)'), 'text', has), pw = field(L('비밀번호 (8자 이상)'), 'password'), pw2 = field(L('비밀번호 확인'), 'password');
+        const err = errLine();
+        const d = modal([h('h2', has ? L('비밀번호 바꾸기') : L('아이디·비밀번호 만들기')),
+            h('div.tip', L('다른 기기나 웹에서 이 아이디로 로그인하면 지금 진행을 그대로 이어서 할 수 있어요.')),
+            h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', margin: '8px 0', minWidth: '260px' } }, id, pw, pw2),
+            h('div.tip', L('비밀번호를 잊으면 찾을 수 없어요. 꼭 기억해 두세요. 이메일은 받지 않아요.')),
+            err,
+            h('div.row', { style: { gap: '10px', justifyContent: 'center' } },
+                h('button.btn.gold', { onclick: () => { click(); run(err, async () => {
+                    if (pw.value !== pw2.value) throw new Error(L('비밀번호가 서로 달라요'));
+                    const v = await Online.setLogin(id.value, pw.value);
+                    d.remove(); toast(has ? L('저장했어요. 아이디 {0}', v) : L('아이디 {0}를 만들었어요. 다른 기기에서 이 아이디로 로그인할 수 있어요', v)); after && after();
+                }); } }, L('저장')),
+                h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기')))], { dismiss: true });
+    }
+
+    // sign in to a different account (another device's progress). A guest that is not linked anywhere is lost, so ask first
+    function switchModal() {
+        const id = field(L('아이디')), pw = field(L('비밀번호'), 'password'), err = errLine();
+        const guard = go => {
+            if (Online.on && !Online.isLinked()) confirmBox(L('지금 진행은 아직 어디에도 연결되지 않은 게스트 계정이에요.\n다른 계정으로 로그인하면 이 게스트 계정으로는 다시 들어올 수 없어요.\n계속할까요?'), () => run(err, go));
+            else run(err, go);
+        };
+        const d = modal([h('h2', L('다른 계정으로 로그인')),
+            h('div.tip', L('다른 기기에서 하던 진행을 불러와요. 두 진행이 다르면 어느 쪽을 쓸지 고를 수 있어요.')),
+            h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', margin: '8px 0', minWidth: '260px' } }, id, pw,
+                h('button.btn.gold', { onclick: () => { click(); if (!id.value.trim() || !pw.value) { err.textContent = L('아이디와 비밀번호를 넣어 주세요'); return; } guard(() => Online.loginWithId(id.value, pw.value)); } }, L('아이디로 로그인'))),
+            h('div.row', { style: { gap: '8px', justifyContent: 'center', flexWrap: 'wrap' } },
+                Online.googleOn() ? h('button.btn.small', { onclick: () => { click(); guard(() => Online.loginGoogle()); } }, L('Google로 로그인')) : null,
+                Online.kakaoOn() ? h('button.btn.small', { onclick: () => { click(); guard(() => Online.loginKakao()); } }, L('카카오로 로그인')) : null),
+            err,
+            h('button.btn.ghost', { style: { marginTop: '8px' }, onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
+    }
+
     function profileModal(then) {
         const p = Save.p, pr = Online.profile;
         const input = h('input.nick', { value: pr ? pr.name : (p.profileName || ''), maxLength: 12, placeholder: L('닉네임 (2~12자)') });
-        const err = h('div.tip', { style: { color: '#a8401a', minHeight: '20px' } });
+        const err = errLine();
         const linked = Online.isLinked();
+        const reopen = () => { d.remove(); profileModal(then); };
         const d = modal([h('h2', L('프로필 · 계정')),
             h('div.prof-row', img(heroPortrait(p.hero, p.shop && p.shop.skin[p.hero]), '.prof-pic'),
                 h('div', { style: { flex: 1 } },
@@ -46,13 +108,12 @@
                     } catch (e) { err.textContent = e.message; }
                 } }, L('저장'))),
             h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.7 } },
+                h('b', L('내 계정')),
                 h('div', L('서버 '), h('b', onlineStatusText())),
-                h('div', L('계정 '), h('b', !Online.on ? '-' : linked ? L('Google 연동됨') : L('게스트')), L(' · 진행은 자동으로 클라우드에 저장됩니다')),
-                Online.on && !linked ? h('div.tip', L('게스트 계정은 앱을 지우거나 기기를 바꾸면 진행을 잃을 수 있습니다. Google 계정을 연동하면 어느 기기에서든 이어서 할 수 있습니다.')) : null,
-                Online.on && !linked ? h('button.btn.small', { style: { marginTop: '6px' }, onclick: async () => {
-                    click();
-                    try { await Online.linkGoogle(); d.remove(); toast(L('Google 계정을 연동했습니다')); } catch (e) { err.textContent = e.message || String(e); }
-                } }, L('Google 계정 연동')) : null),
+                h('div', L('계정 '), h('b', accountText()), L(' · 진행은 자동으로 클라우드에 저장됩니다')),
+                Online.on && !linked ? h('div.tip', L('게스트 계정은 앱을 지우거나 기기를 바꾸면 진행을 잃을 수 있습니다. 계정을 연동하면 어느 기기에서든 이어서 할 수 있습니다.')) : null,
+                linkButtons(err, reopen),
+                Online.sb ? h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => { click(); switchModal(); } }, L('다른 계정으로 로그인')) : null),
             Online.on ? h('button.btn.small.red', { style: { marginTop: '8px' }, onclick: () => {
                 click();
                 UI.confirmBox(L('계정과 서버의 모든 데이터(프로필, 클라우드 저장, 랭킹 기록)를 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.'), async () => {
@@ -61,6 +122,44 @@
             } }, L('계정 및 데이터 삭제')) : null,
             h('button.btn.ghost', { style: { marginTop: '8px' }, onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
     }
+
+    // guests: why and how to link (title line, settings, the one-time nudge)
+    function linkModal(nudge) {
+        const err = errLine();
+        const d = modal([h('h2', nudge ? L('진행을 지켜 주세요') : L('계정 연동')),
+            h('div', { style: { margin: '4px 0 8px', textAlign: 'center', lineHeight: 1.6 } }, L('지금은 게스트 계정이라 앱을 지우거나 기기를 바꾸면 진행을 잃을 수 있어요.'), h('br'),
+                L('연동해 두면 다른 기기와 웹에서도 그대로 이어서 할 수 있어요.')),
+            linkButtons(err, () => { d.remove(); toast(L('이제 다른 기기에서도 이어서 할 수 있어요')); }),
+            err,
+            h('button.btn.ghost', { style: { marginTop: '8px' }, onclick: () => { click(); d.remove(); } }, nudge ? L('나중에') : L('닫기'))], { dismiss: true });
+    }
+
+    // first nickname: once, on the hub after the first stage clear (the tutorial is in 1-1 ~ 1-3 battles, never over it)
+    function nickModal() {
+        const p = Save.p, input = h('input.nick', { value: p.profileName || '', maxLength: 12, placeholder: L('닉네임 (2~12자)') }), err = errLine();
+        const d = modal([h('h2', L('닉네임 정하기')),
+            h('div', { style: { margin: '4px 0 8px', textAlign: 'center' } }, L('랭킹, 레이드, 친구에게 보이는 이름이에요. 나중에 프로필에서 바꿀 수 있어요.')),
+            input, err,
+            h('div.row', { style: { gap: '10px', justifyContent: 'center' } },
+                h('button.btn.gold', { onclick: () => { click(); run(err, async () => {
+                    const sk = p.shop && p.shop.skin ? p.shop.skin[p.hero] : null;
+                    const pr = await Online.setProfile(input.value.trim(), p.hero, sk); Save.save();
+                    d.remove(); toast(L('반가워요, {0}님!', pr.name)); UI.showHub(UI.S.tab);
+                }); } }, L('저장')),
+                h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('나중에')))]);
+    }
+    // the one-time account prompts on the hub map: nickname first, then (much later) the guest link nudge. One per visit
+    function accountPrompts() {
+        const p = Save.p, S = UI.S;
+        if (!Online.on || S.screen !== 'hub' || document.querySelector('.modal')) return;
+        const cleared = i => (p.stars && p.stars[i] > 0);
+        if (!Online.profile && !p.set.nickAsked && cleared(0)) { p.set.nickAsked = 1; Save.save(); nickModal(); return; }
+        const paid = !!(p.shop && p.shop.purchases && p.shop.purchases.length);
+        if (!Online.isLinked() && !p.set.linkNudged && (cleared(4) || paid)) { p.set.linkNudged = 1; Save.save(); linkModal(true); }
+    }
+    // the server answers after the hub is drawn on a cold start: try again once it is online
+    let wasOn = false;
+    Online.onChange(() => { if (Online.on && !wasOn) { wasOn = true; setTimeout(accountPrompts, 800); } });
 
     // policy pages bundled with the game (policy/*.html, also hosted publicly for the store listing)
     // policy pages: Korean originals in policy/, English translations in policy/en/ for every other language
@@ -143,5 +242,5 @@
         if (box && x) box.textContent = L('주간 순위에 등록했습니다 · 이번 주 최고 {0}점{1}', fmt(x.value), x.flagged ? L(' (검토 중)') : '');
     }
 
-    Object.assign(UI, { tierName, tierBadge, ensureProfile, profileModal, cloudChoice, rankList, myRankLine, leagueRows, cupRankLine, onlineStatusText, policyModal, probModal });
+    Object.assign(UI, { tierName, tierBadge, ensureProfile, profileModal, accountText, linkButtons, idModal, switchModal, linkModal, accountPrompts, cloudChoice, rankList, myRankLine, leagueRows, cupRankLine, onlineStatusText, policyModal, probModal });
 })();

@@ -5,6 +5,7 @@
 // the host's own and the guest's, is given a tick by the host and sent in a frame every FRAME ticks with a checksum.
 // The guest runs only the ticks it has frames for and asks for the host's state when its checksum differs.
 // Messages: hi {me, info} · go {infos, seed} · c {c} (guest command) · f {to, c, s, sp} · rs · snap {at, snap} · hb · bye
+// · sig {id} (quick signal, js/ui/coop-signal.js: screen only, never part of the battle or its checksum)
 const Coop = {
     TICK: 1 / 30, FRAME: 8, LOST_MS: 8000, HOST_LOST_MS: 20000,
     room: null, ch: null, me: 0, infos: [null, null], B: null, onLobby: null,
@@ -16,7 +17,7 @@ const Coop = {
         const p = Save.p; Rewards.ensure(p); metaEnsure(p);
         const b = computeBonuses(p), sg = skinBonus(p, p.hero).gold;
         if (sg) b.bountyPct += sg;
-        return { name: Online.profile ? Online.profile.name : '', cls: p.hero, stats: heroStats(p, p.hero), skin: (p.shop.skin && p.shop.skin[p.hero]) || null,
+        return { name: Online.profile ? Online.profile.name : '', uid: Online.user ? Online.user.id : null, cls: p.hero, stats: heroStats(p, p.hero), skin: (p.shop.skin && p.shop.skin[p.hero]) || null,
             bonuses: b, dmgMul: codexDmgMul(p), auto: !!p.set.autoHero };
     },
     // join the room's channel; onLobby(state) is called whenever the partner shows up or leaves
@@ -25,7 +26,7 @@ const Coop = {
         this.room = room; this.me = room.me; this.onLobby = onLobby; this.infos = [null, null]; this.infos[this.me] = this.myInfo();
         this.ended = false; this.partnerGone = false; this.lastHeard = Date.now();
         const ch = this.ch = Online.sb.channel('bonghwa-coop-' + room.key, { config: { broadcast: { self: false, ack: false } } });
-        for (const ev of ['hi', 'go', 'c', 'f', 'rs', 'snap', 'hb', 'bye']) ch.on('broadcast', { event: ev }, msg => this.onMsg(ev, msg.payload || {}));
+        for (const ev of ['hi', 'go', 'c', 'f', 'rs', 'snap', 'hb', 'bye', 'sig']) ch.on('broadcast', { event: ev }, msg => this.onMsg(ev, msg.payload || {}));
         ch.subscribe(st => { if (st === 'SUBSCRIBED') this.hello(); });
         clearInterval(this.hiTimer);
         this.hiTimer = setInterval(() => { if (!this.B) this.hello(); }, 2000);   // until the partner answers (a message can be missed)
@@ -37,6 +38,12 @@ const Coop = {
         clearInterval(this.hiTimer); this.hiTimer = null;
         this.ch = null; this.B = null; this.pend = []; this.sent = []; this.sums = {};
         if (ch) setTimeout(() => { try { Online.sb.removeChannel(ch); } catch (e) { } }, delay || 0);
+    },
+    // quick signal to the partner (2s cooldown); returns false while cooling down
+    signal(id) {
+        if (!this.B || Date.now() - (this.lastSig || 0) < 2000) return false;
+        this.lastSig = Date.now(); this.send('sig', { id });
+        return true;
     },
     partnerName() { const i = this.infos[1 - this.me]; return (i && i.name) || L('친구'); },
 
@@ -64,6 +71,8 @@ const Coop = {
             this.pend.push([this.tick + 1, 1, m.c]);
         } else if (ev === 'hb') {
             // heartbeat only
+        } else if (ev === 'sig') {
+            if (this.B && typeof UI !== 'undefined' && UI.coopSignalShow) UI.coopSignalShow(this.partnerName(), m.id, false);
         } else if (ev === 'rs' && this.me === 0) {
             this.wantSnap = true;
         } else if (ev === 'f' && this.me === 1 && this.B) {

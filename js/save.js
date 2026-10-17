@@ -99,7 +99,7 @@ let overflowGain = 0, overflowN = 0, overflowTimer = 0;
 function bagOverflow(p) {
     let worst = null;
     for (const x of p.items) {
-        if (isEquipped(x) || x.enh > 0) continue;
+        if (isEquipped(x) || x.enh > 0 || x.mid) continue;   // tradeable (server-minted) gear is never auto-salvaged
         if (!worst || x.r < worst.r || (x.r === worst.r && x.ilvl < worst.ilvl)) worst = x;
     }
     if (!worst) return false;
@@ -202,12 +202,12 @@ function equipBest() {
 }
 // 일괄 분해 설정 (p.set.salvage): up to which grade (0 일반, 1 희귀, 2 영웅) and whether enhanced gear goes too
 function salvageSet(p) { const s = (p.set && p.set.salvage) || {}; return { max: s.max === undefined ? 1 : s.max, enh: !!s.enh }; }
-function salvageTargets(p, maxRarity, withEnh) { return p.items.filter(it => !isEquipped(it) && it.r <= maxRarity && (withEnh || it.enh === 0)); }
+function salvageTargets(p, maxRarity, withEnh) { return p.items.filter(it => !isEquipped(it) && !it.mid && it.r <= maxRarity && (withEnh || it.enh === 0)); }   // 거래 가능 gear only by hand
 function bulkSalvage(maxRarity, withEnh) {
     const p = Save.p;
     let gain = 0, n = 0;
     p.items = p.items.filter(it => {
-        if (isEquipped(it) || it.r > maxRarity || (it.enh > 0 && !withEnh)) return true;
+        if (isEquipped(it) || it.mid || it.r > maxRarity || (it.enh > 0 && !withEnh)) return true;
         gain += salvageValue(it); n++; return false;
     });
     p.silver += gain;

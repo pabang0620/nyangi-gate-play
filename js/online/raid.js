@@ -35,6 +35,8 @@ const RaidOn = {
     coopQuick(diff) { return this.call('coop_quick', { p_diff: diff }); },
     coopRoom(id) { return this.call('coop_room', { p_id: id }); },
     coopSet(id, action) { return this.call('coop_set', { p_id: id, p_action: action }); },
+    // 파티 찾기: open parties / waiting co-op rooms of opened difficulties, friends first (20261021000000_party_plus.sql)
+    openList(kind) { return this.call('raid_open_list', { p_kind: kind }); },
     coopFinish(id, win, waves) { return this.call('coop_finish', { p_id: id, p_win: !!win, p_waves: waves | 0 }); },
     // pick one of four cards; the reward (card + medals) arrives as mail and is claimed right away
     async flip(mode, ref, pick) {

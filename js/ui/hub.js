@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.2.9';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.0';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-14';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
@@ -63,18 +63,25 @@
     }
 
     // ------------------------------------------------------------ title
-    // account line under the start button: server state + guest / Google, tap for the profile popup.
+    // account line under the start button: name#tag, server state + guest / linked logins, tap for the profile popup;
+    // a guest also gets a 연동하기 button (losing the device loses an unlinked guest).
     // Only once the terms are agreed (a first-time player meets the account in the settings afterwards) and only with a server configured.
     let acctLine = null;
     function titleAccount(p) {
         if (p.set.agreed !== TERMS_VERSION || !Online.enabled) return null;
         const st = h('span.tip');
-        acctLine = h('div.title-acct', h('button.btn.small.ghost', { onclick: () => { click(); UI.profileModal(); } }, L('프로필 · 계정')), st);
-        acctLine.refresh = () => { st.textContent = UI.onlineStatusText() + (Online.on ? ' · ' + (Online.isLinked() ? L('Google 연동됨') : L('게스트')) : ''); };
+        const link = h('button.btn.small.gold', { style: { display: 'none' }, onclick: () => { click(); UI.linkModal(); } }, L('연동하기'));
+        acctLine = h('div.title-acct', h('button.btn.small.ghost', { onclick: () => { click(); UI.profileModal(); } }, L('프로필 · 계정')), st, link);
+        acctLine.refresh = () => {
+            const pr = Online.on && Online.profile;
+            st.textContent = (pr ? `${pr.name}#${pr.tag} · ` : '') + UI.onlineStatusText() + (Online.on ? ' · ' + UI.accountText() : '');
+            link.style.display = Online.on && !Online.isLinked() ? '' : 'none';
+        };
         acctLine.refresh();
         return acctLine;
     }
-    Online.onChange(() => { if (acctLine && acctLine.isConnected) acctLine.refresh(); });
+    let setAcct = null;   // the settings tab's account box
+    Online.onChange(() => { if (acctLine && acctLine.isConnected) acctLine.refresh(); if (setAcct && setAcct.isConnected) setAcct.refresh(); });
     UI.resumeSupply = () => { if ((S.screen === 'title' || S.screen === 'hub') && !document.querySelector('.modal')) offlineSupply(Save.p); };
 
     function showTitle() {
@@ -125,6 +132,17 @@
 
 
     // ------------------------------------------------------------ hub
+    // friends: badge = incoming requests + live raid invites (js/ui/friends.js), kept fresh by the friends poll
+    let friendsBtn = null;
+    function friendsButton() {
+        const badge = h('span.badge');
+        const sync = () => { const n = UI.friendBadge ? UI.friendBadge() : 0; badge.textContent = String(Math.min(99, n)); badge.style.display = n ? '' : 'none'; };
+        friendsBtn = h('div.iconbtn.friendbtn', { title: L('친구'), onclick: () => { click(); UI.friendsModal(); } }, img('i_coop'), badge);
+        friendsBtn.sync = sync; sync();
+        return friendsBtn;
+    }
+    if (typeof Friends !== 'undefined') Friends.onChange(() => { if (friendsBtn && friendsBtn.isConnected) friendsBtn.sync(); });
+
     function showHub(tab) {
         S.screen = 'hub';
         S.tab = tab || S.tab;
@@ -141,6 +159,7 @@
             h('div.sp'),
             h('div.chip.curchip', { onclick: () => { click(); UI.currencyInfo('ticket'); } }, img('i_ticket', '.icon'), fmtShort(p.tickets || 0)),
             UI.mailButton(),
+            Online.enabled ? friendsButton() : null,
             h('div.iconbtn', { onclick: () => { click(); showHub('settings'); } }, img('nav_settings')),
             h('div.chip.herochip', { style: { cursor: 'pointer' }, onclick: () => { click(); showHub('hero'); } },
                 img(heroPortrait(p.hero, p.shop && p.shop.skin[p.hero]), '.icon'), h('span.hc', h('b', HERO_NAMES[p.hero]), h('i', `Lv.${p.heroes[p.hero].lv}`))),
@@ -158,7 +177,7 @@
         root().appendChild(top);
         root().appendChild(nav);
         ({ map: tabMap, hero: tabHero, research: tabResearch, summon: tabSummon, rewards: tabRewards, shop: tabShop, endless: tabEndless, settings: tabSettings })[S.tab]();
-        if (S.tab === 'map') maybeLogin();
+        if (S.tab === 'map') { maybeLogin(); UI.accountPrompts(); }
         UI.fitAll();
     }
 
@@ -216,8 +235,21 @@
         for (const [code, name] of Object.entries(LANGS)) { const o = document.createElement('option'); o.value = code; o.textContent = name; if (code === LANG) o.selected = true; sel.appendChild(o); }
         sel.addEventListener('change', () => { click(); setLang(sel.value); });
         colL.prepend(h('label.lang-row', h('span', L('언어')), sel));   // first: it was pushed below the panel on phones
-        colR.appendChild(h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' } },
-            h('button.btn.small.gold', { onclick: () => { click(); UI.profileModal(); } }, L('프로필 · 계정')), h('span.tip', UI.onlineStatusText())));
+        // account: who am I, which logins open this progress elsewhere, link buttons right here (not only in the popup)
+        const acct = h('div.inset', { style: { padding: '8px 10px', marginBottom: '8px' } });
+        const drawAcct = () => {
+            const pr = Online.on && Online.profile, err = h('div.tip', { style: { color: '#a8401a' } });
+            acct.replaceChildren(
+                h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } },
+                    h('button.btn.small.gold', { onclick: () => { click(); UI.profileModal(); } }, L('프로필 · 계정')),
+                    h('span.tip', (pr ? `${pr.name}#${pr.tag} · ` : '') + UI.onlineStatusText() + (Online.on ? ' · ' + UI.accountText() : ''))),
+                Online.on && !Online.isLinked() ? h('div.tip', L('게스트 계정이에요. 연동하면 다른 기기와 웹에서도 이어서 할 수 있어요.')) : null,
+                UI.linkButtons(err, drawAcct),
+                Online.sb ? h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => { click(); UI.switchModal(); } }, L('다른 계정으로 로그인')) : null,
+                err);
+        };
+        drawAcct(); acct.refresh = drawAcct; setAcct = acct;
+        colR.appendChild(acct);
         colR.appendChild(h('div.set-help',
             h('button.btn.small.gold', { onclick: () => { click(); howToModal(); } }, L('게임 방법')),
             h('button.btn.small', { onclick: () => { click(); UI.openMail(); } }, L('쿠폰 입력')),
@@ -299,6 +331,7 @@
                 owned ? h('div.claimed-t', L('보유 중')) : h('button.btn.gold.small', { onclick: () => { click(); buyProduct(id); } }, priceLabel(id)));
         };
         win.appendChild(h('div.tip', { style: { margin: '0 6px 4px' } }, L('결제는 Google Play로 진행됩니다. 구매 후 7일 이내 사용하지 않은 상품은 청약철회(환불)할 수 있으며, 지급된 재화를 사용했거나 효과가 바로 적용되는 상품은 청약철회가 제한될 수 있습니다. 미성년자는 법정대리인의 동의가 필요합니다.')));
+        if (Online.enabled) win.appendChild(h('button.btn.gold.market-open', { style: { margin: '2px auto 6px', display: 'flex', alignItems: 'center', gap: '6px' }, onclick: () => { click(); UI.marketModal(); } }, img('i_gold', '.icon'), L('거래소')));
         win.appendChild(sec(L('추천'), ['starter', 'monthly', 'pass', 'premium', 'speed3'].map(card)));   // best value first (월간 보급권 = 3,300 gems)
         win.appendChild(sec(L('보석'), GEM_PRODUCTS.map(card)));
         // 강화 도구 (bought with gems): 하락방지권 keeps the level when a try at +10 or more fails

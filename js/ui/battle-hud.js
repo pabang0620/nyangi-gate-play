@@ -36,6 +36,7 @@
             h('div.hud-box', ico('gold'), hud.gold),
             h('div.hud-box', ico('skull'), hud.wave),
             B.coop ? (hud.mate = h('div.hud-box.mate', '')) : null,
+            B.coop && UI.coopSignalBtn ? UI.coopSignalBtn() : null,
             h('div.sp'),
             hud.autoHero, B.coop ? null : hud.autoWave, hud.speed,
             h('div.iconbtn', { onclick: () => { click(); pause(true); } }, img('i_pause')));

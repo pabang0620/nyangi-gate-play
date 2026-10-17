@@ -1,6 +1,6 @@
 'use strict';
-// Online layer (Supabase): guest sign-in, server clock, cloud save, rankings, real league, reward inbox, Google link,
-// purchase verification. Server: server/supabase (SQL RPCs + verify-purchase function), docs/PLAN_ONLINE_RELEASE.md.
+// Online layer (Supabase): guest sign-in, server clock, cloud save, rankings, real league, reward inbox, account links
+// (Google, Kakao, game id + password), purchase verification. Server: server/supabase (SQL RPCs + verify-purchase function), docs/PLAN_ONLINE_RELEASE.md.
 // Every call is optional: when the project is not configured or the network is down, the game keeps playing offline.
 const Online = {
     sb: null, user: null, profile: null, cfg: null,
@@ -14,11 +14,18 @@ const Online = {
     async init() {
         if (!this.enabled) return;
         this.status = 'connecting'; this.emit();
+        // coming back from a Kakao / Google page: the result is in the address (#access_token=... or ?error=...)
+        const back = typeof location !== 'undefined' ? new URLSearchParams(location.hash.slice(1) + '&' + location.search.slice(1)) : new URLSearchParams();
+        const authErr = back.get('error_code') || back.get('error');
         try {
             this.sb = supabase.createClient(ONLINE_CONFIG.url, ONLINE_CONFIG.anonKey, { db: { schema: ONLINE_CONFIG.schema || 'public' }, auth: { persistSession: true, storageKey: 'nyangi-auth', autoRefreshToken: true } });
             let { data: { session } } = await this.sb.auth.getSession();
             if (!session) { const r = await this.sb.auth.signInAnonymously(); if (r.error) throw r.error; session = r.data.session; }
             this.user = session.user;
+            if (back.has('access_token') || authErr) try { history.replaceState(null, '', location.pathname); } catch (e) { }
+            if (authErr) setTimeout(() => toast(/identity_already_exists|already/i.test(authErr + (back.get('error_description') || ''))
+                ? L('이미 다른 진행에 연결된 계정이에요. 프로필의 다른 계정으로 로그인에서 그 계정으로 들어갈 수 있어요')
+                : L('로그인하지 못했어요. 다시 시도해 주세요')), 600);
             await this.syncClock();
             this.cfg = (await this.sb.rpc('online_config')).data;
             this.profile = (await this.sb.from('profiles').select('*').eq('uid', this.user.id).maybeSingle()).data;
@@ -55,11 +62,14 @@ const Online = {
     async pullSave() {
         const { data } = await this.sb.from('saves').select('data, rev, saved_ms').eq('uid', this.user.id).maybeSingle();
         const local = Save.p;
+        // just signed in to another account: this device's progress belongs to the previous one, so always ask when they differ
+        let switched = false;
+        try { switched = localStorage.getItem('nyangi-switch') === '1'; localStorage.removeItem('nyangi-switch'); } catch (e) { }
         if (!data) { await this.pushSave(true); return; }
         // the cloud copy is from another device and newer: let the player choose
         // (compared on progress, currencies and collections, so a newer gem purchase / summon on the other device is not overwritten silently)
         const sig = s => JSON.stringify([s.stars, s.hstars, s.gems, s.tickets, (s.items || []).length, s.shop && s.shop.skins, s.shop && s.shop.purchases && s.shop.purchases.length]);
-        if (Number(data.saved_ms) > (local.savedMs || 0) + 5000 && sig(data.data) !== sig(local)) {
+        if ((switched || Number(data.saved_ms) > (local.savedMs || 0) + 5000) && sig(data.data) !== sig(local)) {
             if (typeof UI !== 'undefined' && UI.cloudChoice) UI.cloudChoice(data.data, local, keepCloud => {
                 if (keepCloud) { Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); }
                 else this.pushSave(true);
@@ -71,8 +81,10 @@ const Online = {
     async setProfile(name, hero, skin) {
         const { data, error } = await this.sb.rpc('set_profile', { p_name: name, p_hero: hero, p_skin: skin || null });
         if (error) throw new Error(/length/.test(error.message) ? L('닉네임은 2~12자로 지어 주세요') : /chars/.test(error.message) ? L('글자, 숫자, 공백, _만 쓸 수 있습니다') : /reserved/.test(error.message) ? L('쓸 수 없는 닉네임입니다') : /cooldown/.test(error.message) ? L('닉네임은 하루에 한 번만 바꿀 수 있습니다') : L('저장하지 못했습니다'));
+        const first = !this.profile;
         this.profile = data;
         if (Save.p) { Save.p.profileName = data.name; }
+        if (first && typeof Friends !== 'undefined') Friends.refresh();   // friends need a profile: start right away instead of on the next poll
         return data;
     },
     // keep the leaderboard look (hero/skin) in sync with the save, quietly
@@ -163,29 +175,87 @@ const Online = {
         return '';
     },
 
-    // ---------------------------------------------------------------- Google account (keeps the same uid: guest progress stays)
-    isLinked() { return !!(this.user && (this.user.identities || []).some(i => i.provider === 'google')); },
+    // ---------------------------------------------------------------- accounts (a link keeps the same uid: guest progress stays)
+    // Google: the app asks Android for an ID token, the browser goes through Google's page.
+    // Kakao: Kakao's page (the app opens it in the phone browser, which comes back through nyangi-gate://auth, MainActivity).
+    // Game id + password: Edge Function bonghwa-login stores it as a never-mailed address <id>@id.nyangi-gate.app.
+    // Signing in to another account reloads the game, and pullSave then asks which progress to keep.
+    LOGIN_DOMAIN: '@id.nyangi-gate.app',
+    get nativeGoogle() { return typeof window !== 'undefined' && !!(window.BonghwaBridge && window.BonghwaBridge.googleIdToken); },
+    get inApp() { return typeof navigator !== 'undefined' && /NyangiApp/.test(navigator.userAgent); },
+    loginId() { const e = this.user && this.user.email; return e && e.endsWith(this.LOGIN_DOMAIN) ? e.slice(0, -this.LOGIN_DOMAIN.length) : ''; },
+    // 'google' | 'kakao' | 'id' this account can be opened with on another device
+    logins() {
+        const ids = ((this.user && this.user.identities) || []).map(i => i.provider), out = [];
+        if (ids.includes('google')) out.push('google');
+        if (ids.includes('kakao')) out.push('kakao');
+        if (this.loginId()) out.push('id');
+        return out;
+    },
+    isLinked() { return this.logins().length > 0; },
+    // turned on in game_config 'auth' once the provider is set up in Supabase (Kakao app, Google web client secret)
+    kakaoOn() { return !!(this.cfg && this.cfg.auth && this.cfg.auth.kakao); },
+    googleOn() { return this.nativeGoogle || !!(this.cfg && this.cfg.auth && this.cfg.auth.googleWeb); },
+    markSwitch() { try { localStorage.setItem('nyangi-switch', '1'); } catch (e) { } },
+    async refreshUser() { this.user = (await this.sb.auth.getUser()).data.user || this.user; this.emit(); },
+
+    // OAuth page (Kakao everywhere, Google in the browser). link = attach to this account, otherwise sign in to that account
+    async oauth(provider, link) {
+        if (!this.sb) throw new Error(L('온라인 연결이 필요합니다'));
+        const redirectTo = this.inApp ? 'nyangi-gate://auth' : location.origin + location.pathname;
+        const options = { redirectTo, skipBrowserRedirect: true };
+        const r = link ? await this.sb.auth.linkIdentity({ provider, options }) : await this.sb.auth.signInWithOAuth({ provider, options });
+        if (r.error) throw r.error;
+        if (!link) this.markSwitch();
+        if (this.inApp) toast(L('브라우저에서 로그인을 마치면 게임으로 돌아와요'));
+        location.href = r.data.url;   // in the app this opens the phone browser (MainActivity.shouldOverrideUrlLoading)
+    },
     async linkGoogle() {
         if (!this.on) throw new Error(L('온라인 연결이 필요합니다'));
-        const native = typeof window !== 'undefined' && window.BonghwaBridge && window.BonghwaBridge.googleIdToken;
-        if (native) {
-            const token = await window.BonghwaBridge.googleIdToken(ONLINE_CONFIG.googleWebClientId);
-            if (!token) throw new Error(L('Google 로그인을 취소했습니다'));
-            let r = await this.sb.auth.linkIdentity({ provider: 'google', token });
-            if (r.error && /already/i.test(r.error.message)) {
-                // this Google account already has progress (another device): switch to it
-                r = await this.sb.auth.signInWithIdToken({ provider: 'google', token });
-                if (r.error) throw r.error;
-                location.reload(); return;
-            }
+        if (!this.nativeGoogle) return this.oauth('google', true);
+        const token = await window.BonghwaBridge.googleIdToken(ONLINE_CONFIG.googleWebClientId);
+        if (!token) throw new Error(L('Google 로그인을 취소했습니다'));
+        let r = await this.sb.auth.linkIdentity({ provider: 'google', token });
+        if (r.error && /already/i.test(r.error.message)) {
+            // this Google account already has progress (another device): switch to it
+            r = await this.sb.auth.signInWithIdToken({ provider: 'google', token });
             if (r.error) throw r.error;
-            this.user = (await this.sb.auth.getUser()).data.user;
-            this.emit();
-        } else {
-            // browser / PWA: OAuth redirect, the anonymous user gets the identity linked
-            const r = await this.sb.auth.linkIdentity({ provider: 'google', options: { redirectTo: location.href } });
-            if (r.error) throw r.error;
+            this.markSwitch(); location.reload(); return;
         }
+        if (r.error) throw r.error;
+        await this.refreshUser();
+    },
+    async loginGoogle() {
+        if (!this.sb) throw new Error(L('온라인 연결이 필요합니다'));
+        if (!this.nativeGoogle) return this.oauth('google', false);
+        const token = await window.BonghwaBridge.googleIdToken(ONLINE_CONFIG.googleWebClientId);
+        if (!token) throw new Error(L('Google 로그인을 취소했습니다'));
+        const r = await this.sb.auth.signInWithIdToken({ provider: 'google', token });
+        if (r.error) throw r.error;
+        this.markSwitch(); location.reload();
+    },
+    linkKakao() { if (!this.on) throw new Error(L('온라인 연결이 필요합니다')); return this.oauth('kakao', true); },
+    loginKakao() { return this.oauth('kakao', false); },
+    // make (or change) this account's game id and password
+    async setLogin(id, password) {
+        if (!this.on) throw new Error(L('온라인 연결이 필요합니다'));
+        id = String(id || '').trim().toLowerCase();
+        if (!/^[a-z0-9_]{4,16}$/.test(id)) throw new Error(L('아이디는 영어 소문자, 숫자, _ 로 4~16자예요'));
+        if (String(password || '').length < 8) throw new Error(L('비밀번호는 8자 이상으로 정해 주세요'));
+        const { data, error } = await this.sb.functions.invoke('bonghwa-login', { body: { id, password } });
+        let reason = data && data.reason;
+        if (error) { try { reason = (await error.context.json()).reason; } catch (e) { reason = 'net'; } }
+        if (!data || !data.ok) throw new Error({ bad_id: L('아이디는 영어 소문자, 숫자, _ 로 4~16자예요'), bad_password: L('비밀번호는 8자 이상으로 정해 주세요'),
+            taken: L('이미 쓰고 있는 아이디예요'), net: L('서버에 연결되지 않았습니다') }[reason] || L('저장하지 못했습니다'));
+        await this.sb.auth.refreshSession();   // the new address is in a fresh token
+        await this.refreshUser();
+        return data.id;
+    },
+    async loginWithId(id, password) {
+        if (!this.sb) throw new Error(L('온라인 연결이 필요합니다'));
+        const r = await this.sb.auth.signInWithPassword({ email: String(id || '').trim().toLowerCase() + this.LOGIN_DOMAIN, password: String(password || '') });
+        if (r.error) throw new Error(/invalid/i.test(r.error.message) ? L('아이디나 비밀번호가 맞지 않아요') : /rate|many/i.test(r.error.message) ? L('잠시 후 다시 시도해 주세요') : L('로그인하지 못했어요. 다시 시도해 주세요'));
+        this.markSwitch(); location.reload();
     },
 
     // ---------------------------------------------------------------- account deletion (store policy): server data, then this device

@@ -175,6 +175,7 @@
             h('div', { style: { flex: 1 } },
                 h('div', { style: { fontSize: '19px', color: RARITY[it.r].color } }, `${itemName(it)}${it.enh ? ' +' + it.enh : ''}`),
                 h('div.muted', L('{0} {1} · 아이템 레벨 {2}', RARITY[it.r].name, SLOT_NAME[it.slot], itemLv(it))),
+                it.mid ? h('div', { style: { color: '#7fe0d0', fontSize: '13px' } }, it.enh ? L('거래 가능 장비 (강화하지 않은 상태로만 팔 수 있어요)') : L('거래 가능 장비 · 거래소에서 팔 수 있어요')) : null,
                 h('div', { style: { color: '#f5c451' } }, fmtOpt(main.name, main.v, main.pct), cmp),
                 it.subs.map(sb => h('div', fmtOpt(SUB_OPTS[sb.k].name, sb.v, SUB_OPTS[sb.k].pct))),
             ),

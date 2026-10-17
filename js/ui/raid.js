@@ -53,7 +53,7 @@
                 });
                 c.classList.add('rd-pick');
                 Sfx.play(r.cards[i].item >= 3 ? 'rare' : 'coin');
-                tip.textContent = r.pity ? L('천장 발동! {0} 장비 확정', RARITY[r.pity === 'myth' ? 4 : 3].name) : L('토벌 훈장 +{0}', r.medals);
+                tip.textContent = (r.pity ? L('천장 발동! {0} 장비 확정', RARITY[r.pity === 'myth' ? 4 : 3].name) : L('토벌 훈장 +{0}', r.medals)) + (r.friend ? L(' · 친구 보너스 +20%') : '');
                 setTimeout(() => {
                     d.querySelector('.modal').appendChild(h('button.btn.gold', { onclick: () => { click(); d.remove(); if (r.got && r.got.length) showGot(title, r.got); done && done(); } }, L('받기')));
                 }, 1400);
@@ -131,6 +131,7 @@
                 h('div', L('2~4명이 함께 같은 보스를 때려요. 각자 하루 {0}번 도전하고, 피해를 합쳐 보스 체력을 다 깎으면 처치!', RAID_ON.party.tries)),
                 h('div.tip', L('혼자서는 못 잡아요. 2명 이상이 피해를 넣어야 해요. 파티는 이번 주 일요일까지')),
                 h('div.row', mk, quick), h('div.row', code, join)));
+            win.appendChild(finderBox('party', d));
             return;
         }
         const me = pt.members.find(m => m.me) || { runs: 0, pts: 0 };
@@ -154,10 +155,12 @@
                 bossPic(pt.kind), h('div.tip', L('보스 강도: {0} 기준', stageLabel(RAID_ON.diffs[pt.diff].eq)))),
             h('div.inset.rd-right',
                 h('div.rd-code-line', L('파티 코드 '), h('b.gold-t', pt.code), ' ', copy, leave),
+                pt.members.length < RAID_ON.party.size && !pt.cleared ? h('button.btn.small.gold', { onclick: () => { click(); UI.friendPick('party', pt.code); } }, L('친구 초대')) : null,
                 h('div.rd-mems', pt.members.map(m => h('div.rd-mem' + (m.me ? '.me' : ''), img(heroPortrait(m.hero, m.skin)), h('span.nm', m.me ? L('나') : `${m.name}#${m.tag}`),
                     h('span.tip', L('오늘 {0}/{1}', m.runs, RAID_ON.party.tries)), h('span.gold-t', L('{0}점', fmt(m.pts)))))),
                 pt.members.length < RAID_ON.party.size ? h('div.tip', L('코드를 친구에게 알려 주세요 · 빈자리 {0}', RAID_ON.party.size - pt.members.length)) : null,
-                h('div.tip', L('한 판 최대 {0}점 · 제 실력 한 판 약 150점', RAID_ON.party.runCap)))));
+                h('div.tip', L('한 판 최대 {0}점 · 제 실력 한 판 약 150점', RAID_ON.party.runCap)),
+                pt.members.some(m => !m.me && Friends.isFriend(m.uid)) ? h('div.gold-t', L('친구와 함께: 보상 카드 훈장 +20%')) : null)));
     }
 
     // ---------------------------------------------------------------- 월드 보스
@@ -222,15 +225,46 @@
                 h('div.tip', L('파란 점이 붙은 탑과 파란 이름의 영웅이 친구예요')),
                 h('div.tip', L('이기면 난이도마다 주 1번 보상 카드')),
                 wins.filter(x => !seen.has(x.diff) && seen.add(x.diff)).map(x => h('div.row', h('span', RAID_ON.diffs[x.diff].name), claimBtn('coop', x.id, x.diff, L('협동 디펜스 보상')))))));
+        win.appendChild(finderBox('coop', d));
+    }
+
+    // ---------------------------------------------------------------- 파티 찾기: open rooms of opened difficulties, friends first
+    function finderBox(kind, sel) {
+        const list = h('div.lg-list', { style: { maxHeight: '34vh', overflowY: 'auto' } }, h('div.tip', L('불러오는 중…')));
+        const again = h('button.btn.small', L('새로고침'));
+        const load = async () => {
+            const r = await RaidOn.openList(kind);
+            list.innerHTML = '';
+            if (r.error) { list.appendChild(h('div.tip', RaidOn.errText(r.error))); return; }
+            const rows = r.slice().sort((a, b) => (b.diff === sel) - (a.diff === sel) || b.friend - a.friend || b.at - a.at);
+            if (!rows.length) { list.appendChild(h('div.tip', kind === 'party' ? L('지금 사람을 찾는 파티가 없어요. 직접 만들어 보세요') : L('지금 기다리는 방이 없어요. 방을 만들거나 빠른 매칭을 눌러 보세요'))); return; }
+            for (const x of rows) {
+                const go = h('button.btn.small.gold', L('참가'));
+                go.onclick = busy(go, async () => {
+                    if (kind === 'coop') { const c = await RaidOn.coopJoin(x.code); if (say(c)) lobby(c); else load(); return; }
+                    if (say(await RaidOn.partyJoin(x.code))) { S.rdiff = x.diff; await RaidOn.state(); refresh(); } else load();
+                });
+                list.appendChild(h('div.lg-row', img(heroPortrait(x.hero, x.skin), '.rk-pic'), UI.tierBadge(x.tier || 0),
+                    h('span.lg-name', x.name, h('span.tip', ` #${x.tag}`), x.friend ? h('span.gold-t', ' ' + L('친구')) : null),
+                    h('span.tip', RAID_ON.diffs[x.diff].name),
+                    kind === 'party' ? h('span.tip', `${x.members}/${RAID_ON.party.size}` + ' · ' + (x.kind && ENEMIES[x.kind] ? ENEMIES[x.kind].name : '')) : null,
+                    go));
+            }
+        };
+        again.onclick = busy(again, load);
+        load();
+        return h('div.inset.rd-finder', { style: { marginTop: '8px', padding: '8px' } },
+            h('div.row', { style: { justifyContent: 'space-between' } }, h('b', L('파티 찾기')), h('span.tip', L('친구 방이 먼저 보여요 · 같이 하면 친구 보너스')), again), list);
     }
     // waiting room: shows the partner, the host starts
     function lobby(room, quick) {
-        const who = h('div.rd-lobby-who'), start = h('button.btn.gold.off'), status = h('div.tip');
+        const who = h('div.rd-lobby-who'), start = h('button.btn.gold.off'), status = h('div.tip'), bonus = h('div.gold-t');
         const draw = () => {
             who.innerHTML = '';
             Coop.infos.forEach((inf, i) => who.appendChild(h('div.rd-mem' + (i === Coop.me ? '.me' : ''),
                 inf ? img(heroPortrait(inf.cls, inf.skin)) : h('div.rd-wait', '?'), h('span.nm', inf ? (i === Coop.me ? L('나') : inf.name) : L('기다리는 중…')), h('span.tip', i === 0 ? L('방장') : L('손님')))));
             const ready = !!Coop.infos[1 - Coop.me];
+            bonus.textContent = ready && Friends.isFriend(Coop.infos[1 - Coop.me].uid) ? L('친구와 함께: 보상 카드 훈장 +20%') : '';
             start.classList.toggle('off', !(ready && Coop.me === 0));
             status.textContent = Coop.me === 0 ? (ready ? L('준비 완료! 시작을 눌러 주세요') : quick ? L('같이 할 냥이를 찾는 중… 코드를 친구에게 알려 줘도 돼요') : L('친구가 코드로 들어오길 기다리는 중'))
                 : L('방장이 시작하길 기다리는 중');
@@ -242,7 +276,8 @@
             await RaidOn.coopSet(room.id, Coop.me === 0 ? 'cancel' : 'leave'); d.remove();
         } }, L('나가기'));
         const d = modal([h('div.title-t', L('협동 디펜스 · {0}', RAID_ON.diffs[room.diff].name)),
-            h('div', L('방 코드 '), h('b.gold-t', room.code)), who, status, h('div.row', cancel, Coop.me === 0 ? start : null)]);
+            h('div', L('방 코드 '), h('b.gold-t', room.code)), who, status, bonus,
+            h('div.row', cancel, Coop.me === 0 ? h('button.btn', { onclick: () => { click(); UI.friendPick('coop', room.code); } }, L('친구 초대')) : null, Coop.me === 0 ? start : null)]);
         Coop.open(room, ev => {
             if (ev === 'start') d.remove();
             else if (ev === 'left' && Coop.me === 1 && document.body.contains(d)) { toast(L('방장이 나갔어요')); Coop.close(); RaidOn.coopSet(room.id, 'leave'); d.remove(); }
@@ -250,6 +285,23 @@
         });
         draw();
         // quick match: a guest that searched later may have joined the room on the server; the channel 'hi' tells us
+    }
+
+    // a friend's invite (js/ui/friends.js): open the raid tab on that mode and join with the code
+    async function raidJoinInvite(inv) {
+        if (document.querySelector('.rd-lobby-who')) { toast(L('지금은 다른 방에 있어요')); return; }
+        S.ctab = 'online'; S.rtab = inv.kind === 'coop' ? 'coop' : 'party'; S.rdiff = inv.diff;
+        if (inv.kind === 'coop') {
+            const r = await RaidOn.coopJoin(inv.code);
+            if (!say(r)) { showHub('endless'); return; }
+            if (!RaidOn.st) await RaidOn.state();
+            showHub('endless'); lobby(r);
+            return;
+        }
+        const r = await RaidOn.partyJoin(inv.code);
+        say(r);
+        await RaidOn.state();
+        showHub('endless');
     }
 
     // ---------------------------------------------------------------- the tab
@@ -294,16 +346,19 @@
             const x = R.raidOn.res;
             if (!x || x.error) { el.textContent = x ? RaidOn.errText(x.error) : L('기록을 보내는 중…'); return; }
             RaidOn.at = 0;
-            if (R.raidOn.mode === 'party') el.append(h('div', L('파티 합계 '), bar(x.dmg, x.hp, x.cleared ? '.done' : '')), x.cleared ? h('div.gold-t', L('보스 처치! 레이드 탭에서 보상 카드를 뒤집으세요')) : null);
+            if (R.raidOn.mode === 'party') { el.append(h('div', L('파티 합계 '), bar(x.dmg, x.hp, x.cleared ? '.done' : '')), x.cleared ? h('div.gold-t', L('보스 처치! 레이드 탭에서 보상 카드를 뒤집으세요')) : null,
+                x.cleared && (x.members || []).some(m => !m.me && m.pts > 0 && Friends.isFriend(m.uid)) ? h('div.gold-t', L('친구 보너스 +20%: 보상 카드 훈장이 늘어나요')) : null); }
             else el.append(h('div', L('월드 보스 '), bar(x.dmg, x.hp, x.dmg >= x.hp ? '.done' : '')), h('div.tip', L('내 기여 {0}점', fmt(x.me.pts)) + (x.me.rank ? L(' · {0}위', x.me.rank) : '')));
         } else if (R.coop) {
             const x = R.coop.res;
             if (!x || x.error) { el.textContent = x ? RaidOn.errText(x.error) : L('결과를 보내는 중…'); return; }
             RaidOn.at = 0;
+            const mate = Coop.infos && Coop.infos[1 - Coop.me];
+            if (x.win && mate && Friends.isFriend(mate.uid)) el.append(h('div.gold-t', L('친구 보너스 +20%: 보상 카드 훈장이 늘어나요')));
             if (x.win && !RaidOn.claimed('coop', R.coop.diff)) el.append(h('button.btn.gold', { onclick: () => { click(); flipModal('coop', R.coop.room, L('협동 디펜스 보상'), () => { el.innerHTML = ''; el.append(h('div.tip', L('이번 주 이 난이도 보상은 이미 받았어요'))); }); } }, L('보상 카드 뒤집기')));
             else if (x.win) el.append(h('div.tip', L('이번 주 이 난이도 보상은 이미 받았어요')));
         }
     }
 
-    Object.assign(UI, { tabRaidOn, raidResultLine, raidFlip: flipModal, raidShop: shopModal });
+    Object.assign(UI, { tabRaidOn, raidResultLine, raidFlip: flipModal, raidShop: shopModal, raidJoinInvite });
 })();

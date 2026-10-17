@@ -88,6 +88,7 @@ const UI = {};
         const c = h('div.cell.r' + it.r, { title: itemName(it) });
         c.appendChild(Art.domImg(Art.itemIcon(it), 3));   // <img>, not a canvas each: bags can hold thousands
         if (it.enh) c.appendChild(h('span.enh', '+' + it.enh));
+        if (it.mid) c.appendChild(h('span.trd', L('거래##배지')));   // server-minted gear: can go on the market (js/ui/market.js)
         if (isEquipped(it)) c.appendChild(h('span.eq', L('장착##배지')));
         else if (it.isNew && !opts.noNew) c.appendChild(h('span.eq', { style: { color: '#ff8a6a' } }, L('새##배지')));
         if (opts.onclick) c.addEventListener('click', opts.onclick);
@@ -117,7 +118,7 @@ const UI = {};
         if (!c.querySelector('.x2')) c.appendChild(h('span.x2', 'x2'));
     }
     const INFO_OF = { silver: 'silver', gem: 'gem', i_gem: 'gem', i_ticket: 'ticket', i_stone: 'stone', star: 'star', i_star: 'star' };
-    const REWARD_NAMES = () => ({ silver: L('은화'), gem: L('보석'), i_gem: L('보석'), i_ticket: L('소환권'), i_stone: L('강화석'), i_xp: L('경험치'), i_medal: L('토벌 훈장'), star: L('별'), i_star: L('별') });
+    const REWARD_NAMES = () => ({ silver: L('은화'), gem: L('보석'), i_gem: L('보석'), i_ticket: L('소환권'), i_stone: L('강화석'), i_xp: L('경험치'), i_medal: L('토벌 훈장'), i_gold: L('거래 금화'), star: L('별'), i_star: L('별') });
 
 
     // ------------------------------------------------------------ modal helpers
@@ -166,6 +167,7 @@ const UI = {};
         if (g.tickets) out.push(rewardCell('i_ticket', g.tickets));
         if (g.stones) out.push(rewardCell('i_stone', g.stones));
         if (g.medals) out.push(rewardCell('i_medal', g.medals));
+        if (g.gold) out.push(rewardCell('i_gold', fmt(g.gold)));
         if (g.item !== undefined) { const c = h('div.cell.r' + g.item, { onclick: () => toast(L('{0} 장비 1개 (무기·갑옷·부적 중 하나)', RARITY[g.item].name)) }, Art.domCanvas(Art.icon('weapon'), 3)); c.appendChild(h('span.cnt', RARITY[g.item].name)); out.push(c); }
         if (g.skin) { const s = skinById(g.skin); const c = h('div.cell.r' + s.r, img(heroPortrait(s.cls, s.id))); c.appendChild(h('span.cnt', L('스킨'))); const bd = skinBadge(s); if (bd) c.appendChild(bd); out.push(c); }
         return out;
