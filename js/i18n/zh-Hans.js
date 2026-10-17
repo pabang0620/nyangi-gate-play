@@ -1,6 +1,9 @@
 'use strict';
 // zh-Hans translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['zh-Hans'] = {
+    "오늘 도전한 뒤에는 나갈 수 없어요": "今天挑战后无法退出",
+    "방장이 나갔어요": "房主已离开",
+    "다시 불러오기": "重新加载",
     "{0}웨이브 · {1}웨이브에 중간 보스, 마지막에 레이드 보스": "{0}波 · 第{1}波出现中途首领，最后是突袭首领",
     "토벌 훈장": "讨伐勋章",
     "파티 레이드 · {0}": "组队突袭 · {0}",

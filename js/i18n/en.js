@@ -1,6 +1,9 @@
 'use strict';
 // en translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['en'] = {
+    "오늘 도전한 뒤에는 나갈 수 없어요": "You can't leave after playing today",
+    "방장이 나갔어요": "The host left",
+    "다시 불러오기": "Reload",
     "{0}웨이브 · {1}웨이브에 중간 보스, 마지막에 레이드 보스": "{0} waves · mid boss at wave {1}, raid boss at the end",
     "토벌 훈장": "Raid Medal",
     "파티 레이드 · {0}": "Party Raid · {0}",

@@ -81,6 +81,7 @@
                         if (!can) { toast(left === 0 ? L('이번 주에는 다 샀어요') : L('토벌 훈장이 부족해요')); return; }
                         click();
                         const buy = slot => {
+                            if (medals() < it.cost || (it.weekly && (p.raidShop.bought[it.id] || 0) >= it.weekly)) { draw(); return; }
                             p.mats.medal -= it.cost;
                             if (it.weekly) p.raidShop.bought[it.id] = (p.raidShop.bought[it.id] || 0) + 1;
                             const got = Rewards.grant(p, slot ? { ...it.reward, slot } : it.reward);
@@ -242,7 +243,11 @@
         } }, L('나가기'));
         const d = modal([h('div.title-t', L('협동 디펜스 · {0}', RAID_ON.diffs[room.diff].name)),
             h('div', L('방 코드 '), h('b.gold-t', room.code)), who, status, h('div.row', cancel, Coop.me === 0 ? start : null)]);
-        Coop.open(room, ev => { if (ev === 'start') d.remove(); else if (document.body.contains(d)) draw(); });
+        Coop.open(room, ev => {
+            if (ev === 'start') d.remove();
+            else if (ev === 'left' && Coop.me === 1 && document.body.contains(d)) { toast(L('방장이 나갔어요')); Coop.close(); RaidOn.coopSet(room.id, 'leave'); d.remove(); }
+            else if (document.body.contains(d)) draw();
+        });
         draw();
         // quick match: a guest that searched later may have joined the room on the server; the channel 'hi' tells us
     }
@@ -263,9 +268,14 @@
             h('button.btn.small', { onclick: () => { click(); shopModal(); } }, L('훈장 상점')));
         win.appendChild(head);
         const st = RaidOn.st;
+        if (!st && RaidOn.fail) {
+            win.appendChild(h('div.rd-off', h('div', RaidOn.errText(RaidOn.fail)), h('button.btn.gold', { onclick: () => { click(); RaidOn.fail = null; refresh(); } }, L('다시 불러오기'))));
+            return;
+        }
         if (!st || Date.now() - (RaidOn.at || 0) > 20000) {
             win.appendChild(h('div.tip', L('불러오는 중…')));
-            RaidOn.state().then(r => { RaidOn.at = Date.now(); if (r.error) { toast(RaidOn.errText(r.error)); RaidOn.at = Date.now(); } refresh(); });
+            RaidOn.at = Date.now();
+            RaidOn.state().then(r => { RaidOn.at = Date.now(); RaidOn.fail = r.error && !RaidOn.st ? r.error : null; if (r.error && RaidOn.st) toast(RaidOn.errText(r.error)); refresh(); });
             if (!st) return;
         }
         if (S.rdiff === undefined || !RaidOn.diffOpen(S.rdiff)) { S.rdiff = 0; RAID_ON.diffs.forEach((x, i) => { if (RaidOn.diffOpen(i)) S.rdiff = i; }); }
@@ -290,7 +300,7 @@
             const x = R.coop.res;
             if (!x || x.error) { el.textContent = x ? RaidOn.errText(x.error) : L('결과를 보내는 중…'); return; }
             RaidOn.at = 0;
-            if (x.win && !RaidOn.claimed('coop', R.coop.diff)) el.append(h('button.btn.gold', { onclick: () => { click(); flipModal('coop', R.coop.room, L('협동 디펜스 보상'), () => { }); } }, L('보상 카드 뒤집기')));
+            if (x.win && !RaidOn.claimed('coop', R.coop.diff)) el.append(h('button.btn.gold', { onclick: () => { click(); flipModal('coop', R.coop.room, L('협동 디펜스 보상'), () => { el.innerHTML = ''; el.append(h('div.tip', L('이번 주 이 난이도 보상은 이미 받았어요'))); }); } }, L('보상 카드 뒤집기')));
             else if (x.win) el.append(h('div.tip', L('이번 주 이 난이도 보상은 이미 받았어요')));
         }
     }

@@ -1,6 +1,9 @@
 'use strict';
 // es translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['es'] = {
+    "오늘 도전한 뒤에는 나갈 수 없어요": "No puedes salir después de jugar hoy",
+    "방장이 나갔어요": "El anfitrión se fue",
+    "다시 불러오기": "Recargar",
     "{0}웨이브 · {1}웨이브에 중간 보스, 마지막에 레이드 보스": "{0} oleadas · jefe intermedio en la oleada {1}, jefe de incursión al final",
     "토벌 훈장": "Medalla de incursión",
     "파티 레이드 · {0}": "Incursión en grupo · {0}",

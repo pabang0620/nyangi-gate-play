@@ -1,6 +1,9 @@
 'use strict';
 // zh-Hant translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['zh-Hant'] = {
+    "오늘 도전한 뒤에는 나갈 수 없어요": "今天挑戰後無法退出",
+    "방장이 나갔어요": "房主已離開",
+    "다시 불러오기": "重新載入",
     "{0}웨이브 · {1}웨이브에 중간 보스, 마지막에 레이드 보스": "{0}波 · 第{1}波出現中途首領，最後是突襲首領",
     "토벌 훈장": "討伐勳章",
     "파티 레이드 · {0}": "組隊突襲 · {0}",
