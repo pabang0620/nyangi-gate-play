@@ -97,7 +97,7 @@
             const list = h('div.lg-list');
             for (const it of items) {
                 const why = it.enh ? L('강화한 장비') : isEquipped(it) ? L('장착 중') : Market.bound(it) ? L('구매한 장비 (재판매 불가)') : '';
-                list.appendChild(h('div.lg-row', UI.itemCell(it, { noNew: true }),
+                list.appendChild(h('div.lg-row', UI.itemCell(it, { noNew: true, onclick: () => UI.itemInfo(it) }),
                     h('div', { style: { flex: 1, textAlign: 'left' } }, nameLine(it), h('div.tip', why || L('거래 가능'))),
                     why ? null : h('button.btn.small.gold', { onclick: () => { click(); sellModal(it); } }, L('팔기'))));
             }
@@ -141,7 +141,7 @@
                     if (!say(await Market.cancel(row.id))) return;
                     toast(L('판매를 취소했어요')); draw();
                 }); };
-                list.appendChild(h('div.lg-row', UI.itemCell(it, { noNew: true }),
+                list.appendChild(h('div.lg-row', UI.itemCell(it, { noNew: true, onclick: () => UI.itemInfo(it) }),
                     h('div', { style: { flex: 1, textAlign: 'left' } }, nameLine(it), h('div.tip', `${goldText(row.price)} · ${left(row.expires)}`)), x));
             }
             body.appendChild(list);

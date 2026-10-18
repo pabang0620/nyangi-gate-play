@@ -91,7 +91,7 @@
         const linked = Online.isLinked();
         const reopen = () => { d.remove(); profileModal(then); };
         const d = modal([h('h2', L('프로필 · 계정')),
-            h('div.prof-row', img(heroPortrait(p.hero, p.shop && p.shop.skin[p.hero]), '.prof-pic'),
+            h('div.prof-row', (() => { const a = img(heroFace(p.hero, p.shop && p.shop.skin[p.hero]), '.prof-pic'); a.style.background = avatarBg(); return a; })(),
                 h('div', { style: { flex: 1 } },
                     h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } }, input, pr ? h('span.tip', '#' + pr.tag) : null),
                     h('div.tip', L('랭킹과 리그에서 다른 냥이에게 보이는 이름과 대표 영웅(현재 영웅·스킨)입니다.')),
@@ -214,7 +214,7 @@
         if (!view) return h('div.muted', { style: { margin: '20px' } }, Online.enabled ? L('랭킹을 불러오지 못했습니다') : L('온라인 기능이 아직 설정되지 않았습니다'));
         if (!view.top.length) return h('div.muted', { style: { margin: '20px' } }, L('아직 기록이 없습니다. 첫 기록의 주인공이 되어 보세요!'));
         return h('div.lg-list.rank-list', view.top.map(r => h('div.lg-row' + (r.me ? '.me' : ''),
-            h('span.lg-rank', `${r.rank}`), img(heroPortrait(r.hero, r.skin), '.rk-pic'), tierBadge(r.tier || 0),
+            h('span.lg-rank', `${r.rank}`), img(heroFace(r.hero, r.skin), '.rk-pic'), tierBadge(r.tier || 0),
             h('span.lg-name', `${r.name}`, h('span.tip', ` #${r.tag}`)), h('span.lg-score', `${fmtValue(Number(r.value))} ${unit}`))));
     }
     function myRankLine(view, unit, fmtValue = v => fmt(v)) {

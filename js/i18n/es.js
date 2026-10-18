@@ -1,6 +1,14 @@
 'use strict';
 // es translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['es'] = {
+    "병영으로 붙잡고 궁수탑 · 대포탑 (화상은 안 통함)": "Frena con Cuartel y usa Torre de Arqueros · Torre de Cañón (la quemadura no sirve)",
+    "이번 층에서는 {0}을(를) 지을 수 없습니다": "En este piso no se puede construir {0}",
+    "영웅 자동 켜짐": "Héroe auto activado",
+    "영웅 자동 꺼짐 (직접 조작)": "Héroe auto desactivado (manual)",
+    "대기 중에도 경험치 {0}% 획득": "Gana {0}% de EXP en reserva",
+    "· {0}장부터 적 체력 {1}% (보스 스테이지 {2}%)": "· Desde el capítulo {0}: vida enemiga {1}% (fases de jefe {2}%)",
+    "장 보스를 물리치면 그 장의 영웅 난이도가 열립니다. 적 체력 {0}% ({2}장부터 {3}%) · 별마다 보석 {1}개 · 별 3개는 특별 조건까지 지켜야 합니다.": "Vencer al jefe de un capítulo abre su modo heroico. Vida enemiga {0}% ({3}% desde el capítulo {2}) · {1} gemas por estrella · 3 estrellas exigen también la condición especial.",
+    "3분 동안 준 피해량으로 단계 보상을 받아요. 단계 보상은 주마다 1번, 보스는 매주 월요일 05:00에 바뀌어요.": "Recibe premios por nivel según el daño que hagas en 3 minutos. Premios por nivel 1 vez por semana; el jefe cambia cada lunes a las 05:00.",
     "순식간에 지나가는 빠른 적": "Enemigo veloz que pasa en un parpadeo",
     "병영으로 붙잡기 · 서리 첨탑 둔화": "Frena con Cuartel · Ralentiza con Aguja de Escarcha",
     "가장 약한 기본 적": "El enemigo básico más débil",

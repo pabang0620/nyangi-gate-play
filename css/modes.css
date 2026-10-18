@@ -84,9 +84,9 @@
 .tierbadge { display: inline-block; font-size: 12px; font-family: 'BlackHan', sans-serif; padding: 0 6px; border: 2px solid; border-radius: 6px; background: rgba(20, 12, 4, .75); vertical-align: middle; white-space: nowrap; }
 .nick { font: inherit; font-size: 20px; padding: 6px 10px; border-radius: 8px; border: 2px solid #8a6a3a; background: #fff8e8; color: #3a2410; width: 220px; }
 .prof-row { display: flex; gap: 14px; align-items: center; margin: 8px 0; text-align: left; }
-.prof-pic { width: 84px; height: 84px; object-fit: contain; }
+.prof-pic { width: 84px; height: 84px; object-fit: contain; border-radius: 12px; }
 .rank-list { max-height: none; flex: 1; width: auto; }
-.rk-pic { width: 30px; height: 30px; object-fit: contain; }
+.rk-pic { width: 30px; height: 30px; object-fit: contain; border-radius: 50%; background: #3a2412; }
 .cloudopt { flex: 1; padding: 10px; display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; }
 .tbtn.banned, .banned { filter: grayscale(1) brightness(.6); }
 .cup-rw { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; font-size: 13px; }
@@ -159,7 +159,7 @@
 .rd-mems { display: flex; flex-direction: column; gap: 4px; }
 .rd-mem { display: flex; align-items: center; gap: 10px; padding: 4px 8px; border-radius: 8px; background: rgba(60,36,14,.18); }
 .rd-mem.me { background: rgba(242,193,78,.25); }
-.rd-mem img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; object-position: top; }
+.rd-mem img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; background: #3a2412; }
 .rd-mem .nm { flex: 1; font-family: 'BlackHan'; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rd-wait { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #3a2412; color: #f2c14e; font-family: 'BlackHan'; font-size: 22px; }
 .rd-marks { display: flex; gap: 8px; flex-wrap: wrap; }

@@ -284,7 +284,7 @@
         if (key === 'autoHero' && Game.battle && Game.battle.coop) Coop.cmd(['auto', on]);   // co-op: the switch is part of the shared fight
         const hud = S.hud; if (hud && hud[key]) hud[key].classList.toggle('on', on);
         if (key === 'autoHero') {
-            toast(on ? L('영웅 AUTO 켜짐') : L('영웅 AUTO 꺼짐 (직접 조작)'));
+            toast(on ? L('영웅 자동 켜짐') : L('영웅 자동 꺼짐 (직접 조작)'));
             if (!tipSeen('tog_autoHero')) coach(L('영웅 자동'), [L('켜면 알아서 싸우고, 끄면 누른 곳을 지켜요.'), L('직접 움직인 3초 동안 잡으면 금화 1.25배')], 6000);
         } else {
             toast(on ? L('자동 웨이브 켜짐') : L('자동 웨이브 꺼짐 (뿔피리로 직접 시작)'));
@@ -301,11 +301,11 @@
     function showFoe(kind) {
         if (tipSeen('foe_' + kind)) return;
         const d = ENEMIES[kind];
-        coach(d.name + ' · ' + (d.boss ? d.title : d.tag), [UI.foeTip(kind), (d.boss || d.elite) && !(Game.battle && Game.battle.raid) ? L('놓치면 즉시 패배! 꼭 잡으세요') : null, L('웨이브 예고의 적 아이콘을 누르면 다시 볼 수 있어요')].filter(Boolean), 7000);
+        coach(d.boss ? d.name + ' · ' + d.title : d.name, [UI.foeTip(kind), (d.boss || d.elite) && !(Game.battle && Game.battle.raid) ? L('놓치면 즉시 패배! 꼭 잡으세요') : null, L('웨이브 예고의 적 아이콘을 누르면 다시 볼 수 있어요')].filter(Boolean), 7000);
     }
     function foeCard(title, kinds, foot) {
         if (!kinds.length) return;
-        coach(title, [...kinds.map(k => { const d = ENEMIES[k]; return h('div.foe', h('span.gn', d.name + (d.tag ? ` (${d.tag})` : '')), UI.foeTip(k)); }), foot], 8000);
+        coach(title, [...kinds.map(k => { const d = ENEMIES[k]; return h('div.foe', h('span.gn', d.name), UI.foeTip(k)); }), foot], 8000);
         S.coach.classList.add('foes');
     }
 
@@ -391,7 +391,7 @@
             TOWER_ORDER.forEach((type, i) => {
                 const d = TOWERS[type], c = B.towerCost(type, 0);
                 const bb = add(pos[i][0], pos[i][1], Art.domCanvas(Art.tower(type, 0, null), 1.15), c,
-                    () => { if (B.ban === type) { toast(L('이번 주 공방전에서는 {0}을(를) 지을 수 없습니다', d.name)); return; } if (B.build(slot, type)) { closePopup(); if (!tipSeen('t_' + type)) coach(L('{0} 완성!', d.name), [d.desc, type === 'barracks' ? L('탑을 다시 누르면 업그레이드, 깃발 버튼으로 집결지를 옮겨요') : L('탑을 다시 누르면 업그레이드할 수 있어요')]); } else toast(L('금화가 {0} 부족합니다', c - Math.floor(B.gold))); },
+                    () => { if (B.ban === type) { toast(B.mode === 'tower' ? L('이번 층에서는 {0}을(를) 지을 수 없습니다', d.name) : L('이번 주 공방전에서는 {0}을(를) 지을 수 없습니다', d.name)); return; } if (B.build(slot, type)) { closePopup(); if (!tipSeen('t_' + type)) coach(L('{0} 완성!', d.name), [d.desc, type === 'barracks' ? L('탑을 다시 누르면 업그레이드, 깃발 버튼으로 집결지를 옮겨요') : L('탑을 다시 누르면 업그레이드할 수 있어요')]); } else toast(L('금화가 {0} 부족합니다', c - Math.floor(B.gold))); },
                     () => [h('b', d.name), h('div', d.desc), statLines(B, { type, lv: 0, spec: null })]);
                 bb.appendChild(h('span.nm', d.name)); bb.range = B.towerStats({ type, lv: 0, spec: null }).range;
                 if (B.ban === type) bb.classList.add('banned');

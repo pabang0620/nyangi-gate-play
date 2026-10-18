@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.3';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.4';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-14';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
@@ -168,7 +168,7 @@
         const tabs = [['map', L('지도')], ['hero', L('영웅')], ['research', L('연구')], ['summon', L('소환')], ['rewards', L('보상')], ['shop', L('상점')], ['endless', L('도전')]];
         const nav = h('div.navbar', tabs.map(([id, name]) => {
             const b = h('div.navbtn' + (S.tab === id ? '.cur' : ''), { onclick: () => { click(); showHub(id); } }, img(id === 'endless' ? 'nav_challenge' : 'nav_' + id), h('span', name));
-            if (id === 'hero' && p.items.some(i => i.isNew)) b.appendChild(h('span.badge', 'N'));
+            if (id === 'hero' && S.tab !== 'hero' && p.items.some(i => i.isNew)) b.appendChild(h('span.badge', 'NEW'));   // the hero tab clears isNew once its bag is drawn
             if (id === 'research' && researchAffordable(p)) b.appendChild(h('span.badge', '!'));
             if (id === 'rewards' && Rewards.pending(p)) b.appendChild(h('span.badge', '!'));
             if (id === 'endless' && ((p.league && p.league.pending) || (Meta.dungeonUnlocked(p) && Meta.dungeonLeft(p) > 0) || (Meta.raidUnlocked(p) && p.raid.runs < RAID.tries))) b.appendChild(h('span.badge', '!'));
@@ -198,7 +198,7 @@
             sec(L('자동·배속'), L('영웅 자동: 알아서 싸움 · 자동 웨이브: 알아서 시작'), L('배속: 게임 속도')),
             sec(L('별'), L('목숨을 2 이하로 잃고 이기면 별 3개. 별은 연구에 써요.')),
             sec(L('재화'), L('은화: 강화 · 보석: 소환 · 강화석: +11 이상 강화')),
-            sec(L('영웅 난이도'), L('장 보스를 물리치면 그 장의 영웅 난이도가 열립니다. 적 체력 {0}% · 별마다 보석 {1}개 · 별 3개는 특별 조건까지 지켜야 합니다.', Math.round(HARD.hpMul * 100), HARD.gemsPerStar)),
+            sec(L('영웅 난이도'), L('장 보스를 물리치면 그 장의 영웅 난이도가 열립니다. 적 체력 {0}% ({2}장부터 {3}%) · 별마다 보석 {1}개 · 별 3개는 특별 조건까지 지켜야 합니다.', Math.round(HARD.hpMul * 100), HARD.gemsPerStar, HARD.lateFrom + 1, Math.round(HARD.lateHpMul * 100))),
         ]));
     }
 
@@ -352,7 +352,7 @@
             if (s.gacha) continue;
             const own = p.shop.skins.includes(s.id), on = p.shop.skin[cls] === s.id;
             skins.push(h('div.pcard.skin.r' + s.r,
-                (() => { const pic = img(heroPortrait(cls, s.id), '.shopimg.round');
+                (() => { const pic = img(heroFace(cls, s.id), '.shopimg.round');
                     pic.style.cursor = 'pointer';
                     pic.addEventListener('click', () => { click(); UI.skinPreview(cls, s.id, () => showHub('shop')); });
                     return pic; })(),

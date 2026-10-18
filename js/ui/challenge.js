@@ -61,7 +61,7 @@
             const open = m.open(p);
             const b = h('button.btn.small' + (S.ctab === m.id ? '.gold' : '.ghost') + (open ? '' : '.ch-locked'), { onclick: () => { click(); S.ctab = m.id; showHub('endless'); } },
                 open ? null : img('i_lock', '.icon'), open ? names[m.id] : m.name());
-            if (open && !seen['ch_' + m.id]) b.appendChild(h('span.badge', 'N'));   // opened but its intro not seen yet
+            if (open && !seen['ch_' + m.id]) b.appendChild(h('span.badge', 'NEW'));   // opened but its intro not seen yet
             return b;
         }));
         root().appendChild(sub);
@@ -109,14 +109,18 @@
     let leagueCache = null;
     function onlineLeagueCard(p) {
         const card = h('div.leaguecard', img('i_league', '.lg-ico'));
+        const pd = p.league && p.league.pending;   // an AI-league reward left from before going online: still claimable here (the hub badge points at it)
+        const claim = pd && h('button.btn.small.gold', { onclick: () => { click(); const g = Meta.claimLeague(p); Save.save(); showHub('endless'); if (g) showGot(L('지난 시즌 {0}위 보상', pd.rank), g); } }, L('지난 시즌 {0}위 보상 받기', pd.rank));
         if (!Online.profile) {
             card.appendChild(h('div', { style: { flex: 1 } }, h('b', L('온라인 시즌 리그 ')), h('span', L('· 같은 등급 30명과 2주 동안 무한의 성벽 기록으로 겨룹니다'))));
             card.appendChild(h('button.btn.small.gold', { onclick: () => { click(); ensureProfile(() => showHub('endless')); } }, L('참가하기')));
+            if (claim) card.appendChild(claim);
             return card;
         }
         const body = h('div', { style: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' } }, h('b', L('온라인 시즌 리그 ')), tierBadge(Online.profile.tier || 0), h('span.tip', L('불러오는 중…')));
         card.appendChild(body);
         card.appendChild(h('button.btn.small', { onclick: () => { click(); leagueBoard(p); } }, L('순위표')));
+        if (claim) card.appendChild(claim);
         Online.league().then(rows => {
             if (!rows) { body.lastChild.textContent = L('불러오지 못했습니다'); return; }
             leagueCache = leagueRows(rows, p);
@@ -136,8 +140,8 @@
                 h('div', h('b', L('시즌 리그 ')), h('span.gold-t', L('{0}위', B.rank)), h('span', L(' / {0} · 이번 시즌 {1} 웨이브 · {2}일 남음', LEAGUE.rivals + 1, lg.best, B.daysLeft))),
                 h('div.tip', L('예상 보상({0}) ', tier.name), ...rewardIcons(tier.reward))),
             h('button.btn.small', { onclick: () => { click(); leagueBoard(p); } }, L('순위표')));
-        if (L.pending) {
-            const pd = L.pending;
+        if (lg.pending) {
+            const pd = lg.pending;
             card.appendChild(h('button.btn.small.gold', { onclick: () => { click(); const g = Meta.claimLeague(p); Save.save(); showHub('endless'); if (g) showGot(L('지난 시즌 {0}위 보상', pd.rank), g); } }, L('지난 시즌 {0}위 보상 받기', pd.rank)));
         }
         return card;
@@ -217,7 +221,7 @@
         const win = h('div.panel.win');
         win.appendChild(h('div.tabhead', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' } },
             h('h2', { style: { margin: 0 } }, L('보스 토벌전')), h('div.chip', L('이번 주 남은 도전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries)),
-            h('div.tip', L('3분 동안 거대 보스에게 준 피해량으로 단계 보상을 받습니다(주 1회). 보스는 매주 월요일 05:00에 바뀝니다.'))));
+            h('div.tip', L('3분 동안 준 피해량으로 단계 보상을 받아요. 단계 보상은 주마다 1번, 보스는 매주 월요일 05:00에 바뀌어요.'))));
         if (!Meta.raidUnlocked(p)) { win.appendChild(h('div', { style: { color: '#ff9090', margin: '30px', fontSize: '20px' } }, L('2장 보스를 물리치면 열립니다'))); root().appendChild(win); return; }
         const kind = Meta.raidBoss(p), si = Meta.raidStage(p, kind), ref = Meta.raidRef(kind, si), tierNow = Meta.raidTierOf(kind, p.raid.best, si);
         const left = h('div.inset.raidleft',

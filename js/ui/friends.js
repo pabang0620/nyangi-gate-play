@@ -20,7 +20,7 @@
         return L('{0}일 전', Math.floor(m / 1440));
     }
     const nameTag = f => h('span.lg-name', f.name, h('span.tip', ` #${f.tag}`));
-    const row = (f, ...right) => h('div.lg-row', img(heroPortrait(f.hero, f.skin), '.rk-pic'), UI.tierBadge(f.tier || 0), nameTag(f), ...right);
+    const row = (f, ...right) => h('div.lg-row', img(heroFace(f.hero, f.skin), '.rk-pic'), UI.tierBadge(f.tier || 0), nameTag(f), ...right);
 
     function friendBadge() { return Friends.badge; }
 
@@ -105,7 +105,7 @@
             display: 'flex', gap: '10px', alignItems: 'center', maxWidth: 'calc(100% - 32px)', flexWrap: 'wrap', justifyContent: 'center' } },
             h('span', L('{0}님이 {1}에 초대했어요', inv.name, KIND[inv.kind]())),
             h('button.btn.small.gold', { onclick: () => { click(); b.remove(); joinInvite(inv); } }, L('참가')),
-            h('button.btn.small.ghost', { onclick: () => { click(); b.remove(); } }, L('닫기')));
+            h('button.btn.small.ghost', { onclick: () => { click(); b.remove(); Friends.dismiss(inv.id); } }, L('닫기')));
         root().appendChild(b);
         Sfx.play && Sfx.play('coin');
         setTimeout(() => b.remove(), 20000);

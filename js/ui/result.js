@@ -22,8 +22,8 @@
         const cells = [];
         const dblCells = [];   // what the ad doubles: silver and hero xp
         if (R.silver > 0) cells.push(dblCells[dblCells.length] = rewardCell('silver', fmt(R.silver)));
-        if (R.gems) cells.push(rewardCell('gem', R.gems));
         if (R.xp) cells.push(dblCells[dblCells.length] = rewardCell('i_xp', R.xp));
+        if (R.gems) cells.push(rewardCell('gem', R.gems));
         const gear = R.items.map(it => itemCell(it, { noNew: true, onclick: () => { click(); UI.itemInfo(it); } }));   // second row; tap for the options
         const content = [];
         if (R.cup) {

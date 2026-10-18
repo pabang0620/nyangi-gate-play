@@ -174,9 +174,9 @@ const Rewards = {
         if (g.gems) { p.gems += g.gems; got.push({ icon: 'gem', n: g.gems }); }
         if (g.tickets) { p.tickets += g.tickets; got.push({ icon: 'i_ticket', n: g.tickets }); }
         if (g.stones) { p.mats = p.mats || { stone: 0 }; p.mats.stone += g.stones; got.push({ icon: 'i_stone', n: g.stones }); }
-        if (g.shields) { p.mats = p.mats || { stone: 0 }; p.mats.shield = (p.mats.shield || 0) + g.shields; got.push({ text: L('파괴방지권 {0}개', g.shields) }); }
+        if (g.shields) { p.mats = p.mats || { stone: 0 }; p.mats.shield = (p.mats.shield || 0) + g.shields; got.push({ mat: 'shield', n: g.shields }); }
         if (g.medals) { p.mats = p.mats || { stone: 0 }; p.mats.medal = (p.mats.medal || 0) + g.medals; got.push({ icon: 'i_medal', n: g.medals }); }
-        if (g.guards) { p.mats = p.mats || { stone: 0 }; p.mats.guard = (p.mats.guard || 0) + g.guards; got.push({ text: L('하락방지권 {0}개', g.guards) }); }
+        if (g.guards) { p.mats = p.mats || { stone: 0 }; p.mats.guard = (p.mats.guard || 0) + g.guards; got.push({ mat: 'guard', n: g.guards }); }
         // gear minted by the server (mail: raid cards, market deliveries): built from its seed, so the same mid is always
         // the same item, and tagged with mid (거래 가능, js/online/market.js). Never twice in one bag.
         if (g.item !== undefined && g.mid && g.seed) {
@@ -187,7 +187,7 @@ const Rewards = {
             const it = makeItem(SLOTS.includes(g.slot) ? g.slot : SLOTS[Math.floor(Math.random() * 3)], g.item, Math.max(summonIlvl(p), g.ilvlMin || 0));
             got.push({ item: it });
         }
-        if (g.gold) { got.push({ text: L('거래 금화 {0}', fmt(g.gold)) }); if (typeof Market !== 'undefined') Market.gold += g.gold; }   // server wallet (거래소); the save never holds it
+        if (g.gold) { got.push({ icon: 'i_gold', n: g.gold }); if (typeof Market !== 'undefined') Market.gold += g.gold; }   // server wallet (거래소); the save never holds it
         if (g.skin) { if (!p.shop.skins.includes(g.skin)) p.shop.skins.push(g.skin); got.push({ skin: g.skin }); }
         if (g.premium) { p.shop.premium = true; got.push({ text: L('냥이의 가호') }); }
         if (g.speed3) { p.shop.speed3 = true; got.push({ text: L('3배속 영구 해금') }); }

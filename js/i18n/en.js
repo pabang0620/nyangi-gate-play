@@ -1,6 +1,14 @@
 'use strict';
 // en translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['en'] = {
+    "병영으로 붙잡고 궁수탑 · 대포탑 (화상은 안 통함)": "Block with Barracks, then Archer Tower · Cannon Tower (burn won't work)",
+    "이번 층에서는 {0}을(를) 지을 수 없습니다": "{0} can't be built on this floor",
+    "영웅 자동 켜짐": "Hero Auto on",
+    "영웅 자동 꺼짐 (직접 조작)": "Hero Auto off (manual control)",
+    "대기 중에도 경험치 {0}% 획득": "Gets {0}% EXP while benched",
+    "· {0}장부터 적 체력 {1}% (보스 스테이지 {2}%)": "· From chapter {0}: enemy HP {1}% (boss stages {2}%)",
+    "장 보스를 물리치면 그 장의 영웅 난이도가 열립니다. 적 체력 {0}% ({2}장부터 {3}%) · 별마다 보석 {1}개 · 별 3개는 특별 조건까지 지켜야 합니다.": "Beating a chapter's boss opens Heroic Mode for that chapter. Enemy HP {0}% ({3}% from chapter {2}) · {1} gems per star · 3 stars also need the special condition.",
+    "3분 동안 준 피해량으로 단계 보상을 받아요. 단계 보상은 주마다 1번, 보스는 매주 월요일 05:00에 바뀌어요.": "Earn tier rewards by the damage you deal in 3 minutes. Tier rewards once a week; the boss changes every Monday at 05:00.",
     "순식간에 지나가는 빠른 적": "Fast enemy that rushes past",
     "병영으로 붙잡기 · 서리 첨탑 둔화": "Block with Barracks · Slow with Frost Spire",
     "가장 약한 기본 적": "Weakest basic enemy",

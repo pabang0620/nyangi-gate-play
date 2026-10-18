@@ -164,15 +164,28 @@ const UI = {};
     // reward popup listing what was granted (icons, not text lines)
     function showGot(title, got) {
         if (!got || !got.length) return;
-        const cells = got.map(g => {
-            if (g.item) return itemCell(g.item, { noNew: true });
-            if (g.skin) { const s = skinById(g.skin); const c = h('div.cell.r' + s.r, img(heroPortrait(s.cls, s.id))); c.appendChild(h('span.cnt', L('스킨'))); const bd = skinBadge(s); if (bd) c.appendChild(bd); return c; }
+        const cell = g => {
+            if (g.item) return itemCell(g.item, { noNew: true, onclick: () => itemInfo(g.item) });
+            if (g.mat) return matCell(g.mat, g.n);
+            if (g.skin) { const s = skinById(g.skin); const c = h('div.cell.r' + s.r, img(heroFace(s.cls, s.id))); c.appendChild(h('span.cnt', L('스킨'))); const bd = skinBadge(s); if (bd) c.appendChild(bd); return c; }
             if (g.text) return h('div.gotext', g.text);
             return rewardCell(g.icon, fmt(g.n));
-        });
+        };
+        // same layout as the battle result: currencies on the first row, gear and skins on the second
+        const big = got.filter(g => g.item || g.skin), rest = got.filter(g => !g.item && !g.skin);
         Sfx.play('coin');
-        const d = modal([h('div.ribbon', h('span', title)), h('div.row', cells), h('button.btn.gold', { onclick: () => { click(); d.remove(); } }, L('확인'))]);
+        const d = modal([h('div.ribbon', h('span', title)), rest.length ? h('div.row', rest.map(cell)) : null, big.length ? h('div.row', big.map(cell)) : null, h('button.btn.gold', { onclick: () => { click(); d.remove(); } }, L('확인'))]);
     }
+
+    // 하락방지권 / 파괴방지권: no sprite, the round badge of the shop card in small
+    function matCell(kind, n) {
+        const sh = kind === 'shield';
+        return h('div.cell.matc', { onclick: () => toast(sh ? L('파괴방지권') : L('하락방지권')) },
+            h('div.guard-ico' + (sh ? '.shield' : ''), h('b', sh ? '\u2726' : '\u25B2')), h('span.cnt', fmt(n)));
+    }
+
+    // gear of a known grade but not yet a known slot (reward cards, 훈장 shop): weapon · armor · charm side by side
+    function gearAny(r) { return h('div.cell.gear3.r' + r, ['weapon', 'armor', 'charm'].map(s => Art.domCanvas(Art.icon(s), 1.5))); }
 
     function rewardIcons(g) {
         const out = [];
@@ -182,8 +195,10 @@ const UI = {};
         if (g.stones) out.push(rewardCell('i_stone', g.stones));
         if (g.medals) out.push(rewardCell('i_medal', g.medals));
         if (g.gold) out.push(rewardCell('i_gold', fmt(g.gold)));
-        if (g.item !== undefined) { const c = h('div.cell.r' + g.item, { onclick: () => toast(L('{0} 장비 1개 (무기·갑옷·부적 중 하나)', RARITY[g.item].name)) }, Art.domCanvas(Art.icon('weapon'), 3)); c.appendChild(h('span.cnt', RARITY[g.item].name)); out.push(c); }
-        if (g.skin) { const s = skinById(g.skin); const c = h('div.cell.r' + s.r, img(heroPortrait(s.cls, s.id))); c.appendChild(h('span.cnt', L('스킨'))); const bd = skinBadge(s); if (bd) c.appendChild(bd); out.push(c); }
+        if (g.guards) out.push(matCell('guard', g.guards));
+        if (g.shields) out.push(matCell('shield', g.shields));
+        if (g.item !== undefined) { const c = gearAny(g.item); c.onclick = () => toast(L('{0} 장비 1개 (무기·갑옷·부적 중 하나)', RARITY[g.item].name)); c.appendChild(h('span.cnt', RARITY[g.item].name)); out.push(c); }
+        if (g.skin) { const s = skinById(g.skin); const c = h('div.cell.r' + s.r, img(heroFace(s.cls, s.id))); c.appendChild(h('span.cnt', L('스킨'))); const bd = skinBadge(s); if (bd) c.appendChild(bd); out.push(c); }
         return out;
     }
 
@@ -270,5 +285,5 @@ const UI = {};
         const pr = v.play(); if (pr && pr.catch) pr.catch(done);
         return v;
     }
-    Object.assign(UI, { vfx, vfxWarm, foeTip, itemInfo, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, markDouble, modal, confirmBox, longPress, showGot, rewardIcons, testPurchase, testAd });
+    Object.assign(UI, { vfx, vfxWarm, foeTip, itemInfo, gearAny, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, markDouble, modal, confirmBox, longPress, showGot, rewardIcons, testPurchase, testAd });
 })();

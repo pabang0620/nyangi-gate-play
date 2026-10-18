@@ -20,7 +20,7 @@
 
     // the reward card face: what was rolled (gems, stones, an item grade ...)
     function cardFace(g) {
-        if (g.item !== undefined) return [h('div.rd-item.r' + g.item, Art.domCanvas(Art.icon('weapon'), 3)), h('div.rn', { style: { color: RARITY[g.item].color } }, RARITY[g.item].name), h('div.nm', L('장비'))];
+        if (g.item !== undefined) return [UI.gearAny(g.item), h('div.rn', { style: { color: RARITY[g.item].color } }, RARITY[g.item].name), h('div.nm', L('장비'))];
         if (g.medals) return [rewardCell('i_medal', g.medals)];
         if (g.guards) return [h('div.gotext', L('하락방지권 {0}개', g.guards))];
         if (g.shields) return [h('div.gotext', L('파괴방지권 {0}개', g.shields))];
@@ -76,7 +76,7 @@
                 const left = it.weekly ? it.weekly - (p.raidShop.bought[it.id] || 0) : null;
                 const can = medals() >= it.cost && (left === null || left > 0);
                 list.appendChild(h('div.rd-srow', h('div.rd-snm', h('b', names[it.id]), it.weekly ? h('div.tip', L('이번 주 {0}번 남음', Math.max(0, left))) : null),
-                    h('div.rd-sic', ...(it.reward.item !== undefined ? [h('div.cell.r' + it.reward.item, Art.domCanvas(Art.icon('weapon'), 3))] : cardFace(it.reward))),
+                    h('div.rd-sic', ...(it.reward.item !== undefined ? [UI.gearAny(it.reward.item)] : cardFace(it.reward))),
                     h('button.btn.small' + (can ? '.gold' : '.off'), { onclick: () => {
                         if (!can) { toast(left === 0 ? L('이번 주에는 다 샀어요') : L('토벌 훈장이 부족해요')); return; }
                         click();
@@ -155,7 +155,7 @@
             h('div.inset.rd-right',
                 h('div.rd-code-line', L('파티 코드 '), h('b.gold-t', pt.code), ' ', copy, leave),
                 pt.members.length < RAID_ON.party.size && !pt.cleared ? h('button.btn.small.gold', { onclick: () => { click(); UI.friendPick('party', pt.code); } }, L('친구 초대')) : null,
-                h('div.rd-mems', pt.members.map(m => h('div.rd-mem' + (m.me ? '.me' : ''), img(heroPortrait(m.hero, m.skin)), h('span.nm', m.me ? L('나') : `${m.name}#${m.tag}`),
+                h('div.rd-mems', pt.members.map(m => h('div.rd-mem' + (m.me ? '.me' : ''), img(heroFace(m.hero, m.skin)), h('span.nm', m.me ? L('나') : `${m.name}#${m.tag}`),
                     h('span.tip', L('오늘 {0}/{1}', m.runs, RAID_ON.party.tries)), h('span.gold-t', L('{0}점', fmt(m.pts)))))),
                 pt.members.length < RAID_ON.party.size ? h('div.tip', L('빈자리 {0}', RAID_ON.party.size - pt.members.length)) : null,
                 pt.members.some(m => !m.me && Friends.isFriend(m.uid)) ? h('div.gold-t', L('친구와 함께: 보상 카드 훈장 +20%')) : null)));
@@ -236,7 +236,7 @@
                     if (kind === 'coop') { const c = await RaidOn.coopJoin(x.code); if (say(c)) lobby(c); else load(); return; }
                     if (say(await RaidOn.partyJoin(x.code))) { S.rdiff = x.diff; await RaidOn.state(); refresh(); } else load();
                 });
-                list.appendChild(h('div.lg-row', img(heroPortrait(x.hero, x.skin), '.rk-pic'), UI.tierBadge(x.tier || 0),
+                list.appendChild(h('div.lg-row', img(heroFace(x.hero, x.skin), '.rk-pic'), UI.tierBadge(x.tier || 0),
                     h('span.lg-name', x.name, h('span.tip', ` #${x.tag}`), x.friend ? h('span.gold-t', ' ' + L('친구')) : null),
                     h('span.tip', RAID_ON.diffs[x.diff].name),
                     kind === 'party' ? h('span.tip', `${x.members}/${RAID_ON.party.size}` + ' · ' + (x.kind && ENEMIES[x.kind] ? ENEMIES[x.kind].name : '')) : null,
@@ -254,7 +254,7 @@
         const draw = () => {
             who.innerHTML = '';
             Coop.infos.forEach((inf, i) => who.appendChild(h('div.rd-mem' + (i === Coop.me ? '.me' : ''),
-                inf ? img(heroPortrait(inf.cls, inf.skin)) : h('div.rd-wait', '?'), h('span.nm', inf ? (i === Coop.me ? L('나') : inf.name) : L('기다리는 중…')), h('span.tip', i === 0 ? L('방장') : L('손님')))));
+                inf ? img(heroFace(inf.cls, inf.skin)) : h('div.rd-wait', '?'), h('span.nm', inf ? (i === Coop.me ? L('나') : inf.name) : L('기다리는 중…')), h('span.tip', i === 0 ? L('방장') : L('손님')))));
             const ready = !!Coop.infos[1 - Coop.me];
             bonus.textContent = ready && Friends.isFriend(Coop.infos[1 - Coop.me].uid) ? L('친구와 함께: 보상 카드 훈장 +20%') : '';
             start.classList.toggle('off', !(ready && Coop.me === 0));

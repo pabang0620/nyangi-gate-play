@@ -480,7 +480,7 @@ const Render = (() => {
         shadow(s.x, s.y + 12, 30);
         const stunned = t.stunUntil > T;
         const rc = t.recoil > 0 ? t.recoil / 0.12 : 0;
-        spr(Art.tower(t.type, t.lv, t.spec), s.x, s.y + 14, sc, false, 0, 1, 1 + rc * 0.05, 1 - rc * 0.07);
+        spr(Art.tower(t.type, t.lv, t.spec != null ? TOWERS[t.type].specs[t.spec].id : null), s.x, s.y + 14, sc, false, 0, 1, 1 + rc * 0.05, 1 - rc * 0.07);
         if (B.coop && (t.owner || 0) !== B.actor) { x.fillStyle = 'rgba(120,200,255,.9)'; x.strokeStyle = '#1a2a40'; x.lineWidth = 2; x.beginPath(); x.arc(s.x + 22, s.y + 8, 6, 0, TAU); x.fill(); x.stroke(); }   // the partner's tower
         if (stunned) {
             x.globalAlpha = 0.45; x.fillStyle = '#2a1708'; x.fillRect(s.x - 30, s.y - 66, 60, 80); x.globalAlpha = 1;

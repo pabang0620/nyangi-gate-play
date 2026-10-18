@@ -1,6 +1,14 @@
 'use strict';
 // fr translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['fr'] = {
+    "병영으로 붙잡고 궁수탑 · 대포탑 (화상은 안 통함)": "Bloque avec Caserne, puis Tour d'archers · Tour de canon (la brûlure est inutile)",
+    "이번 층에서는 {0}을(를) 지을 수 없습니다": "{0} est interdit(e) à cet étage",
+    "영웅 자동 켜짐": "Héros auto activé",
+    "영웅 자동 꺼짐 (직접 조작)": "Héros auto désactivé (manuel)",
+    "대기 중에도 경험치 {0}% 획득": "Gagne {0}% d'EXP en réserve",
+    "· {0}장부터 적 체력 {1}% (보스 스테이지 {2}%)": "· Dès le chapitre {0} : PV ennemis {1}% (niveaux de boss {2}%)",
+    "장 보스를 물리치면 그 장의 영웅 난이도가 열립니다. 적 체력 {0}% ({2}장부터 {3}%) · 별마다 보석 {1}개 · 별 3개는 특별 조건까지 지켜야 합니다.": "Vaincre le boss d'un chapitre ouvre son mode héroïque. PV ennemis {0}% ({3}% dès le chapitre {2}) · {1} gemmes par étoile · 3 étoiles demandent aussi la condition spéciale.",
+    "3분 동안 준 피해량으로 단계 보상을 받아요. 단계 보상은 주마다 1번, 보스는 매주 월요일 05:00에 바뀌어요.": "Récompenses par palier selon les dégâts infligés en 3 min. Paliers 1 fois par semaine ; le boss change chaque lundi à 05:00.",
     "순식간에 지나가는 빠른 적": "Ennemi rapide qui file en un éclair",
     "병영으로 붙잡기 · 서리 첨탑 둔화": "Bloque avec Caserne · Ralentis avec Flèche de givre",
     "가장 약한 기본 적": "L'ennemi de base le plus faible",

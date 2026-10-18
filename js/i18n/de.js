@@ -1,6 +1,14 @@
 'use strict';
 // de translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['de'] = {
+    "병영으로 붙잡고 궁수탑 · 대포탑 (화상은 안 통함)": "Mit Kaserne aufhalten, dann Bogenturm · Kanonenturm (Brand wirkt nicht)",
+    "이번 층에서는 {0}을(를) 지을 수 없습니다": "{0} ist auf dieser Etage verboten",
+    "영웅 자동 켜짐": "Held auto an",
+    "영웅 자동 꺼짐 (직접 조작)": "Held auto aus (manuell)",
+    "대기 중에도 경험치 {0}% 획득": "Erhält {0}% EP auf der Bank",
+    "· {0}장부터 적 체력 {1}% (보스 스테이지 {2}%)": "· Ab Kapitel {0}: Gegner-LP {1}% (Boss-Stufen {2}%)",
+    "장 보스를 물리치면 그 장의 영웅 난이도가 열립니다. 적 체력 {0}% ({2}장부터 {3}%) · 별마다 보석 {1}개 · 별 3개는 특별 조건까지 지켜야 합니다.": "Besiegst du den Kapitelboss, öffnet sich dort der Heldenmodus. Gegner-LP {0}% ({3}% ab Kapitel {2}) · {1} Edelsteine pro Stern · 3 Sterne brauchen zusätzlich die Sonderbedingung.",
+    "3분 동안 준 피해량으로 단계 보상을 받아요. 단계 보상은 주마다 1번, 보스는 매주 월요일 05:00에 바뀌어요.": "Belohnungsstufen je nach Schaden in 3 Minuten. Stufenbelohnung 1× pro Woche, der Boss wechselt jeden Montag um 05:00.",
     "순식간에 지나가는 빠른 적": "Schneller Gegner, der blitzschnell vorbeizieht",
     "병영으로 붙잡기 · 서리 첨탑 둔화": "Mit Kaserne halten · Frostturm verlangsamt",
     "가장 약한 기본 적": "Schwächster Standardgegner",

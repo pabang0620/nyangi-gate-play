@@ -75,7 +75,7 @@
             layer.appendChild(node);
         }
         root().appendChild(layer);
-        const starRule = [L('별 3개: 목숨을 2 이하로 잃고 승리'), S.hard ? L('영웅 난이도: 적 체력 {1}% · 별 1개마다 보석 {0}', HARD.gemsPerStar, Math.round(HARD.hpMul * 100)) : L('처음 얻는 별 1개마다 보석 15')];
+        const starRule = [L('별 3개: 목숨을 2 이하로 잃고 승리'), S.hard ? L('영웅 난이도: 적 체력 {1}% · 별 1개마다 보석 {0}', HARD.gemsPerStar, Math.round((ch >= HARD.lateFrom ? HARD.lateHpMul : HARD.hpMul) * 100)) : L('처음 얻는 별 1개마다 보석 15')];
         root().appendChild(h('div.tip.hubtip', { style: { position: 'absolute', right: '24px', top: '78px', textAlign: 'right' } }, starRule[0], h('br'), starRule[1]));
         root().appendChild(UI.helpBtn(L('별 얻는 법'), starRule.join('\n'), '.mob-q.map-q'));
         if (!p.seenTips.map) firstCoach();
@@ -103,6 +103,7 @@
     function hardInfo(open, then) {
         const text = [L('같은 스테이지를 더 강한 적과 다시 싸우는 어려운 모드입니다 (영웅 탭과는 다릅니다).'),
             L('· 적 체력 {0}% · 적 공격력 {1}%', Math.round(HARD.hpMul * 100), Math.round(HARD.atkMul * 100)) + L(' (보스 스테이지 {0}%)', Math.round(HARD.bossHpMul * 100)),
+            L('· {0}장부터 적 체력 {1}% (보스 스테이지 {2}%)', HARD.lateFrom + 1, Math.round(HARD.lateHpMul * 100), Math.round(HARD.lateBossHpMul * 100)),
             L('· 별 1개마다 보석 {0}개 · 은화 {1}배', HARD.gemsPerStar, HARD.silverMul),
             L('· 별 3개: 스테이지마다 정해진 조건 + 잃은 목숨 2 이하'),
         ].filter(Boolean).join('\n');
@@ -152,7 +153,7 @@
         // landscape layout: left = what you face and what you get, right = who goes
         const heroPick = h('div.heropick', Object.keys(HEROES).map(c =>
             h('div.hp' + (p.hero === c ? '.on' : ''), { onclick: () => { click(); p.hero = c; Save.save(); d.remove(); stageInfo(idx, hard); } },
-                img(heroPortrait(c, p.shop && p.shop.skin[c])), h('div', h('b', `${HERO_NAMES[c]} · ${HEROES[c].name}`), h('span.num', ` Lv.${p.heroes[c].lv}`), h('div.tip', HEROES[c].desc)))));
+                img(heroFace(c, p.shop && p.shop.skin[c])), h('div', h('b', `${HERO_NAMES[c]} · ${HEROES[c].name}`), h('span.num', ` Lv.${p.heroes[c].lv}`), h('div.tip', HEROES[c].desc)))));
         const left = h('div.si-left',
             h('div.title-t', { style: hard ? { color: '#ff7a5c' } : {} }, `${hard ? L('[영웅] ') : ''}${stageLabel(idx)} ${st.name}`),
             h('div.row', { style: { alignItems: 'center' } }, starsStr(have), h('span', { style: { marginLeft: '8px' } }, L('웨이브 {0}', st.waves) + (st.boss ? L(' · 보스 {0}', ENEMIES[st.boss].name) : '') + (hard ? L(' · 적 체력 {0}%', Math.round(hardHpMul(idx) * 100)) : ''))),
