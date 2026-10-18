@@ -304,6 +304,8 @@ const Game = {
     // the canvas stays empty (dark #app background) until the title screen is ready
     let booted = false;
     Promise.all([fontReady, Art.load()]).finally(() => { booted = true; UI.showTitle(); });
+    // the big reveal clips go into memory once the title is up, so they start on the first frame later
+    setTimeout(() => UI.vfxWarm(['vfx/summon_epic.mp4', 'vfx/summon_legend.mp4', 'vfx/summon_mythic.mp4', 'vfx/enhance.mp4', 'vfx/victory.mp4', 'vfx/boss_warn.mp4']), 2500);
     // online (optional): guest sign-in, server clock, cloud save, reward inbox; store purchases owned but not yet granted
     Online.init().then(() => Rewards.restorePurchases()).catch(() => {});
     Rewards.loadPrices();

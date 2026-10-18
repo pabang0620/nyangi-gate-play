@@ -565,8 +565,7 @@
             const spot = h('div.sm-spot', stage, h('div.tip.sm-spot-hint', L('탭하여 계속')));
             d.appendChild(spot);
             const src = calm ? null : VFX[Math.min(4, r)];
-            const v = src ? UI.vfx(src, stage, { z: 0, back: true }) : null;
-            if (v) v.classList.add('vfx-spot');
+            if (src) UI.vfx(src, spot, { z: 0, back: true });
             let gone = false;
             const close = () => { if (gone) return; gone = true; spot.remove(); unlock(); if (after) after(); };
             setTimeout(() => spot.addEventListener('click', close), 250);   // the tap that opened the card must not close it

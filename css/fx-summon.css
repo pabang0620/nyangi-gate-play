@@ -100,12 +100,12 @@
 #app.mobile .sm-list .cell canvas, #app.mobile .sm-list .cell img { width: 40px; height: 40px; }
 .calm .sm-bestrow .sm-best { animation: none !important; }
 /* high-grade reveal clip: light only (black = transparent via screen blend), never blocks taps */
-.vfx-clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: screen; pointer-events: none; z-index: 50; animation: smVfxIn .15s ease-out; }
+.vfx-clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; mix-blend-mode: screen; pointer-events: none; z-index: 50; opacity: 0; transition: opacity .15s ease-out; }
+.vfx-clip.on { opacity: var(--vfx-op, 1); }   /* js adds .on once a real frame is painted: never a blank box or play button */
 /* ...on a single card or best-of cell: centred on it, spilling a little past the edges */
 .vfx-clip.vfx-spot { inset: auto; left: -65%; top: -50%; width: 230%; height: 200%; object-fit: contain; }   /* a <video> keeps its own pixel size with width:auto, so the box is set explicitly */
 /* the enhance stamp is a wide row, so its clip needs a tighter box or it washes out the whole popup */
 .enh-stamp > .vfx-clip.vfx-spot { left: -18%; top: -30%; width: 136%; height: 160%; }
-@keyframes smVfxIn { from { opacity: 0; } to { opacity: 1; } }
 /* enhance: the risky try waits for a tap (glow + shake), the clip is placed over the stamp from js (enhanceResult) */
 #anvil.enh-wait { animation: shake .14s infinite; filter: drop-shadow(0 0 14px #ffd040) brightness(1.25); }
 .vfx-clip.enh-clip { inset: auto; }
@@ -117,7 +117,8 @@
 /* 영웅+ card opened: shown big in the middle of the screen (js/ui/hero.js spotlight) */
 .sm-spot { position: fixed; inset: 0; z-index: 120; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; background: rgba(10,6,20,.72); animation: sm-spot-in .18s ease-out; }
 .sm-spot-in { position: relative; display: flex; align-items: center; justify-content: center; }
-.sm-spot-in > .vfx-clip.vfx-spot { left: -120%; top: -90%; width: 340%; height: 280%; pointer-events: none; }
+.sm-spot > .vfx-clip { inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }   /* the clip fills the whole screen behind the card */
+.sm-spot > .sm-spot-in, .sm-spot > .sm-spot-hint { position: relative; z-index: 1; }
 .sm-spot-card { transform: scale(1.9); z-index: 1; animation: sm-spot-pop .35s cubic-bezier(.2,1.5,.5,1); }
 .sm-spot-hint { color: #fff4dc; text-shadow: 0 2px 4px #000; margin-top: 90px; }
 @keyframes sm-spot-in { from { opacity: 0; } to { opacity: 1; } }

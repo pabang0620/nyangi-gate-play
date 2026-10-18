@@ -226,15 +226,27 @@ const UI = {};
 
     // pre-rendered light effect clip (vfx/*.mp4, black background) screen-blended over `parent`; never blocks taps.
     // opt: { loop, opacity, z, back } - back = behind the parent's other children (ambient layers)
+    // clips are fetched once into memory (blob URLs) so a reveal starts at once instead of streaming from disk
+    const VFX_BLOB = {}, VFX_POSTER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+    function vfxWarm(list) {
+        list.forEach(src => {
+            if (VFX_BLOB[src]) return;
+            VFX_BLOB[src] = 'pending';
+            fetch(src).then(r => r.ok ? r.blob() : null).then(b => { VFX_BLOB[src] = b ? URL.createObjectURL(b) : null; }).catch(() => { VFX_BLOB[src] = null; });
+        });
+    }
     function vfx(src, parent, opt = {}) {
         parent = parent || root();
         if (!parent || (!opt.loop && (Save.p.set.noShake || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)))) return null;
-        const v = h('video.vfx-clip', { src, muted: true, playsInline: true, autoplay: true, preload: 'auto', loop: !!opt.loop });
-        v.muted = true;
-        // hidden until frames actually move: some WebViews paint an empty box or a play button first
-        v.style.opacity = '0';
-        const show = () => { if (v.currentTime > 0.04) { v.style.opacity = opt.opacity || ''; v.removeEventListener('timeupdate', show); } };
-        v.addEventListener('timeupdate', show);
+        const url = VFX_BLOB[src] && VFX_BLOB[src] !== 'pending' ? VFX_BLOB[src] : src;
+        // the transparent poster stops Android WebView from painting its grey play button before the first frame
+        const v = h('video.vfx-clip', { src: url, poster: VFX_POSTER, muted: true, playsInline: true, autoplay: true, preload: 'auto', loop: !!opt.loop, disablePictureInPicture: true });
+        v.muted = true; v.controls = false;
+        // stays invisible (css) until a real frame is on screen, then fades in
+        if (opt.opacity) v.style.setProperty('--vfx-op', opt.opacity);
+        const show = () => v.classList.add('on');
+        if (v.requestVideoFrameCallback) v.requestVideoFrameCallback(() => requestAnimationFrame(show));
+        else { const t = () => { if (v.currentTime > 0.04) { v.removeEventListener('timeupdate', t); show(); } }; v.addEventListener('timeupdate', t); }
         if (opt.rate) v.addEventListener('loadedmetadata', () => { v.playbackRate = opt.rate; });
         if (opt.z !== undefined) v.style.zIndex = opt.z;
         const done = () => v.remove();
@@ -244,5 +256,5 @@ const UI = {};
         const pr = v.play(); if (pr && pr.catch) pr.catch(done);
         return v;
     }
-    Object.assign(UI, { vfx, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, markDouble, modal, confirmBox, longPress, showGot, rewardIcons, testPurchase, testAd });
+    Object.assign(UI, { vfx, vfxWarm, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, markDouble, modal, confirmBox, longPress, showGot, rewardIcons, testPurchase, testAd });
 })();
