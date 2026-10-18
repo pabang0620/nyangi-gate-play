@@ -112,7 +112,7 @@ function bagOverflow(p) {
     }, 600);
     return true;
 }
-function itemName(it) { return ITEM_NAMES[it.slot][it.r]; }
+function itemName(it) { const a = it.r >= 2 && ITEM_ART_NAMES[it.slot] && ITEM_ART_NAMES[it.slot][it.r]; return a ? a[itemArt(it)] : ITEM_NAMES[it.slot][it.r]; }
 // gear grows with progress: the level used for stats is the item's own level or what a summon gives right now, whichever is higher.
 // So gear bought or summoned early (a day-1 purchase) never falls behind new drops of the same grade.
 function itemLv(it) { const p = Save.p; return Math.max(it.ilvl, p && p.stars ? Math.round(summonIlvl(p)) : 0); }

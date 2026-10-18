@@ -24,7 +24,7 @@
         if (R.silver > 0) cells.push(dblCells[dblCells.length] = rewardCell('silver', fmt(R.silver)));
         if (R.gems) cells.push(rewardCell('gem', R.gems));
         if (R.xp) cells.push(dblCells[dblCells.length] = rewardCell('i_xp', R.xp));
-        for (const it of R.items) cells.push(itemCell(it, { noNew: true }));
+        const gear = R.items.map(it => itemCell(it, { noNew: true, onclick: () => { click(); UI.itemInfo(it); } }));   // second row; tap for the options
         const content = [];
         if (R.cup) {
             content.push(h('div.ribbon', h('span', L('{0}점', fmt(R.cup.score)))));
@@ -57,14 +57,16 @@
             else content.push(h('div.muted', L('탑 배치와 업그레이드, 장비를 바꿔 다시 도전해 보세요.')));
             // who got through the gate, and what beats them
             if (!R.win && R.leaks && R.leaks.length) content.push(h('div.leaks', h('b', L('성문을 넘은 적')),
-                R.leaks.slice(0, 3).map(([k, n]) => h('div.leak', Art.domCanvas(Art.enemy(k, 0), 1), h('div', h('span.gn', `${ENEMIES[k].name} ×${n}`), ' ', ENEMIES[k].tip)))));
+                R.leaks.slice(0, 3).map(([k, n]) => h('div.leak', Art.domCanvas(Art.enemy(k, 0), 1), h('div', h('span.gn', `${ENEMIES[k].name} ×${n}`), UI.foeTip(k))))));
             if (!R.win && R.leaks && R.leaks.some(([k]) => ENEMIES[k] && (ENEMIES[k].boss || ENEMIES[k].elite))) content.push(h('div.tip', { style: { color: '#a8401a' } }, L('보스·정예가 성문을 넘으면 바로 패배! 5초 안에 잡으세요')));
             if (R.cond) content.push(h('div', { style: { fontSize: '17px', color: R.cond.ok ? '#3a7a2a' : '#a8401a' } }, L('3성 조건 · {0}: {1}', R.cond.name, R.cond.ok ? L('달성') : L('실패'))));
         }
-        for (const g of (R.got || [])) cells.push(g.item ? itemCell(g.item, { noNew: true }) : rewardCell(g.icon, g.icon === 'silver' ? fmt(g.n) : g.n));
+        for (const g of (R.got || [])) g.item ? gear.push(itemCell(g.item, { noNew: true, onclick: () => { click(); UI.itemInfo(g.item); } })) : cells.push(rewardCell(g.icon, g.icon === 'silver' ? fmt(g.n) : g.n));
         content.push(h('div', { style: { fontSize: '16px', color: '#5a3a1c' } }, L('처치 {0} · 잃은 목숨 {1}', R.kills, R.lost) + (R.levelUp ? L(' · 영웅 레벨 업! Lv.{0}', R.heroLv) : '')));
         if (R.xpShare) content.push(h('div.tip', L('다른 영웅도 경험치 +{0}', fmt(R.xpShare))));
-        content.push(h('div.row', { style: { maxWidth: '680px', alignItems: 'center' } }, R.win || R.endless ? img('ui_chest', '.result-chest') : null, cells));
+        // silver and xp always come first, gear on its own row under them
+        if (cells.length) content.push(h('div.row.res-row', cells));
+        if (gear.length) content.push(h('div.row.res-row', gear));
         const btns = h('div.row');
         const toChallenge = R.endless || R.dungeon || R.raid || R.raidOn || R.coop || R.tower;
         btns.appendChild(h('button.btn.ghost', { onclick: () => { click(); if (R.dungeon) S.ctab = 'dungeon'; if (R.raid) S.ctab = 'raid'; if (R.raidOn || R.coop) S.ctab = 'online'; if (R.cup) S.ctab = 'cup'; if (R.tower) S.ctab = 'tower'; showHub(toChallenge ? 'endless' : 'map'); } }, toChallenge ? L('돌아가기') : L('지도로')));

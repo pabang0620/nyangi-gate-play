@@ -79,7 +79,21 @@ const UI = {};
     function enemyInfo(k) {
         const e = ENEMIES[k], c = Art.domCanvas(Art.enemy(k, 0), e.boss ? 1.6 : 2.5);
         c.style.maxHeight = '110px'; c.style.maxWidth = '160px';
-        infoModal(e.title ? `${e.title} ${e.name}` : e.name, [c, h('div', e.tip || e.tag || '')]);
+        infoModal(e.title ? `${e.title} ${e.name}` : e.name, [c, foeTip(k)]);
+    }
+    // an enemy's tip as two aligned lines: 특징 (what it does) / 대처 (what beats it)
+    function foeTip(k) {
+        const e = ENEMIES[k];
+        if (!e.tipT) return h('div', e.tag || '');
+        return h('div.ftip', h('span.ftl', L('특징')), h('span', e.tipT), h('span.ftl.c', L('대처')), h('span', e.tipC));
+    }
+    // a gear's name, grade and options in a small popup (battle rewards, anywhere the bag's full panel is not open)
+    function itemInfo(it) {
+        const m = itemMain(it);
+        infoModal(`${itemName(it)}${it.enh ? ' +' + it.enh : ''}`, h('div', { style: { display: 'flex', gap: '14px', alignItems: 'center', textAlign: 'left' } }, itemCell(it, { noNew: true }),
+            h('div', h('div', { style: { color: RARITY[it.r].color } }, L('{0} {1} · 아이템 레벨 {2}', RARITY[it.r].name, SLOT_NAME[it.slot], itemLv(it))),
+                h('div', { style: { color: '#f5c451' } }, fmtOpt(m.name, m.v, m.pct)),
+                it.subs.map(sb => h('div', fmtOpt(SUB_OPTS[sb.k].name, sb.v, SUB_OPTS[sb.k].pct))))));
     }
 
 
@@ -90,7 +104,7 @@ const UI = {};
         if (it.enh) c.appendChild(h('span.enh', '+' + it.enh));
         if (it.mid) c.appendChild(h('span.trd', L('거래##배지')));   // server-minted gear: can go on the market (js/ui/market.js)
         if (isEquipped(it)) c.appendChild(h('span.eq', L('장착##배지')));
-        else if (it.isNew && !opts.noNew) c.appendChild(h('span.eq', { style: { color: '#ff8a6a' } }, L('새##배지')));
+        else if (it.isNew && !opts.noNew) c.appendChild(h('span.eq.new', 'NEW'));   // shown until the bag has been seen once
         if (opts.onclick) c.addEventListener('click', opts.onclick);
         if (opts.sel) c.classList.add('sel');
         return c;
@@ -256,5 +270,5 @@ const UI = {};
         const pr = v.play(); if (pr && pr.catch) pr.catch(done);
         return v;
     }
-    Object.assign(UI, { vfx, vfxWarm, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, markDouble, modal, confirmBox, longPress, showGot, rewardIcons, testPurchase, testAd });
+    Object.assign(UI, { vfx, vfxWarm, foeTip, itemInfo, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, markDouble, modal, confirmBox, longPress, showGot, rewardIcons, testPurchase, testAd });
 })();

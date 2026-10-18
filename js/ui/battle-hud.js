@@ -56,7 +56,7 @@
         });
         const heroPanel = h('div.hud-hero',
             h('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
-                h('div.portrait', { onclick: () => { click(); if (B.heroAlive) { Render.view.selSlot = null; closePopup(); } } }, img(heroPortrait(cls, skinId)), hud.dead),
+                h('div.portrait', { onclick: () => { click(); if (B.heroAlive) { Render.view.selSlot = null; closePopup(); } } }, (() => { const a = img(heroFace(cls, skinId)); a.style.background = avatarBg(); return a; })(), hud.dead),
                 h('div.bar', { style: { width: '70px' } }, hud.hpBar)),
             h('div', { style: { display: 'flex', flexDirection: 'column', gap: '4px' } },
                 h('div.hero-name', `${HERO_NAMES[cls]} `, h('span.num', `Lv.${B.hero.lv}`), ' ', hud.manual),
@@ -301,11 +301,11 @@
     function showFoe(kind) {
         if (tipSeen('foe_' + kind)) return;
         const d = ENEMIES[kind];
-        coach(d.name + ' · ' + (d.boss ? d.title : d.tag), [d.tip, (d.boss || d.elite) && !(Game.battle && Game.battle.raid) ? L('놓치면 즉시 패배! 꼭 잡으세요') : null, L('웨이브 예고의 적 아이콘을 누르면 다시 볼 수 있어요')].filter(Boolean), 7000);
+        coach(d.name + ' · ' + (d.boss ? d.title : d.tag), [UI.foeTip(kind), (d.boss || d.elite) && !(Game.battle && Game.battle.raid) ? L('놓치면 즉시 패배! 꼭 잡으세요') : null, L('웨이브 예고의 적 아이콘을 누르면 다시 볼 수 있어요')].filter(Boolean), 7000);
     }
     function foeCard(title, kinds, foot) {
         if (!kinds.length) return;
-        coach(title, [...kinds.map(k => { const d = ENEMIES[k]; return h('span', h('span.gn', d.name + (d.tag ? ` (${d.tag})` : '')), ' · ', d.tip); }), foot], 8000);
+        coach(title, [...kinds.map(k => { const d = ENEMIES[k]; return h('div.foe', h('span.gn', d.name + (d.tag ? ` (${d.tag})` : '')), UI.foeTip(k)); }), foot], 8000);
         S.coach.classList.add('foes');
     }
 

@@ -21,7 +21,8 @@
         left.appendChild(h('div.classpick', Object.keys(HEROES).map(c =>
             h('button.btn.small' + (c === cls ? '.gold' : '.ghost'), { onclick: () => { click(); p.hero = c; Save.save(); showHub('hero'); } }, HEROES[c].name))));
         const port = h('div', { style: { display: 'flex', gap: '12px', alignItems: 'center' } },
-            h('div.portrait', { style: { width: '100px', height: '100px' } }, img(heroPortrait(cls, Save.p.shop && Save.p.shop.skin[cls]))),
+            h('div.portrait', { style: { width: '100px', height: '100px' }, title: L('배경색 바꾸기'), onclick: () => { click(); avatarBgModal(); } },
+                (() => { const a = img(heroFace(cls, Save.p.shop && Save.p.shop.skin[cls])); a.style.background = avatarBg(); return a; })(), h('span.av-edit', L('배경'))),
             h('div', { style: { flex: 1 } },
                 h('div', { style: { fontSize: '22px', color: '#f5c451', fontFamily: 'BlackHan', textShadow: 'var(--stroke-s)' } }, `${HERO_NAMES[cls]} (${HEROES[cls].name})  Lv.${hd.lv}`),
                 h('div.tip', HEROES[cls].desc),
@@ -64,6 +65,8 @@
             h('button.btn.small', { onclick: () => { click(); salvageModal(); } }, L('일괄 분해'))));
         const items = p.items.slice().sort((a, b2) => (isEquipped(b2) - isEquipped(a)) || (b2.r - a.r) || (b2.ilvl - a.ilvl) || (b2.enh - a.enh));
         right.appendChild(h('div.grid', items.map(it => itemCell(it, { sel: S.selItem === it.id, onclick: () => { click(); it.isNew = false; S.selItem = it.id; Save.save(); showHub('hero'); } }))));
+        // NEW shows this one time: the bag has now been seen
+        if (p.items.some(i => i.isNew)) { p.items.forEach(i => { i.isNew = false; }); Save.save(); }
         win.appendChild(h('div.hero-wrap', left, right));
         root().appendChild(win);
         // item details open as a popup over the screen (a fixed panel under the bag hid most of the bag on phones)
@@ -163,6 +166,15 @@
             h('div.row', h('button.btn.gold', { onclick: () => { click(); d.remove(); S.summonBanner = 'skin'; showHub('summon'); } }, L('스킨 소환')),
                 h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기')))], { dismiss: true });
         d.querySelector('.modal').classList.add('skbook-pop');
+    }
+
+    // tap the portrait: pick the avatar's background colour (top bar, hero tab, battle)
+    function avatarBgModal() {
+        const p = Save.p;
+        const d = modal([h('h2', L('프로필 배경색')),
+            h('div.av-swatches', AVATAR_BG.map(c => h('button.av-sw' + (avatarBg() === c ? '.on' : ''), { style: { background: c }, onclick: () => { click(); p.set.avBg = c; Save.save(); d.remove(); showHub('hero'); } },
+                img(heroFace(p.hero, p.shop && p.shop.skin[p.hero]))))),
+            h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
     }
 
     function itemDetail(it) {
@@ -473,7 +485,7 @@
     const skinFace = (x, big) => { const s = skinById(x.id); return [img(heroPortrait(s.cls, s.id), big ? '.sm-cardpic' : '')]; };
     function skinCell(x) {
         const s = skinById(x.id), c = h('div.cell.r' + x.r + (x.dup ? '.dup' : ''), { title: s.name }, img(heroPortrait(s.cls, s.id)));
-        c.appendChild(x.dup ? h('span.eq.gemtag', ico('gem', 13), '+' + x.gems) : h('span.eq', L('새##배지')));
+        c.appendChild(x.dup ? h('span.eq.gemtag', ico('gem', 13), '+' + x.gems) : h('span.eq.new', 'NEW'));
         return c;
     }
 
@@ -561,6 +573,8 @@
         // a 영웅+ card opens big in the middle of the screen with its clip behind it; tap (or wait) to put it back
         function spotlight(c, r, after) {
             const card = c.cloneNode(true); card.classList.remove('best', 'charging', 'hi', 'sm-nudge'); card.classList.add('sm-spot-card'); card.style.animationDelay = '';
+            // cloneNode copies a <canvas> blank: paint the gear picture over again
+            const from = c.querySelectorAll('canvas'); card.querySelectorAll('canvas').forEach((cv, i) => { const o = from[i]; if (o) { cv.width = o.width; cv.height = o.height; cv.getContext('2d').drawImage(o, 0, 0); } });
             const stage = h('div.sm-spot-in', card);
             const spot = h('div.sm-spot', stage, h('div.tip.sm-spot-hint', L('탭하여 계속')));
             d.appendChild(spot);

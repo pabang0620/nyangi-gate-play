@@ -128,8 +128,7 @@
             join.onclick = busy(join, async () => { if (code.value.trim().length < 6) { toast(L('코드 6자리를 입력해 주세요')); return; } if (say(await RaidOn.partyJoin(code.value))) { await RaidOn.state(); refresh(); } });
             mk.textContent = L('파티 만들기'); quick.textContent = L('빠른 참가'); join.textContent = L('참가');
             win.appendChild(h('div.inset.rd-empty',
-                h('div', L('2~4명이 함께 같은 보스를 때려요. 각자 하루 {0}번 도전하고, 피해를 합쳐 보스 체력을 다 깎으면 처치!', RAID_ON.party.tries)),
-                h('div.tip', L('혼자서는 못 잡아요. 2명 이상이 피해를 넣어야 해요. 파티는 이번 주 일요일까지')),
+                h('div', L('2~4명이 피해를 합쳐 보스를 잡아요 · 하루 {0}번', RAID_ON.party.tries)),
                 h('div.row', mk, quick), h('div.row', code, join)));
             win.appendChild(finderBox('party', d));
             return;
@@ -158,8 +157,7 @@
                 pt.members.length < RAID_ON.party.size && !pt.cleared ? h('button.btn.small.gold', { onclick: () => { click(); UI.friendPick('party', pt.code); } }, L('친구 초대')) : null,
                 h('div.rd-mems', pt.members.map(m => h('div.rd-mem' + (m.me ? '.me' : ''), img(heroPortrait(m.hero, m.skin)), h('span.nm', m.me ? L('나') : `${m.name}#${m.tag}`),
                     h('span.tip', L('오늘 {0}/{1}', m.runs, RAID_ON.party.tries)), h('span.gold-t', L('{0}점', fmt(m.pts)))))),
-                pt.members.length < RAID_ON.party.size ? h('div.tip', L('코드를 친구에게 알려 주세요 · 빈자리 {0}', RAID_ON.party.size - pt.members.length)) : null,
-                h('div.tip', L('한 판 최대 {0}점 · 제 실력 한 판 약 150점', RAID_ON.party.runCap)),
+                pt.members.length < RAID_ON.party.size ? h('div.tip', L('빈자리 {0}', RAID_ON.party.size - pt.members.length)) : null,
                 pt.members.some(m => !m.me && Friends.isFriend(m.uid)) ? h('div.gold-t', L('친구와 함께: 보상 카드 훈장 +20%')) : null)));
     }
 
@@ -181,12 +179,10 @@
                 bar(w.dmg, w.hp, dead ? '.done' : ''),
                 dead && w.me.pts > 0 ? claimBtn('world', 0, RaidOn.worldDiff(), L('월드 보스 보상')) : go,
                 dead ? go : null, bossPic(w.kind),
-                h('div.tip', L('모든 냥이가 함께 이번 주 안에 쓰러뜨려요 · 참가 {0}명', fmt(w.players)))),
+                h('div.tip', L('참가 {0}명', fmt(w.players)))),
             h('div.inset.rd-right',
                 h('div', L('내 기여 '), h('span.gold-t', L('{0}점', fmt(w.me.pts))), w.me.rank ? L(' · {0}위', w.me.rank) : ''),
-                h('div.tip', L('보스 강도는 내 진행도에 맞춰요. 한 판 최대 {0}점', RAID_ON.world.runCap)),
-                h('b', L('전체 달성 보상 (참가한 모두, 다음 주 월요일 우편)')), marks,
-                h('div.tip', L('기여 순위 보상도 우편으로 와요 (상위 1%부터 100%까지)')),
+                h('b', L('전체 달성 보상 (다음 주 우편)')), marks,
                 h('button.btn.small', { onclick: () => { click(); worldRank(w); } }, L('기여 순위')))));
     }
     function worldRank(w) {
@@ -216,13 +212,9 @@
         win.appendChild(h('div.rd-main',
             h('div.inset.rd-left', h('div.title-t.rd-title', L('협동 디펜스')),
                 h('div.row', mk, quick), h('div.row', code, join),
-                h('div', L('친구와 둘이서 실시간으로 한 성문을 지켜요')),
-                h('div.tip', L('{0}웨이브 · {1}웨이브에 중간 보스, 마지막에 레이드 보스', RAID_ON.coop.waves, RAID_ON.coop.midWave)), img('i_coop', '.rd-bigico')),
+                h('div', L('친구와 둘이서 실시간으로 한 성문을 지켜요')), img('i_coop', '.rd-bigico')),
             h('div.inset.rd-right',
-                h('b', L('함께하는 법')),
-                h('div.tip', L('목숨은 함께 써요. 금화와 영웅은 각자, 탑은 지은 사람만 업그레이드해요')),
-                h('div.tip', L('적을 잡으면 누가 잡든 두 사람 모두 금화를 받아요')),
-                h('div.tip', L('파란 점이 붙은 탑과 파란 이름의 영웅이 친구예요')),
+                h('div.tip', L('목숨은 함께, 금화·영웅·탑은 각자')),
                 h('div.tip', L('이기면 난이도마다 주 1번 보상 카드')),
                 wins.filter(x => !seen.has(x.diff) && seen.add(x.diff)).map(x => h('div.row', h('span', RAID_ON.diffs[x.diff].name), claimBtn('coop', x.id, x.diff, L('협동 디펜스 보상')))))));
         win.appendChild(finderBox('coop', d));
@@ -254,7 +246,7 @@
         again.onclick = busy(again, load);
         load();
         return h('div.inset.rd-finder', { style: { marginTop: '8px', padding: '8px' } },
-            h('div.row', { style: { justifyContent: 'space-between' } }, h('b', L('파티 찾기')), h('span.tip', L('친구 방이 먼저 보여요 · 같이 하면 친구 보너스')), again), list);
+            h('div.row', { style: { justifyContent: 'space-between' } }, h('b', L('파티 찾기')), h('span.tip', L('친구 방이 먼저 보여요')), again), list);
     }
     // waiting room: shows the partner, the host starts
     function lobby(room, quick) {

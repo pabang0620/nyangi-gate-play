@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.2';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.3';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-14';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
@@ -162,7 +162,7 @@
             Online.enabled ? friendsButton() : null,
             h('div.iconbtn', { onclick: () => { click(); showHub('settings'); } }, img('nav_settings')),
             h('div.chip.herochip', { style: { cursor: 'pointer' }, onclick: () => { click(); showHub('hero'); } },
-                img(heroPortrait(p.hero, p.shop && p.shop.skin[p.hero]), '.icon'), h('span.hc', h('b', HERO_NAMES[p.hero]), h('i', `Lv.${p.heroes[p.hero].lv}`))),
+                (() => { const a = img(heroFace(p.hero, p.shop && p.shop.skin[p.hero]), '.icon'); a.style.background = avatarBg(); return a; })(), h('span.hc', h('b', HERO_NAMES[p.hero]), h('i', `Lv.${p.heroes[p.hero].lv}`))),
         );
         Rewards.ensure(p);
         const tabs = [['map', L('지도')], ['hero', L('영웅')], ['research', L('연구')], ['summon', L('소환')], ['rewards', L('보상')], ['shop', L('상점')], ['endless', L('도전')]];

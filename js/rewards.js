@@ -416,6 +416,10 @@ function summonRun(kind, budget, stopAt, slot, salvage = -1) {
 function heroSkin(p, cls) { const id = p && p.shop && p.shop.skin[cls]; return id ? skinById(id) : null; }
 function heroSprite(cls, skinId) { return (skinId && Art.gen('sk_' + skinId)) || Art.hero(cls, 0); }
 function heroPortrait(cls, skinId) { return skinId && Art.gen('ps_' + skinId) ? 'ps_' + skinId : 'p_' + cls; }
+// round avatars use a face crop of the portrait (img/pf_*, img/pfs_*) on the background colour the player picked
+function heroFace(cls, skinId) { const n = heroPortrait(cls, skinId); return n.startsWith('ps_') ? 'pfs_' + n.slice(3) : 'pf_' + n.slice(2); }
+const AVATAR_BG = ['#3a2412', '#e0605a', '#f5a8c8', '#f5d36a', '#6fbf5a', '#8fe0c0', '#7ec8f0', '#2c3a6e', '#a98ce0', '#f4efe6'];
+function avatarBg() { return (Save.p && Save.p.set && Save.p.set.avBg) || AVATAR_BG[0]; }
 
 // ------------------------------------------------------------ providers (native bridge or labelled test flow)
 const Payments = {

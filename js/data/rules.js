@@ -169,6 +169,22 @@ const ITEM_NAMES = {
     armor:  [L('가죽 갑옷'), L('사슬 갑옷'), L('기사단 판금'), L('황금 발바닥 갑주'), L('태초의 갑주')],
     charm:  [L('나무 부적'), L('은 부적'), L('수호 부적'), L('수호냥 인장'), L('태초의 인장')],
 };
+// 영웅·전설·신화 gear has 4 pictures per slot (img/it_{slot}_{r}_{art}.png); the name follows the picture.
+// art 0 keeps the ITEM_NAMES name above
+const ITEM_ART_NAMES = {
+    weapon: [null, null,
+        [L('기사단 장검'), L('기사단 지팡이'), L('기사단 장궁'), L('기사단 단검')],
+        [L('황금 발톱 검'), L('황금 발톱 지팡이'), L('황금 발톱 활'), L('황금 발톱 단검')],
+        [L('태초의 검'), L('태초의 지팡이'), L('태초의 활'), L('태초의 단검')]],
+    armor: [null, null,
+        [L('기사단 판금'), L('기사단 로브'), L('기사단 망토'), L('기사단 흉갑')],
+        [L('황금 발바닥 갑주'), L('황금 발바닥 로브'), L('황금 발바닥 망토'), L('황금 발바닥 흉갑')],
+        [L('태초의 갑주'), L('태초의 로브'), L('태초의 망토'), L('태초의 흉갑')]],
+    charm: [null, null,
+        [L('수호 부적'), L('수호 목걸이'), L('수호 반지'), L('수호 방울')],
+        [L('수호냥 인장'), L('수호냥 목걸이'), L('수호냥 반지'), L('수호냥 방울')],
+        [L('태초의 인장'), L('태초의 목걸이'), L('태초의 반지'), L('태초의 방울')]],
+};
 const SUB_OPTS = {
     heroAtkPct: { name: L('영웅 공격력'), min: 0.04, max: 0.08, pct: true },
     heroHpPct:  { name: L('영웅 체력'),   min: 0.05, max: 0.10, pct: true },

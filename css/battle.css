@@ -64,7 +64,15 @@
 .bigstars img { width: 70px; height: 70px; animation: starpop .45s backwards; }
 .bigstars img:nth-child(2) { width: 90px; height: 90px; }
 @keyframes starpop { from { transform: scale(2.6) rotate(-30deg); opacity: 0; } }
-.result-chest { width: 84px; height: 84px; object-fit: contain; animation: starpop .5s .9s backwards; }
+.res-row { max-width: 680px; justify-content: center; flex-wrap: wrap; }
+/* enemy tip: 특징 / 대처 labels in one column, the text lined up beside them */
+.ftip { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; text-align: left; align-items: baseline; }
+.ftip .ftl { font-family: 'BlackHan'; font-size: .85em; color: #a8401a; white-space: nowrap; }
+.ftip .ftl.c { color: #3a7a2a; }
+.coach .ftip .ftl { color: #ffb27a; }
+.coach .ftip .ftl.c { color: #8fe07a; }
+.coach .foe { margin-top: 6px; }
+.coach .foe .ftip { margin-left: 4px; }
 
 /* coach cards (first-time / long-press help), aiming hint, auto-next countdown */
 .coach { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); width: max-content; max-width: 520px; z-index: 9; padding: 8px 16px 10px; border-radius: 12px; font-size: 17px; line-height: 1.4; text-align: center; background: rgba(30,16,6,.94); box-shadow: inset 0 0 0 2px #c08a3a, var(--hard); text-shadow: var(--stroke-s); animation: coachin .25s; cursor: pointer; }
