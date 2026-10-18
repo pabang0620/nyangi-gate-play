@@ -22,8 +22,8 @@
     function cardFace(g) {
         if (g.item !== undefined) return [UI.gearAny(g.item), h('div.rn', { style: { color: RARITY[g.item].color } }, RARITY[g.item].name), h('div.nm', L('장비'))];
         if (g.medals) return [rewardCell('i_medal', g.medals)];
-        if (g.guards) return [h('div.gotext', L('하락방지권 {0}개', g.guards))];
-        if (g.shields) return [h('div.gotext', L('파괴방지권 {0}개', g.shields))];
+        if (g.guards) return [rewardCell('i_guard', g.guards)];
+        if (g.shields) return [rewardCell('i_shield', g.shields)];
         return rewardIcons(g);
     }
 

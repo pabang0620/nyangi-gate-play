@@ -39,7 +39,8 @@ const PASS_TIERS = [
     { stars: 108, free: { tickets: 2 },   paid: { skin: 'ranger_forest' } },
 ];
 
-// skins: looks + one small option + projectile/slash tint. r = grade (RARITY 0..3: 일반/희귀/영웅/전설).
+// skins: looks + one small option + projectile/slash tint. r = grade (RARITY 0..4: 일반/희귀/영웅/전설/신화).
+// 신화 (스킨 소환 only, 0.02%) carries a second option (opt2) on top of a much bigger first one.
 // opt = [kind, value] (SKIN_OPTS); older skins keep their `atk` field as an attack option.
 // tier = trail look (SKIN_TIERS): by default 영웅 skins leave paw prints and 전설 skins also afterimages
 // (skinTier); a skin can set its own tier or `trail` list. Trails are render-only.
@@ -48,6 +49,7 @@ const SKIN_TIERS = {
     normal: { trail: [] },
     rare:   { trail: ['paw'], badge: true, note: L('걸으면 발자국이 남아요'), short: L('발자국') },
     hidden: { trail: ['paw', 'ghost'], badge: true, star: true, note: L('걸으면 발자국과 잔상이 남아요'), short: L('발자국 + 잔상') },
+    myth:   { trail: ['paw', 'ghost'], badge: true, star: true, note: L('걸으면 발자국과 잔상이 남아요 · 옵션 2개'), short: L('잔상 · 옵션 2개') },
 };
 const SKIN_OPTS = { atk: L('공격력'), hp: L('체력'), cdr: L('스킬 대기 감소'), gold: L('처치 금화') };
 const SKINS = {
@@ -62,6 +64,22 @@ const SKINS = {
         { id: 'knight_pirate', name: L('해적 선장 치즈'), r: 2, atk: 0.03, gems: 300, tint: '#ffd36b', tier: 'rare' },
         { id: 'knight_hanbok', name: L('한복 무사 치즈'), r: 2, atk: 0.05, gems: 600, tint: '#ff8a6a', tier: 'rare' },
         { id: 'knight_santa',  name: L('산타 기사 치즈'), r: 3, atk: 0.08, gems: 1200, tint: '#fff4dc', tier: 'hidden' },
+        { id: 'knight_orange', name: L('주황 망토 치즈'), r: 0, opt: ['atk', 0.02], tint: '#ffa04a', gacha: true },
+        { id: 'knight_sky', name: L('하늘 망토 치즈'), r: 0, opt: ['hp', 0.02], tint: '#8fd8ff', gacha: true },
+        { id: 'knight_brown', name: L('갈색 망토 치즈'), r: 0, opt: ['gold', 0.02], tint: '#c8955a', gacha: true },
+        { id: 'knight_silver', name: L('은빛 기사 치즈'), r: 1, opt: ['hp', 0.03], tint: '#e8eef8', gacha: true },
+        { id: 'knight_jade', name: L('비취 갑옷 치즈'), r: 1, opt: ['cdr', 0.02], tint: '#5fd6a8', gacha: true },
+        { id: 'knight_navy', name: L('근위대 치즈'), r: 1, opt: ['atk', 0.03], tint: '#6a8cff', gacha: true },
+        { id: 'knight_samurai', name: L('사무라이 치즈'), r: 2, opt: ['atk', 0.05], tint: '#ff5a4a', gacha: true },
+        { id: 'knight_viking', name: L('바이킹 치즈'), r: 2, opt: ['hp', 0.05], tint: '#d8b080', gacha: true },
+        { id: 'knight_dragon', name: L('용기사 치즈'), r: 3, opt: ['atk', 0.08], tint: '#ff4a3a', gacha: true },
+        { id: 'knight_sun', name: L('태양 성기사 치즈'), r: 3, opt: ['hp', 0.08], tint: '#fff0a0', gacha: true },
+        { id: 'knight_archangel', name: L('대천사 치즈'), r: 4, opt: ['atk', 0.15], opt2: ['hp', 0.1], tint: '#fff6c8', gacha: true },
+        { id: 'knight_pumpkin', name: L('호박 기사 치즈'), r: 3, opt: ['atk', 0.08], tint: '#ff8a2a', gacha: true, set: 'halloween' },
+        { id: 'knight_ginger', name: L('진저브레드 치즈'), r: 3, opt: ['hp', 0.08], tint: '#d8945a', gacha: true, set: 'xmas' },
+        { id: 'knight_surf', name: L('서핑 치즈'), r: 2, opt: ['gold', 0.05], tint: '#5ac8ff', gacha: true, set: 'summer' },
+        { id: 'knight_sebae', name: L('세배 치즈'), r: 2, opt: ['hp', 0.05], tint: '#ff7a8a', gacha: true, set: 'newyear' },
+        { id: 'knight_demonlord', name: L('마왕 치즈'), r: 4, opt: ['atk', 0.15], opt2: ['gold', 0.1], tint: '#c03aff', gacha: true },
     ],
     mage: [
         { id: 'mage_red',    name: L('빨간 로브 구름'), r: 0, opt: ['atk', 0.02], tint: '#ff6a5a', gacha: true },
@@ -74,6 +92,22 @@ const SKINS = {
         { id: 'mage_witch',  name: L('할로윈 마녀 구름'), r: 2, atk: 0.03, gems: 300, tint: '#c58cff', pass: true, tier: 'hidden' },
         { id: 'mage_sakura', name: L('벚꽃 마법사 구름'), r: 2, atk: 0.05, gems: 600, tint: '#ffa8c8', tier: 'rare' },
         { id: 'mage_star',   name: L('별빛 천문가 구름'), r: 3, atk: 0.08, gems: 1200, tint: '#ffe08a', tier: 'hidden' },
+        { id: 'mage_yellow', name: L('레몬 로브 구름'), r: 0, opt: ['atk', 0.02], tint: '#ffe85a', gacha: true },
+        { id: 'mage_teal', name: L('청록 로브 구름'), r: 0, opt: ['hp', 0.02], tint: '#4ad0d0', gacha: true },
+        { id: 'mage_gray', name: L('잿빛 로브 구름'), r: 0, opt: ['gold', 0.02], tint: '#a8b0c0', gacha: true },
+        { id: 'mage_frost', name: L('서리 마법사 구름'), r: 1, opt: ['cdr', 0.02], tint: '#c8f0ff', gacha: true },
+        { id: 'mage_ember', name: L('불씨 마법사 구름'), r: 1, opt: ['atk', 0.03], tint: '#ff8a3a', gacha: true },
+        { id: 'mage_royal', name: L('왕실 마법사 구름'), r: 1, opt: ['hp', 0.03], tint: '#b07aff', gacha: true },
+        { id: 'mage_alchemist', name: L('연금술사 구름'), r: 2, opt: ['cdr', 0.03], tint: '#9fe05a', gacha: true },
+        { id: 'mage_shrine', name: L('무녀 구름'), r: 2, opt: ['gold', 0.05], tint: '#ff6a6a', gacha: true },
+        { id: 'mage_phoenix', name: L('불사조 대마법사 구름'), r: 3, opt: ['atk', 0.08], tint: '#ffb03a', gacha: true },
+        { id: 'mage_icequeen', name: L('얼음 여왕 구름'), r: 3, opt: ['cdr', 0.05], tint: '#9fe8ff', gacha: true },
+        { id: 'mage_cosmos', name: L('우주 시간술사 구름'), r: 4, opt: ['atk', 0.15], opt2: ['cdr', 0.06], tint: '#c89cff', gacha: true },
+        { id: 'mage_vampire', name: L('뱀파이어 구름'), r: 3, opt: ['atk', 0.08], tint: '#d0304a', gacha: true, set: 'halloween' },
+        { id: 'mage_rudolph', name: L('루돌프 구름'), r: 3, opt: ['cdr', 0.05], tint: '#ff5a4a', gacha: true, set: 'xmas' },
+        { id: 'mage_sea', name: L('바다 요정 구름'), r: 2, opt: ['cdr', 0.03], tint: '#5ae0d8', gacha: true, set: 'summer' },
+        { id: 'mage_seolbim', name: L('설빔 구름'), r: 2, opt: ['gold', 0.05], tint: '#ffb0d0', gacha: true, set: 'newyear' },
+        { id: 'mage_kumiho', name: L('구미호 구름'), r: 4, opt: ['atk', 0.15], opt2: ['hp', 0.1], tint: '#7ab8ff', gacha: true },
     ],
     ranger: [
         { id: 'ranger_red',    name: L('빨간 후드 까망'), r: 0, opt: ['atk', 0.02], tint: '#ff6a5a', gacha: true },
@@ -86,8 +120,27 @@ const SKINS = {
         { id: 'ranger_beach',  name: L('여름 해변 까망'), r: 2, atk: 0.03, gems: 300, tint: '#7fd4ff', tier: 'rare' },
         { id: 'ranger_ninja',  name: L('닌자 까망'),      r: 2, atk: 0.05, gems: 600, tint: '#8c98be', tier: 'rare' },
         { id: 'ranger_forest', name: L('숲의 정령 까망'), r: 3, atk: 0.08, gems: 1200, tint: '#9fd65a', pass: true, tier: 'hidden' },
+        { id: 'ranger_lime', name: L('라임 후드 까망'), r: 0, opt: ['atk', 0.02], tint: '#b8f05a', gacha: true },
+        { id: 'ranger_teal', name: L('청록 후드 까망'), r: 0, opt: ['hp', 0.02], tint: '#4ad0d0', gacha: true },
+        { id: 'ranger_gray', name: L('잿빛 후드 까망'), r: 0, opt: ['gold', 0.02], tint: '#a8b0c0', gacha: true },
+        { id: 'ranger_crimson', name: L('진홍 사냥꾼 까망'), r: 1, opt: ['atk', 0.03], tint: '#ff4a5a', gacha: true },
+        { id: 'ranger_autumn', name: L('단풍 사냥꾼 까망'), r: 1, opt: ['gold', 0.03], tint: '#ff9a3a', gacha: true },
+        { id: 'ranger_dusk', name: L('황혼 사냥꾼 까망'), r: 1, opt: ['cdr', 0.02], tint: '#9a7ad0', gacha: true },
+        { id: 'ranger_cowboy', name: L('카우보이 까망'), r: 2, opt: ['atk', 0.05], tint: '#d89a5a', gacha: true },
+        { id: 'ranger_dokkaebi', name: L('도깨비 까망'), r: 2, opt: ['gold', 0.05], tint: '#ff7a4a', gacha: true },
+        { id: 'ranger_moon', name: L('달빛 궁수 까망'), r: 3, opt: ['atk', 0.08], tint: '#e0e8ff', gacha: true },
+        { id: 'ranger_wind', name: L('바람 정령왕 까망'), r: 3, opt: ['cdr', 0.05], tint: '#8ff0c8', gacha: true },
+        { id: 'ranger_shadow', name: L('그림자 군주 까망'), r: 4, opt: ['atk', 0.15], opt2: ['cdr', 0.06], tint: '#a05aff', gacha: true },
+        { id: 'ranger_bat', name: L('박쥐 사냥꾼 까망'), r: 3, opt: ['atk', 0.08], tint: '#a05aff', gacha: true, set: 'halloween' },
+        { id: 'ranger_elf', name: L('꼬마 요정 까망'), r: 3, opt: ['gold', 0.08], tint: '#5ad06a', gacha: true, set: 'xmas' },
+        { id: 'ranger_melon', name: L('수박 까망'), r: 2, opt: ['atk', 0.05], tint: '#ff5a6a', gacha: true, set: 'summer' },
+        { id: 'ranger_saekdong', name: L('색동 까망'), r: 2, opt: ['hp', 0.05], tint: '#ffd04a', gacha: true, set: 'newyear' },
+        { id: 'ranger_thunder', name: L('뇌신 까망'), r: 4, opt: ['atk', 0.15], opt2: ['gold', 0.1], tint: '#7ad8ff', gacha: true },
     ],
 };
+// themed sets: one skin per hero (SKINS set field), shown as "<세트> 2/3" in the skin book
+const SKIN_SETS = { halloween: L('할로윈'), xmas: L('크리스마스'), summer: L('여름'), newyear: L('설날') };
+function skinSetCount(p, set) { let n = 0, all = 0; for (const k in SKINS) for (const s of SKINS[k]) if (s.set === set) { all++; if (p.shop.skins.includes(s.id)) n++; } return [n, all]; }
 const HERO_NAMES = { knight: L('치즈'), mage: L('구름'), ranger: L('까망') };
 
 // shop products (KRW display prices). gems products give double gems on the first purchase of each tier.
@@ -104,8 +157,8 @@ const PRODUCTS = {
     gem7500:  { name: L('보석 산더미'), price: 65000, img: 'shop_gem5', gems: 7500 },
 };
 const GEM_PRODUCTS = ['gem80', 'gem500', 'gem1150', 'gem2600', 'gem7500'];
-// 소탕 (Rewards.sweepStage): stages cleared with 3 stars, this many times a day (냥이의 가호 +10)
-const SWEEP = { perDay: 30, premiumBonus: 10 };
+// 소탕 (Rewards.sweepStage): stages cleared with 3 stars, this many times a day (냥이의 가호 +5)
+const SWEEP = { perDay: 10, premiumBonus: 5 };   // 2026-10-19: was 30 + 10, sweeping out-paced playing
 const AD_LIMITS = { freeGems: 3, freeSummon: 1, double: 10, offline: 3, speed3: 5 };
 const SPEED3_AD_MIN = 30;   // 광고 한 번 = 30분 동안 3배속
 const AD_FREE_GEMS = 30;
@@ -128,17 +181,18 @@ function won(n) { return '₩' + n.toLocaleString('ko-KR'); }
 const PLAY_PRICES = {};
 function priceLabel(id) { return PLAY_PRICES[id] || won(PRODUCTS[id].price); }
 // trail look for a skin (id or object): { paw, ghost, col } or null when the skin leaves no trail
-function skinTierId(s) { return !s ? 'normal' : s.tier || (s.r >= 3 ? 'hidden' : s.r === 2 ? 'rare' : 'normal'); }
+function skinTierId(s) { return !s ? 'normal' : s.tier || (s.r >= 4 ? 'myth' : s.r >= 3 ? 'hidden' : s.r === 2 ? 'rare' : 'normal'); }
 function skinTier(s) { return SKIN_TIERS[skinTierId(s)] || SKIN_TIERS.normal; }
 // a skin's option { k, v, text }: opt = [kind, value], or the older atk field
 function skinOpt(s) {
     const [k, v] = s.opt || ['atk', s.atk || 0];
-    return { k, v, text: SKIN_OPTS[k] + ' +' + Math.round(v * 100) + '%' };
+    const one = (k, v) => SKIN_OPTS[k] + ' +' + Math.round(v * 100) + '%';
+    return { k, v, k2: s.opt2 && s.opt2[0], v2: s.opt2 && s.opt2[1], text: one(k, v) + (s.opt2 ? ' · ' + one(s.opt2[0], s.opt2[1]) : '') };
 }
 // option bonuses of the skin a hero wears (zeros without one): atk/hp/cdr feed heroStats, gold the kill bounty
 function skinBonus(p, cls) {
     const b = { atk: 0, hp: 0, cdr: 0, gold: 0 }, s = heroSkin(p, cls);
-    if (s) { const o = skinOpt(s); b[o.k] += o.v; }
+    if (s) { const o = skinOpt(s); b[o.k] += o.v; if (o.k2) b[o.k2] += o.v2; }
     return b;
 }
 // the 스킨 소환 pool of one grade: every skin but the growth-pass ones
@@ -380,15 +434,17 @@ function doSkinSummon(n, keepOpen) {
     Rewards.track('summon', n);
     const out = [];
     const pulls = n + (n === 10 ? (SKIN_SUMMON.bonus10 || 0) : 0);   // 10-pull: the 11th draw is free
+    let hit = false;
     for (let i = 0; i < pulls; i++) {
         let r = pickWeighted(SKIN_SUMMON.table);
         p.skinPity++;
         if (p.skinPity >= SKIN_SUMMON.pity && r < 3) r = 3;
-        if (r >= 3) p.skinPity = 0;
+        if (r >= 3) { p.skinPity = 0; hit = true; }
         const pool = skinPool(r), id = pool[Math.floor(Math.random() * pool.length)];
         if (p.shop.skins.includes(id)) { const g = SKIN_SUMMON.dupGems[r]; p.gems += g; out.push({ id, r, dup: true, gems: g }); }
         else { p.shop.skins.push(id); out.push({ id, r, isNew: true }); }
     }
+    if (hit) p.skinPity = 0;   // a legend in this summon resets the pity, even if pulls after it were counted
     if (!keepOpen) Save.save();
     return out;
 }

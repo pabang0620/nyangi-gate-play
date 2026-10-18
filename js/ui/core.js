@@ -132,7 +132,7 @@ const UI = {};
         if (!c.querySelector('.x2')) c.appendChild(h('span.x2', 'x2'));
     }
     const INFO_OF = { silver: 'silver', gem: 'gem', i_gem: 'gem', i_ticket: 'ticket', i_stone: 'stone', star: 'star', i_star: 'star' };
-    const REWARD_NAMES = () => ({ silver: L('은화'), gem: L('보석'), i_gem: L('보석'), i_ticket: L('소환권'), i_stone: L('강화석'), i_xp: L('경험치'), i_medal: L('토벌 훈장'), i_gold: L('거래 금화'), star: L('별'), i_star: L('별') });
+    const REWARD_NAMES = () => ({ silver: L('은화'), gem: L('보석'), i_gem: L('보석'), i_ticket: L('소환권'), i_stone: L('강화석'), i_xp: L('경험치'), i_medal: L('토벌 훈장'), i_gold: L('거래 금화'), i_guard: L('하락방지권'), i_shield: L('파괴방지권'), star: L('별'), i_star: L('별') });
 
 
     // ------------------------------------------------------------ modal helpers
@@ -177,12 +177,8 @@ const UI = {};
         const d = modal([h('div.ribbon', h('span', title)), rest.length ? h('div.row', rest.map(cell)) : null, big.length ? h('div.row', big.map(cell)) : null, h('button.btn.gold', { onclick: () => { click(); d.remove(); } }, L('확인'))]);
     }
 
-    // 하락방지권 / 파괴방지권: no sprite, the round badge of the shop card in small
-    function matCell(kind, n) {
-        const sh = kind === 'shield';
-        return h('div.cell.matc', { onclick: () => toast(sh ? L('파괴방지권') : L('하락방지권')) },
-            h('div.guard-ico' + (sh ? '.shield' : ''), h('b', sh ? '\u2726' : '\u25B2')), h('span.cnt', fmt(n)));
-    }
+    // 하락방지권 / 파괴방지권: the scroll icons (img/i_guard, i_shield)
+    function matCell(kind, n) { return rewardCell(kind === 'shield' ? 'i_shield' : 'i_guard', fmt(n)); }
 
     // gear of a known grade but not yet a known slot (reward cards, 훈장 shop): weapon · armor · charm side by side
     function gearAny(r) { return h('div.cell.gear3.r' + r, ['weapon', 'armor', 'charm'].map(s => Art.domCanvas(Art.icon(s), 1.5))); }

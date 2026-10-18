@@ -28,7 +28,7 @@
                 h('div.tip', HEROES[cls].desc),
                 h('div.bar.xp', { style: { marginTop: '6px' } }, h('i', { style: { width: (hd.lv >= HERO_MAX_LV ? 100 : hd.xp / heroXpNeed(hd.lv) * 100) + '%' } })),
                 h('div.tip', hd.lv >= HERO_MAX_LV ? L('최고 레벨') : L('경험치 {0} / {1}', hd.xp, heroXpNeed(hd.lv))),
-                h('div.tip', { style: { fontSize: '13px' } }, L('대기 중에도 경험치 {0}% 획득', Math.round(HERO_XP_SHARE * 100)))));
+                h('div.tip', { style: { fontSize: '13px' } }, L('장비는 세 영웅이 같이 써요 · 출전 안 해도 경험치 {0}%', Math.round(HERO_XP_SHARE * 100)))));
         left.appendChild(port);
         Rewards.ensure(p);
         // skins: the collection button, then default + owned ones (best grade first) in a scrolling row
@@ -62,6 +62,7 @@
         right.appendChild(h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
             h('div', { style: { fontSize: '20px', color: '#f5c451', fontFamily: 'BlackHan' } }, L('가방 {0}/{1}', p.items.length, BAG_MAX)), h('div', { style: { flex: 1 } }),
             h('button.btn.small.gold', { onclick: () => { click(); bestGearPreview(cls); } }, L('최적 장착')),
+            h('button.btn.small', { onclick: () => { click(); UI.fuseModal(); } }, L('합성')),
             h('button.btn.small', { onclick: () => { click(); salvageModal(); } }, L('일괄 분해'))));
         const items = p.items.slice().sort((a, b2) => (isEquipped(b2) - isEquipped(a)) || (b2.r - a.r) || (b2.ilvl - a.ilvl) || (b2.enh - a.enh));
         right.appendChild(h('div.grid', items.map(it => itemCell(it, { sel: S.selItem === it.id, onclick: () => { click(); it.isNew = false; S.selItem = it.id; Save.save(); showHub('hero'); } }))));
@@ -157,6 +158,7 @@
                 h('div.skc-g', { style: { color: RARITY[s.r].color } }, RARITY[s.r].name),
                 h('div.skc-n', s.name), h('div.skc-o', skinOpt(s).text),
                 t.short ? h('div.skc-t.t-' + skinTierId(s), t.short) : null,
+                s.set ? h('div.skc-set', L('{0} 세트 {1}/{2}', SKIN_SETS[s.set], ...skinSetCount(p, s.set))) : null,
                 h('div.skc-s', on ? L('착용 중') : own ? L('착용') : s.pass ? L('성장 패스') : s.gacha ? L('스킨 소환') : L('상점 · 소환')));
         };
         const n = SKINS[cls].filter(s => p.shop.skins.includes(s.id)).length;
@@ -434,11 +436,11 @@
                 } }, img('i_ticket', '.icon'), L('소환권 10장'))));
         } else {
             // one sample portrait per grade
-            const sample = ['knight_red', 'mage_sunset', 'ranger_ninja', 'knight_santa'];
+            const sample = ['knight_red', 'mage_sunset', 'ranger_ninja', 'knight_santa', 'mage_kumiho'];
             left.appendChild(h('div.sm-rates', SKIN_SUMMON.table.map((v, r) => { const s = skinById(sample[r]); return rate(r, img(heroFace(s.cls, s.id), '.sm-pic'), v); })));
             left.appendChild(h('div.tip', L('{0}번째 소환까지 전설이 없으면 전설 확정 (현재 {1}/{2})', SKIN_SUMMON.pity, p.skinPity, SKIN_SUMMON.pity)));
             left.appendChild(h('div.tip.sm-dup', L('가진 스킨이 나오면 보석으로: {0}', SKIN_SUMMON.dupGems.map((g, r) => `${RARITY[r].name} ${g}`).join(' · '))));
-            const pool = [0, 1, 2, 3].flatMap(skinPool);
+            const pool = [0, 1, 2, 3, 4].flatMap(skinPool);
             left.appendChild(h('div.tip', L('모은 스킨 {0} / {1} · 영웅은 발자국, 전설은 잔상', pool.filter(id => p.shop.skins.includes(id)).length, pool.length)));
             right.appendChild(h('div.sm-pair',
                 big(L('1회 소환'), SKIN_SUMMON.cost1, () => { if (p.gems < SKIN_SUMMON.cost1) { click(); UI.gemGate(SKIN_SUMMON.cost1, '', () => {}); return; } runSkinSummon(1); }),

@@ -12,6 +12,13 @@
     background: linear-gradient(110deg, #ff6fd8, #a874ff 45%, #5fd6ff);
     background-size: 200% 100%; animation: skb-shine 2.4s linear infinite;
 }
+/* themed set line in the skin book */
+.skc-set { font-size: 11px; color: #8a5a1a; }
+
+/* 신화: ember to gold, a little faster */
+.skbadge.t-myth { background: linear-gradient(110deg, #ff5a2a, #ffcf4a 45%, #ff7ae0); background-size: 200% 100%; animation: skb-shine 1.6s linear infinite; }
+.sknote.t-myth { color: #ff9a4a; }
+.pcard .pd.sknote.t-myth, .skc-t.t-myth { color: #c8501a; }
 @keyframes skb-shine { from { background-position: 0 0; } to { background-position: 200% 0; } }
 
 /* hero screen skin picker */

@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.4';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.5';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-14';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
@@ -336,12 +336,12 @@
         win.appendChild(sec(L('보석'), GEM_PRODUCTS.map(card)));
         // 강화 도구 (bought with gems): 하락방지권 keeps the level when a try at +10 or more fails
         const guardCard = (g, i) => h('div.pcard.guard',
-            h('div.guard-ico', h('span', '+10'), h('b', '\u25B2')),
+            img('i_guard', '.shopimg'),
             h('div.pn', L('하락방지권 {0}개', g.n)),
             h('div.pd', L('+10 이상 실패해도 단계 유지')),
             h('button.btn.gold.small' + (p.gems < g.gems ? '.off' : ''), { onclick: () => { click(); UI.gemGate(g.gems, L('보석 {0}개로 하락방지권 {1}개를 살까요?', fmt(g.gems), g.n), () => { if (buyGuards(i)) { Sfx.play('coin'); showHub('shop'); toast(L('하락방지권 {0}개 (보유 {1})', g.n, p.mats.guard)); } }); } }, img('i_gem', '.icon'), fmt(g.gems)));
         const shieldCard = (g, i) => h('div.pcard.guard',
-            h('div.guard-ico.shield', h('span', '+10'), h('b', '\u2726')),
+            img('i_shield', '.shopimg'),
             h('div.pn', L('파괴방지권 {0}개', g.n)),
             h('div.pd', L('+10 이상 실패해도 파괴되지 않음')),
             h('button.btn.gold.small' + (p.gems < g.gems ? '.off' : ''), { onclick: () => { click(); UI.gemGate(g.gems, L('보석 {0}개로 파괴방지권 {1}개를 살까요?', fmt(g.gems), g.n), () => { if (buyGuards(i, true)) { Sfx.play('coin'); showHub('shop'); toast(L('파괴방지권 {0}개 (보유 {1})', g.n, p.mats.shield)); } }); } }, img('i_gem', '.icon'), fmt(g.gems)));

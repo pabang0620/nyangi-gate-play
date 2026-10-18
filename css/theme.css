@@ -125,6 +125,3 @@ img.star { width: 30px; height: 30px; object-fit: contain; }
 @media (prefers-reduced-motion: reduce) { .cell.r4::before { animation: none; } }
 /* gear of a known grade, slot not rolled yet: weapon · armor · charm side by side */
 .cell.gear3 > canvas { width: 36% !important; height: auto !important; margin: 0 -2px; }   /* scales with every cell size (mail, pass, raid rows) */
-/* 하락방지권 / 파괴방지권 in reward rows */
-.cell.matc .guard-ico { width: 70%; height: 70%; border-radius: 50%; display: flex; align-items: center; justify-content: center; position: relative; z-index: 1; background: radial-gradient(circle at 40% 35%, #8fe0ff, #2a6aa8 70%); box-shadow: inset 0 0 0 3px #e8f6ff; font-family: 'Lilita'; font-size: 20px; color: #fff; text-shadow: var(--stroke-s); }
-.cell.matc .guard-ico.shield { background: radial-gradient(circle at 40% 35%, #ffb0a0, #a8302a 70%); box-shadow: inset 0 0 0 3px #fff0e8; }

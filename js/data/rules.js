@@ -18,12 +18,17 @@ const DROP = {
 const SUMMON = { cost1: 30, cost10: 270, bonus10: 1, table: [55, 30, 12, 2.7, 0.3], pity: 30 };
 // skin banner: grades 일반..전설 (RARITY 0..3), own pity; a skin you already own turns into gems (expected value
 // ~14.5 gems per 30-gem pull, so duplicates soften bad luck without making the banner a gem source)
-const SKIN_SUMMON = { cost1: 30, cost10: 270, bonus10: 1, table: [60, 30, 8, 2], pity: 50, dupGems: [5, 15, 50, 150] };
+const SKIN_SUMMON = { cost1: 30, cost10: 270, bonus10: 1, table: [60, 30, 8, 1.98, 0.02], pity: 50, dupGems: [5, 15, 50, 150, 500] };   // 신화 0.02%: banner-only, two options
 // 연속 소환: budget steps of one 10-pull; stop when a pull reaches this grade (null = never)
 // bosses and elites that reach the gate lose the stage (js/battle/enemies.js), so they are a bit easier to bring down
 const MUST_KILL = { bossHp: 0.8, eliteHp: 0.7, gateTime: 5, gateDps: 0.05, eliteGateDps: 0.12 };   // gateTime: seconds a boss/elite smashes the gate before the stage is lost; gateDps / eliteGateDps: share of max HP the gate guards deal per second to a boss / an elite
 // gear bag size; past it the weakest spare gear is salvaged automatically (js/save.js bagOverflow)
 const BAG_MAX = 600;
+// 장비 합성: n of one grade -> one of the next grade at rate[r] %, else one of the same grade (js/save.js fuseOnce).
+// Worse than summoning on purpose (net 2 legends per try at 10% vs a 0.3% mythic summon): it clears spare gear, not a shortcut.
+const FUSE = { n: 3, rate: [80, 50, 25, 10] };
+// 다음 스테이지 자동 진행 · 반복 (result screen): opens once this stage is cleared (index 3 = 1-4, the chapter 1 boss), counts down `wait` seconds
+const AUTO_NEXT = { unlock: 3, wait: 5 };
 const SUMMON_STOPS = [null, 3, 2];
 
 // ---------------------------------------------------------------- towers
@@ -84,9 +89,9 @@ const SELL_RATIO = 0.6;
 
 // ---------------------------------------------------------------- heroes
 const HEROES = {
-    knight: { name: L('기사'), desc: L('탱커##역할'), hp: 470, atk: 32, rate: 0.9, range: 60, spd: 100, block: true, air: true, dmgType: 'phys' },
-    mage:   { name: L('마법사'), desc: L('광역##역할'), hp: 270, atk: 30, rate: 1.1, range: 165, spd: 88, block: false, air: true, dmgType: 'magic' },
-    ranger: { name: L('궁수'), desc: L('공중##역할'), hp: 310, atk: 17, rate: 0.6, range: 195, spd: 105, block: false, air: true, dmgType: 'phys' },
+    knight: { name: L('기사'), desc: L('앞에서 적을 막는 탱커 · 받는 피해 -25%'), hp: 470, atk: 32, rate: 0.9, range: 60, spd: 100, block: true, air: true, dmgType: 'phys' },
+    mage:   { name: L('마법사'), desc: L('마법 피해 · 범위 공격 · 물리 방어 적에 강함'), hp: 270, atk: 30, rate: 1.1, range: 165, spd: 88, block: false, air: true, dmgType: 'magic' },
+    ranger: { name: L('궁수'), desc: L('사거리 가장 김 · 빠른 연사 · 마법 저항 적에 강함'), hp: 310, atk: 17, rate: 0.6, range: 195, spd: 105, block: false, air: true, dmgType: 'phys' },
 };
 const HERO_GROWTH = 1.07;
 const HERO_MAX_LV = 60;
@@ -118,7 +123,7 @@ const SPELLS = [
     { id: 'beacon', name: L('유성 냥펀치'), cd: 50, r: 100, desc: L('불타는 발바닥 유성을 떨어뜨려 범위 피해와 불바다.') },
     { id: 'militia', name: L('증원'), cd: 25, desc: L('민병 2명을 20초간 부른다.') },
     // 냥이 총출동: the two heroes not deployed join for a few seconds (battle cfg.party; the balance bot never passes it)
-    { id: 'party', name: L('냥이 총출동'), cd: 60, r: 90, dur: 15, atkMul: 1.5, icon: 'rally', desc: L('쉬는 영웅 둘이 15초 동안 함께 싸워요.') },
+    { id: 'party', name: L('냥이 총출동'), cd: 60, r: 90, dur: 25, atkMul: 1.5, icon: 'rally', desc: L('쉬는 영웅 둘이 25초 동안 함께 싸워요.') },
 ];
 
 // ---------------------------------------------------------------- research (stars)

@@ -215,6 +215,27 @@ function bulkSalvage(maxRarity, withEnh) {
     return { gain, n };
 }
 
+// 장비 합성 (FUSE): spare gear of one grade, lowest level first; equipped, 거래 가능 and (unless asked) enhanced gear stay out
+function fuseTargets(p, r, withEnh) { return p.items.filter(it => it.r === r && !isEquipped(it) && !it.mid && (withEnh || !it.enh)).sort((a, b) => a.ilvl - b.ilvl || a.enh - b.enh); }
+// one try: the result takes the slot of one of the three and the highest level among them
+function fuseOnce(p, r, withEnh) {
+    if (r >= FUSE.rate.length) return null;
+    const src = fuseTargets(p, r, withEnh).slice(0, FUSE.n);
+    if (src.length < FUSE.n) return null;
+    const ids = new Set(src.map(x => x.id));
+    p.items = p.items.filter(x => !ids.has(x.id));
+    const ok = Math.random() * 100 < FUSE.rate[r];
+    const it = makeItem(src[Math.floor(Math.random() * src.length)].slot, ok ? r + 1 : r, Math.max(...src.map(x => x.ilvl)));
+    return { ok, it };
+}
+// 일괄 합성: every three of one grade until fewer than three are left (a failed try's item can go in again)
+function bulkFuse(p, r, withEnh) {
+    const out = []; let x;
+    while ((x = fuseOnce(p, r, withEnh))) out.push(x);
+    Save.save();
+    return out;
+}
+
 // ------------------------------------------------------------ summon
 function summonIlvl(p) { return 1 + Math.max(0, highestCleared(p)) * 2.5; }
 // slot: 'weapon' | 'armor' | 'charm' picks the gear type (same price and grade rates), anything else = random type.
@@ -226,13 +247,15 @@ function doSummon(n, slot, pay, keepOpen) {
     if (typeof Rewards !== 'undefined') Rewards.track('summon', n);
     const out = [];
     const pulls = n + (n === 10 ? (SUMMON.bonus10 || 0) : 0);   // 10-pull: the 11th draw is free
+    let hit = false;
     for (let i = 0; i < pulls; i++) {
         let r = pickWeighted(SUMMON.table);
         p.pity++;
         if (p.pity >= SUMMON.pity && r < 3) r = 3;
-        if (r >= 3) p.pity = 0;
+        if (r >= 3) { p.pity = 0; hit = true; }
         out.push(makeItem(SLOTS.includes(slot) ? slot : SLOTS[Math.floor(Math.random() * 3)], r, summonIlvl(p)));
     }
+    if (hit) p.pity = 0;   // a legend in this summon resets the pity, even if pulls after it were counted
     if (!keepOpen) Save.save();
     return out;
 }
