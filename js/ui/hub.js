@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.7';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.8';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-14';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
