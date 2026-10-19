@@ -25,7 +25,7 @@
     function friendBadge() { return Friends.badge; }
 
     function friendsModal() {
-        if (!Online.on) { toast(Online.enabled ? L('서버에 연결되지 않았습니다') : L('온라인 기능이 아직 설정되지 않았습니다')); return; }
+        if (!Online.on) { toast(Online.enabled ? L('인터넷에 연결되지 않았어요') : L('온라인 기능이 아직 설정되지 않았습니다')); return; }
         if (!Online.profile) {
             const d0 = modal([h('h2', L('친구')), h('div', L('친구를 맺으려면 닉네임이 필요해요')),
                 h('button.btn.gold', { onclick: () => { click(); d0.remove(); UI.ensureProfile(() => friendsModal()); } }, L('닉네임 정하기')),

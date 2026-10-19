@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.6';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.7';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-14';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
@@ -84,6 +84,34 @@
     Online.onChange(() => { if (acctLine && acctLine.isConnected) acctLine.refresh(); if (setAcct && setAcct.isConnected) setAcct.refresh(); });
     UI.resumeSupply = () => { if ((S.screen === 'title' || S.screen === 'hub') && !document.querySelector('.modal')) offlineSupply(Save.p); };
 
+    // start area: a first visit (no account on this device yet) picks guest / Google / Kakao / id here; afterwards 시작하기
+    function titleStart() {
+        const wrap = h('div.title-start');
+        const go = () => showHub('map');
+        const draw = () => {
+            wrap.innerHTML = '';
+            if (!(Online.enabled && Online.status === 'login')) {
+                wrap.appendChild(h('button.btn.gold', { style: { fontSize: '26px', padding: '14px 60px' }, onclick: () => { click(); Sfx.init(); consentThen(go); } }, L('시작하기')));
+                return;
+            }
+            const err = h('div.tip', { style: { color: '#ffd0b0', textShadow: '0 1px 3px #000', minHeight: '18px' } });
+            const run = fn => { click(); Sfx.init(); consentThen(async () => { err.textContent = ''; try { await fn(); } catch (e) { err.textContent = (e && e.message) || String(e); } }); };
+            wrap.append(
+                h('button.btn.gold', { style: { fontSize: '22px', padding: '12px 48px' }, onclick: () => run(async () => { await Online.startGuest(); go(); }) }, L('게스트로 시작')),
+                h('div.row.title-logins',
+                    Online.kakaoOn() ? h('button.btn.kakao', { onclick: () => run(() => Online.loginKakao()) }, L('카카오로 시작')) : null,
+                    Online.nativeGoogle ? h('button.btn.google', { onclick: () => run(() => Online.loginGoogle()) }, L('Google로 시작')) : null),
+                h('div.row.title-logins',
+                    h('button.btn.small.ghost', { onclick: () => run(() => UI.idLoginModal()) }, L('아이디로 로그인')),
+                    h('button.btn.small.ghost', { onclick: () => run(() => UI.signUpModal(go)) }, L('회원가입'))),
+                h('div.tip.title-guest-note', L('게스트는 앱을 지우면 진행이 사라지고 구매를 할 수 없어요')),
+                err);
+        };
+        Online.onChange(() => { if (S.screen === 'title' && wrap.isConnected) draw(); });
+        draw();
+        return wrap;
+    }
+
     function showTitle() {
         S.screen = 'title';
         clear();
@@ -93,7 +121,7 @@
         const box = h('div.title-screen',
             h('div.logo-wrap', img('logo_emblem'), h('div.logo', h('span.l1', L('냥이')), h('span.l2', L('성문 수비대')))),
             h('div.logo-sub', L('성문을 지켜라냥!')),
-            h('button.btn.gold', { style: { fontSize: '26px', padding: '14px 60px' }, onclick: () => { click(); Sfx.init(); consentThen(() => showHub('map')); } }, L('시작하기')),
+            titleStart(),
             Game.touch && !/NyangiApp/.test(navigator.userAgent) ? h('button.btn.ghost', { onclick: () => { click(); Game.fullscreen(); } }, L('전체 화면으로 하기')) : null,   // the app is already full screen
             h('div.tip', { style: { marginTop: '18px', color: '#fff4dc', textShadow: '0 2px 4px #000' } }, L('탑을 세우고 냥이 영웅을 움직여, 성문이 뚫리기 전에 몬스터를 막아라냥!')),
             titleAccount(p),
@@ -144,6 +172,7 @@
     if (typeof Friends !== 'undefined') Friends.onChange(() => { if (friendsBtn && friendsBtn.isConnected) friendsBtn.sync(); });
 
     function showHub(tab) {
+        UI.ensureAccount();
         S.screen = 'hub';
         S.tab = tab || S.tab;
         clear();
@@ -370,5 +399,6 @@
         root().appendChild(win);
     }
 
+    UI.ensureAccount = () => { if (Online.enabled && Online.status === 'login') Online.startGuest(); };
     Object.assign(UI, { howToModal, touchHelpModal, researchAffordable, showTitle, showHub, tabSettings, maybeLogin, loginModal, tabShop, buyProduct });
 })();

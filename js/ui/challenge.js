@@ -276,7 +276,7 @@
             h('div.tip', L('주간 순위 보상 (월요일 정산)')),
             h('div.cup-rw', rw.map(([n, r]) => h('div', h('b', n), ...rewardIcons(r)))));
         const right = h('div.inset', { style: { flex: 1, padding: '10px', display: 'flex', flexDirection: 'column', minHeight: 0 } }, h('b', L('이번 주 순위')));
-        if (!Online.on) right.appendChild(h('div.muted', { style: { margin: '16px' } }, Online.enabled ? L('서버에 연결되면 순위가 보입니다') : L('온라인 기능이 설정되면 다른 냥이와 순위를 겨룹니다')));
+        if (!Online.on) right.appendChild(h('div.muted', { style: { margin: '16px' } }, Online.enabled ? L('인터넷에 연결되면 순위가 보여요') : L('온라인 기능이 설정되면 다른 냥이와 순위를 겨룹니다')));
         else if (!Online.profile) right.appendChild(h('button.btn.small.gold', { style: { margin: '16px auto' }, onclick: () => { click(); ensureProfile(() => showHub('endless')); } }, L('닉네임 만들고 순위 보기')));
         else { const ph = h('div.tip', L('불러오는 중…')); right.appendChild(ph); Online.board('cup', 30).then(v => { ph.replaceWith(h('div', { style: { display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 } }, myRankLine(v, L('점')), rankList(v, L('점')))); }); }
         win.appendChild(h('div', { style: { display: 'flex', gap: '12px', flex: 1, minHeight: 0 } }, left2, right));
@@ -294,7 +294,7 @@
         const box = h('div.inset', { style: { flex: 1, padding: '10px', display: 'flex', flexDirection: 'column', minHeight: 0 } });
         win.appendChild(box);
         root().appendChild(win);
-        if (!Online.on) { box.appendChild(h('div.muted', { style: { margin: '20px' } }, Online.enabled ? L('서버에 연결되지 않았습니다') : L('온라인 랭킹을 준비하고 있습니다'))); return; }
+        if (!Online.on) { box.appendChild(h('div.muted', { style: { margin: '20px' } }, Online.enabled ? L('인터넷에 연결되지 않았어요') : L('온라인 랭킹을 준비하고 있습니다'))); return; }
         if (!Online.profile) { box.appendChild(h('button.btn.gold', { style: { margin: '20px auto' }, onclick: () => { click(); ensureProfile(() => showHub('endless')); } }, L('닉네임 만들고 랭킹 보기'))); return; }
         const [id, , unit] = kinds.find(k => k[0] === S.rkind);
         box.appendChild(h('div.tip', L('불러오는 중…')));

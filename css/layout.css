@@ -194,6 +194,11 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 .legal-line { font-size: 13px; opacity: .85; margin-bottom: 8px; }
 .title-acct { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 10px; }
 .title-acct .tip { color: #fff4dc; text-shadow: 0 1px 3px #000; }
+.title-start { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.title-logins { gap: 10px; justify-content: center; flex-wrap: wrap; }
+.btn.kakao { border: 2px solid #c9b400; border-image: none; border-radius: 10px; background: #fee500; color: #191919; text-shadow: none; min-width: 200px; min-height: 46px; font-size: 18px; }
+.btn.google { border: 2px solid #c8c8c8; border-image: none; border-radius: 10px; background: #fff; color: #3c4043; text-shadow: none; min-width: 200px; min-height: 46px; font-size: 18px; }
+.title-guest-note { color: #fff4dc; text-shadow: 0 1px 3px #000; font-size: 13px; }
 .locknote { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 6px; color: #a8401a; }
 .locknote .icon { width: 20px; height: 20px; }
 .title-legal { position: absolute; right: 18px; top: 10px; font-size: 13px; color: #fff4dc; text-shadow: 0 1px 3px #000; opacity: .85; }
@@ -238,6 +243,11 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 /* reward icons shown inside explanation popups and shop cards */
 .rwrow { display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; }
 .info-body .rwrow .cell { width: 64px; height: 64px; }
+.sg-row { display: flex; align-items: center; gap: 10px; padding: 6px 4px; width: min(460px, 100%); margin: 0 auto; box-sizing: border-box; border-bottom: 1px dashed rgba(106, 74, 42, 0.25); text-align: left; }
+.sg-stars { display: flex; flex: none; width: 96px; }
+.sg-stars .star { width: 30px; height: 30px; }
+.sg-cond { flex: 1; font-size: 15px; line-height: 1.4; }
+.sg-row .cell { width: 56px; height: 56px; flex: none; }
 /* +1 bonus badge on the 10-pull buttons */
 .sm-bonus { font-family: 'BlackHan'; font-size: 20px; color: #9fd65a; text-shadow: var(--stroke-s); }
 

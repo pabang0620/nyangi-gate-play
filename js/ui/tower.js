@@ -163,7 +163,7 @@
         const box = h('div.inset.tw-rank', h('div.tip', L('불러오는 중…')));
         const d = modal([h('div.title-t', L('심연의 탑 주간 순위')), box, h('div.tip', L('이번 주 오른 가장 높은 층으로 겨뤄요 · 매주 월요일 순위대로 보상')),
             h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
-        if (!Online.on) { box.innerHTML = ''; box.appendChild(h('div.muted', Online.enabled ? L('서버에 연결되지 않았습니다') : L('온라인 랭킹을 준비하고 있습니다'))); return; }
+        if (!Online.on) { box.innerHTML = ''; box.appendChild(h('div.muted', Online.enabled ? L('인터넷에 연결되지 않았어요') : L('온라인 랭킹을 준비하고 있습니다'))); return; }
         if (!Online.profile) { box.innerHTML = ''; box.appendChild(h('button.btn.gold', { onclick: () => { click(); d.remove(); UI.ensureProfile(() => rankModal()); } }, L('닉네임 만들고 랭킹 보기'))); return; }
         Online.board('tower', 50).then(v => { box.innerHTML = ''; box.appendChild(UI.myRankLine(v, L('층'))); box.appendChild(UI.rankList(v, L('층'))); });
     }

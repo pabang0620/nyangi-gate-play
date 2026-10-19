@@ -364,6 +364,11 @@ const Rewards = {
         const p = Save.p, pr = PRODUCTS[productId];
         if (!pr) return null;
         if (pr.once && p.shop[productId]) return null;
+        // 게스트는 결제 못 함: 결제 기록이 로그인한 계정에 남아야 환불·복구를 확인할 수 있다
+        if (Online.enabled) {
+            if (!Online.on) { toast(L('인터넷에 연결해야 구매할 수 있어요')); return null; }
+            if (!Online.isLinked()) { UI.linkModal('buy'); return null; }
+        }
         const res = await Payments.purchase(productId, pr);
         if (!res || !res.ok) return null;
         return this.applyPurchase(productId, res.token || res.receipt || 'test-' + nowMs());
@@ -374,7 +379,7 @@ const Rewards = {
         if (!pr) return null;
         if (p.shop.purchases.some(x => x.token === token)) { if (native) window.BonghwaBridge.finishPurchase(token, !pr.once); return []; }   // already granted on this save: just acknowledge the store (a missed acknowledge gets auto-refunded by Play)
         if (native && Online.enabled) {
-            if (!Online.on) { toast(L('서버에 연결되면 지급됩니다 (구매는 안전하게 보관됩니다)')); return null; }   // not finished: restored later
+            if (!Online.on) { toast(L('인터넷에 연결되면 지급돼요 (구매는 안전하게 보관돼요)')); return null; }   // not finished: restored later
             const v = await Online.verifyPurchase(productId, token);
             if (!v.ok) { toast(L('구매를 확인하지 못했습니다: ') + (v.reason || '')); return null; }
         }

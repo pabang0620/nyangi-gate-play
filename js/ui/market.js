@@ -29,7 +29,7 @@
     const goldText = n => L('거래 금화 {0}', fmt(n));
 
     function marketModal() {
-        if (!Online.on) { toast(Online.enabled ? L('서버에 연결되지 않았습니다') : L('온라인 기능이 아직 설정되지 않았습니다')); return; }
+        if (!Online.on) { toast(Online.enabled ? L('인터넷에 연결되지 않았어요') : L('온라인 기능이 아직 설정되지 않았습니다')); return; }
         if (!Online.profile) {
             const d0 = modal([h('h2', L('거래소')), h('div', L('거래소는 닉네임이 있어야 쓸 수 있어요')),
                 h('button.btn.gold', { onclick: () => { click(); d0.remove(); UI.ensureProfile(() => marketModal()); } }, L('닉네임 정하기')),
@@ -166,7 +166,7 @@
         const d = modal([h('h2', L('거래 규칙')),
             h('div', { style: { textAlign: 'left', lineHeight: 1.7 } },
                 h('div', L('우편으로 받은 장비(레이드 보상 카드 등)만 "거래 가능"이에요. 강화하지 않고 장착하지 않은 것만 팔 수 있어요')),
-                h('div', L('값은 거래 금화로 치러요. 거래 금화는 레이드 보상과 판매 대금으로 모이고 서버에 보관돼요')),
+                h('div', L('값은 거래 금화로 치러요. 거래 금화는 레이드 보상과 판매 대금으로 모이고 계정에 보관돼요')),
                 h('div', L('올릴 때 보증금 {0}%를 내고, 팔리면 돌려받아요. 취소하거나 {1}시간이 지나면 보증금은 사라지고 장비는 우편으로 돌아와요', Math.round((c.deposit || 0.02) * 100), c.hours || 48)),
                 h('div', L('팔리면 수수료 {0}%를 빼고 받아요', Math.round((c.fee || 0.05) * 100))),
                 h('div', L('거래소에서 산 장비는 다시 팔 수 없어요')),

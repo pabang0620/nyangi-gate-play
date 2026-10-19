@@ -19,24 +19,50 @@ const Online = {
         const authErr = back.get('error_code') || back.get('error');
         try {
             this.sb = supabase.createClient(ONLINE_CONFIG.url, ONLINE_CONFIG.anonKey, { db: { schema: ONLINE_CONFIG.schema || 'public' }, auth: { persistSession: true, storageKey: 'nyangi-auth', autoRefreshToken: true } });
-            let { data: { session } } = await this.sb.auth.getSession();
-            if (!session) { const r = await this.sb.auth.signInAnonymously(); if (r.error) throw r.error; session = r.data.session; }
-            this.user = session.user;
-            if (back.has('access_token') || authErr) try { history.replaceState(null, '', location.pathname); } catch (e) { }
-            if (authErr) setTimeout(() => toast(/identity_already_exists|already/i.test(authErr + (back.get('error_description') || ''))
-                ? L('이미 다른 진행에 연결된 계정이에요. 프로필의 다른 계정으로 로그인에서 그 계정으로 들어갈 수 있어요')
-                : L('로그인하지 못했어요. 다시 시도해 주세요')), 600);
-            await this.syncClock();
-            this.cfg = (await this.sb.rpc('online_config')).data;
-            this.profile = (await this.sb.from('profiles').select('*').eq('uid', this.user.id).maybeSingle()).data;
-            this.status = 'online'; this.emit();
-            await this.pullSave();
-            await this.refreshMail();
-            if (typeof window !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.hidden) this.pushSave(true); });
+            const { data: { session } } = await this.sb.auth.getSession();
+            if (!session) {
+                // first visit: the title screen asks how to start (guest / Google / Kakao / id). It needs the login switches
+                this.cfg = (await this.sb.rpc('online_config')).data;
+                if (authErr) setTimeout(() => toast(L('로그인하지 못했어요. 다시 시도해 주세요')), 600);
+                this.status = 'login'; this.emit(); return;
+            }
+            await this.begin(session, back, authErr);
         } catch (e) {
             console.warn('online init failed', e);
             this.status = 'error'; this.emit();
         }
+    },
+    // a guest account (title 게스트로 시작, or the game started before choosing)
+    async startGuest() {
+        if (this.status !== 'login') return;
+        this.status = 'connecting'; this.emit();
+        try {
+            const r = await this.sb.auth.signInAnonymously(); if (r.error) throw r.error;
+            await this.begin(r.data.session, new URLSearchParams(), null);
+        } catch (e) { console.warn('guest sign-in failed', e); this.status = 'error'; this.emit(); }
+    },
+    // 회원가입 on the title: a new account with a game id + password (a guest that gets an id right away)
+    async signUp(id, password) {
+        id = String(id || '').trim().toLowerCase();
+        if (!/^[a-z0-9_]{4,16}$/.test(id)) throw new Error(L('아이디는 영어 소문자, 숫자, _ 로 4~16자예요'));
+        if (String(password || '').length < 8) throw new Error(L('비밀번호는 8자 이상으로 정해 주세요'));
+        await this.startGuest();
+        if (!this.on) throw new Error(L('인터넷에 연결되지 않았어요'));
+        return this.setLogin(id, password);
+    },
+    async begin(session, back, authErr) {
+        this.user = session.user;
+        if (back.has('access_token') || authErr) try { history.replaceState(null, '', location.pathname); } catch (e) { }
+        if (authErr) setTimeout(() => toast(/identity_already_exists|already/i.test(authErr + (back.get('error_description') || ''))
+            ? L('이미 다른 진행에 연결된 계정이에요. 설정의 다른 계정으로 로그인에서 그 계정으로 들어갈 수 있어요')
+            : L('로그인하지 못했어요. 다시 시도해 주세요')), 600);
+        await this.syncClock();
+        this.cfg = (await this.sb.rpc('online_config')).data;
+        this.profile = (await this.sb.from('profiles').select('*').eq('uid', this.user.id).maybeSingle()).data;
+        this.status = 'online'; this.emit();
+        await this.pullSave();
+        await this.refreshMail();
+        if (typeof window !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.hidden) this.pushSave(true); });
     },
 
     // ---------------------------------------------------------------- server clock
@@ -167,7 +193,7 @@ const Online = {
     },
     // coupon: the reward goes to the mailbox. Returns '' on success or an error message
     async redeemCoupon(code) {
-        if (!this.on) return L('온라인 연결이 필요합니다');
+        if (!this.on) return L('인터넷 연결이 필요해요');
         const { data, error } = await this.sb.rpc('redeem_coupon', { p_code: code });
         if (error) return /too fast/.test(error.message || '') ? L('잠시 후 다시 입력해 주세요') : L('쿠폰을 확인하지 못했어요');
         if (data && data.error) return { invalid: L('없거나 기간이 끝난 쿠폰이에요'), used_up: L('선착순이 끝난 쿠폰이에요'), already: L('이미 사용한 쿠폰이에요') }[data.error] || L('쿠폰을 확인하지 못했어요');
@@ -201,7 +227,7 @@ const Online = {
 
     // OAuth page (Kakao everywhere, Google in the browser). link = attach to this account, otherwise sign in to that account
     async oauth(provider, link) {
-        if (!this.sb) throw new Error(L('온라인 연결이 필요합니다'));
+        if (!this.sb) throw new Error(L('인터넷 연결이 필요해요'));
         const redirectTo = this.inApp ? 'nyangi-gate://auth' : location.origin + location.pathname;
         const options = { redirectTo, skipBrowserRedirect: true };
         const r = link ? await this.sb.auth.linkIdentity({ provider, options }) : await this.sb.auth.signInWithOAuth({ provider, options });
@@ -211,7 +237,7 @@ const Online = {
         location.href = r.data.url;   // in the app this opens the phone browser (MainActivity.shouldOverrideUrlLoading)
     },
     async linkGoogle() {
-        if (!this.on) throw new Error(L('온라인 연결이 필요합니다'));
+        if (!this.on) throw new Error(L('인터넷 연결이 필요해요'));
         if (!this.nativeGoogle) return this.oauth('google', true);
         const token = await window.BonghwaBridge.googleIdToken(ONLINE_CONFIG.googleWebClientId);
         if (!token) throw new Error(L('Google 로그인을 취소했습니다'));
@@ -226,7 +252,7 @@ const Online = {
         await this.refreshUser();
     },
     async loginGoogle() {
-        if (!this.sb) throw new Error(L('온라인 연결이 필요합니다'));
+        if (!this.sb) throw new Error(L('인터넷 연결이 필요해요'));
         if (!this.nativeGoogle) return this.oauth('google', false);
         const token = await window.BonghwaBridge.googleIdToken(ONLINE_CONFIG.googleWebClientId);
         if (!token) throw new Error(L('Google 로그인을 취소했습니다'));
@@ -234,11 +260,35 @@ const Online = {
         if (r.error) throw r.error;
         this.markSwitch(); location.reload();
     },
-    linkKakao() { if (!this.on) throw new Error(L('온라인 연결이 필요합니다')); return this.oauth('kakao', true); },
-    loginKakao() { return this.oauth('kakao', false); },
+    get nativeKakao() { return typeof window !== 'undefined' && !!(window.BonghwaBridge && window.BonghwaBridge.kakaoIdToken); },
+    // in the app: KakaoTalk confirms in one tap and hands an ID token (no browser, no Kakao 2-step check). Web: the Kakao page
+    async linkKakao() {
+        if (!this.on) throw new Error(L('인터넷 연결이 필요해요'));
+        if (!this.nativeKakao) return this.oauth('kakao', true);
+        const token = await window.BonghwaBridge.kakaoIdToken();
+        if (!token) throw new Error(L('카카오 로그인을 취소했어요'));
+        let r = await this.sb.auth.linkIdentity({ provider: 'kakao', token });
+        if (r.error && /already/i.test(r.error.message)) {
+            // this Kakao account already has progress (another device): switch to it
+            r = await this.sb.auth.signInWithIdToken({ provider: 'kakao', token });
+            if (r.error) throw r.error;
+            this.markSwitch(); location.reload(); return;
+        }
+        if (r.error) throw r.error;
+        await this.refreshUser();
+    },
+    async loginKakao() {
+        if (!this.nativeKakao) return this.oauth('kakao', false);
+        if (!this.sb) throw new Error(L('인터넷 연결이 필요해요'));
+        const token = await window.BonghwaBridge.kakaoIdToken();
+        if (!token) throw new Error(L('카카오 로그인을 취소했어요'));
+        const r = await this.sb.auth.signInWithIdToken({ provider: 'kakao', token });
+        if (r.error) throw r.error;
+        this.markSwitch(); location.reload();
+    },
     // make (or change) this account's game id and password
     async setLogin(id, password) {
-        if (!this.on) throw new Error(L('온라인 연결이 필요합니다'));
+        if (!this.on) throw new Error(L('인터넷 연결이 필요해요'));
         id = String(id || '').trim().toLowerCase();
         if (!/^[a-z0-9_]{4,16}$/.test(id)) throw new Error(L('아이디는 영어 소문자, 숫자, _ 로 4~16자예요'));
         if (String(password || '').length < 8) throw new Error(L('비밀번호는 8자 이상으로 정해 주세요'));
@@ -246,13 +296,13 @@ const Online = {
         let reason = data && data.reason;
         if (error) { try { reason = (await error.context.json()).reason; } catch (e) { reason = 'net'; } }
         if (!data || !data.ok) throw new Error({ bad_id: L('아이디는 영어 소문자, 숫자, _ 로 4~16자예요'), bad_password: L('비밀번호는 8자 이상으로 정해 주세요'),
-            taken: L('이미 쓰고 있는 아이디예요'), net: L('서버에 연결되지 않았습니다') }[reason] || L('저장하지 못했습니다'));
+            taken: L('이미 쓰고 있는 아이디예요'), net: L('인터넷에 연결되지 않았어요') }[reason] || L('저장하지 못했습니다'));
         await this.sb.auth.refreshSession();   // the new address is in a fresh token
         await this.refreshUser();
         return data.id;
     },
     async loginWithId(id, password) {
-        if (!this.sb) throw new Error(L('온라인 연결이 필요합니다'));
+        if (!this.sb) throw new Error(L('인터넷 연결이 필요해요'));
         const r = await this.sb.auth.signInWithPassword({ email: String(id || '').trim().toLowerCase() + this.LOGIN_DOMAIN, password: String(password || '') });
         if (r.error) throw new Error(/invalid/i.test(r.error.message) ? L('아이디나 비밀번호가 맞지 않아요') : /rate|many/i.test(r.error.message) ? L('잠시 후 다시 시도해 주세요') : L('로그인하지 못했어요. 다시 시도해 주세요'));
         this.markSwitch(); location.reload();
@@ -260,7 +310,7 @@ const Online = {
 
     // ---------------------------------------------------------------- account deletion (store policy): server data, then this device
     async deleteAccount() {
-        if (!this.on) throw new Error(L('온라인 연결이 필요합니다'));
+        if (!this.on) throw new Error(L('인터넷 연결이 필요해요'));
         const { error } = await this.sb.rpc('delete_my_account');
         if (error) throw new Error(L('삭제하지 못했습니다: ') + error.message);
         await this.sb.auth.signOut();

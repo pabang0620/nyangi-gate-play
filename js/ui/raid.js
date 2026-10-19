@@ -301,7 +301,7 @@
         const p = Save.p;
         const win = h('div.panel.win.rd-win');
         root().appendChild(win);
-        if (!Online.on) { win.appendChild(h('div.rd-off', img('i_raid', '.rd-bigico'), h('div.title-t', L('레이드')), h('div', Online.enabled ? L('서버에 연결되지 않았어요. 인터넷을 확인해 주세요') : L('온라인판에서만 열려요')))); return; }
+        if (!Online.on) { win.appendChild(h('div.rd-off', img('i_raid', '.rd-bigico'), h('div.title-t', L('레이드')), h('div', Online.enabled ? L('인터넷에 연결되지 않았어요. 연결을 확인해 주세요') : L('온라인판에서만 열려요')))); return; }
         if (!Online.profile) { win.appendChild(h('div.rd-off', img('i_raid', '.rd-bigico'), h('div.title-t', L('레이드')), h('div', L('다른 냥이들과 함께하려면 닉네임이 필요해요')), h('button.btn.gold', { onclick: () => { click(); UI.ensureProfile(refresh); } }, L('닉네임 정하기')))); return; }
         S.rtab = S.rtab || 'party';
         const head = h('div.tabhead.rd-head',

@@ -34,5 +34,7 @@
         adPrivacyOptions: () => call('adPrivacyOptions').then(r => !!(r && r.ok)),
         // -> Google ID token for Supabase (Credential Manager), or null
         googleIdToken: webClientId => call('googleIdToken', webClientId || '').then(r => (r && r.token) || null),
+        // -> Kakao ID token (KakaoTalk app login, no browser), or null. Only in apps built with the Kakao SDK
+        kakaoIdToken: N.kakaoIdToken ? () => call('kakaoIdToken', '').then(r => (r && r.token) || null) : undefined,
     };
 })();

@@ -50,7 +50,7 @@ const RaidOn = {
     },
     errText(e) {
         return {
-            offline: L('온라인 연결이 필요합니다'), net: L('서버에 연결하지 못했어요'), no_server: L('서버 점검 중이에요. 잠시 후 다시 시도해 주세요'),
+            offline: L('인터넷 연결이 필요해요'), net: L('인터넷에 연결하지 못했어요'), no_server: L('게임 점검 중이에요. 잠시 후 다시 시도해 주세요'),
             no_profile: L('먼저 닉네임을 정해 주세요'), locked: L('진행도가 부족해요'), in_party: L('이번 주 이 난이도 파티에 이미 들어가 있어요'),
             full: L('파티가 가득 찼어요'), cleared: L('이미 처치한 파티예요'), invalid: L('코드를 다시 확인해 주세요'), contributed: L('보스에게 피해를 준 뒤에는 나갈 수 없어요'),
             no_tries: L('오늘 도전 횟수를 다 썼어요'), no_run: L('도전 기록을 찾지 못했어요'), not_cleared: L('아직 보스를 처치하지 못했어요'),

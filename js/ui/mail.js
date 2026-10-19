@@ -24,7 +24,7 @@
             const on = Online.on;
             const list = h('div.mail-list');
             const items = on ? Online.mail : [];
-            if (!on) list.appendChild(h('div.tip', L('우편함과 쿠폰은 온라인 연결이 필요해요')));
+            if (!on) list.appendChild(h('div.tip', L('우편함과 쿠폰은 인터넷 연결이 필요해요')));
             else if (!items.length) list.appendChild(h('div.tip', L('받은 우편이 없어요')));
             for (const r of items) {
                 const P = r.payload || {}, done = !!r.claimed_at;

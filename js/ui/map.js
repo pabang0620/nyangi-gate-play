@@ -77,8 +77,21 @@
         root().appendChild(layer);
         const starRule = [L('별 3개: 목숨을 2 이하로 잃고 승리'), S.hard ? L('영웅 난이도: 적 체력 {1}% · 별 1개마다 보석 {0}', HARD.gemsPerStar, Math.round((ch >= HARD.lateFrom ? HARD.lateHpMul : HARD.hpMul) * 100)) : L('처음 얻는 별 1개마다 보석 15')];
         root().appendChild(h('div.tip.hubtip', { style: { position: 'absolute', right: '24px', top: '78px', textAlign: 'right' } }, starRule[0], h('br'), starRule[1]));
-        root().appendChild(UI.helpBtn(L('별 얻는 법'), starRule.join('\n'), '.mob-q.map-q'));
+        root().appendChild(UI.helpBtn(L('별 얻는 법'), () => starGuide(S.hard, ch), '.mob-q.map-q'));
         if (!p.seenTips.map) firstCoach();
+    }
+
+    // 별 얻는 법: one row per star count (stars drawn, the condition, the gems for reaching it the first time)
+    function starGuide(hard, ch) {
+        const g = hard ? HARD.gemsPerStar : 15;
+        const row = (n, cond) => h('div.sg-row', h('div.sg-stars', UI.starsStr(n)), h('div.sg-cond', cond), UI.rewardCell('gem', g * n));
+        return [
+            row(3, hard ? L('목숨을 2개 이하로 잃고 승리 + 스테이지 조건 지키기') : L('목숨을 2개 이하로 잃고 승리')),
+            row(2, L('목숨을 10개 이하로 잃고 승리')),
+            row(1, L('승리')),
+            h('div.tip', { style: { marginTop: '6px' } }, L('보석은 처음 얻는 별에만 줘요. 별 1개를 더 얻을 때마다 보석 {0}개', g)),
+            hard ? h('div.tip', L('영웅 난이도: 적 체력 {0}%', Math.round((ch >= HARD.lateFrom ? HARD.lateHpMul : HARD.hpMul) * 100))) : null,
+        ];
     }
 
     // brand-new player: a bubble points at the stage to play, after the daily login popup is gone, until it is tapped
