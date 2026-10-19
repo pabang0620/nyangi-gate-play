@@ -1,6 +1,13 @@
 'use strict';
 // en translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['en'] = {
+    "진행을 저장하지 못했습니다. 가방에 장비가 너무 많아요. 장비를 분해해 주세요": "Couldn't save your progress. Your bag has too much gear. Please salvage some gear",
+    " · 진행은 자동으로 저장돼요. 다른 기기에서도 이어서 할 수 있어요": " · Progress saves automatically. You can continue on other devices too",
+    " · 진행은 이 기기에 자동으로 저장돼요": " · Progress saves automatically on this device",
+    "계정과 서버의 모든 데이터(프로필, 저장된 진행, 랭킹 기록)를 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.": "Deletes your account and all server data (profile, saved progress, ranking records)\nand restarts this device's progress from the beginning.\nThis cannot be undone. Purchase history remains on Google Play.",
+    "저장된 진행 고르기": "Choose Saved Progress",
+    "다른 기기": "Other Device",
+    "다른 기기 진행 불러오기": "Load Other Device's Progress",
     "앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요": "Frontline tank · -25% damage taken · skills stun enemies",
     "범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함": "Area magic · Healing Frost restores allies · strong vs armored foes",
     "긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함": "Longest range · 2x damage to stunned or frozen foes · strong vs magic-resistant foes",

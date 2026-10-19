@@ -1,6 +1,13 @@
 'use strict';
 // pt translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['pt'] = {
+    "진행을 저장하지 못했습니다. 가방에 장비가 너무 많아요. 장비를 분해해 주세요": "Não foi possível salvar o progresso. A bolsa tem equipamento demais. Desmonte parte do equipamento",
+    " · 진행은 자동으로 저장돼요. 다른 기기에서도 이어서 할 수 있어요": " · O progresso é salvo automaticamente. Você também pode continuar em outros aparelhos",
+    " · 진행은 이 기기에 자동으로 저장돼요": " · O progresso é salvo automaticamente neste aparelho",
+    "계정과 서버의 모든 데이터(프로필, 저장된 진행, 랭킹 기록)를 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.": "Apaga sua conta e todos os dados do servidor (perfil, progresso salvo, recordes de ranking)\ne reinicia o progresso deste aparelho do zero.\nNão pode ser desfeito. O histórico de compras fica no Google Play.",
+    "저장된 진행 고르기": "Escolher progresso salvo",
+    "다른 기기": "Outro aparelho",
+    "다른 기기 진행 불러오기": "Carregar progresso do outro aparelho",
     "앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요": "Tanque da linha de frente · -25% de dano recebido · habilidades atordoam",
     "범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함": "Magia em área · Geada Curativa cura aliados · forte contra inimigos blindados",
     "긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함": "Maior alcance · dano x2 em inimigos atordoados ou congelados · forte contra resistência mágica",

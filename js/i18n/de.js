@@ -1,6 +1,13 @@
 'use strict';
 // de translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['de'] = {
+    "진행을 저장하지 못했습니다. 가방에 장비가 너무 많아요. 장비를 분해해 주세요": "Fortschritt konnte nicht gespeichert werden. Deine Tasche hat zu viel Ausrüstung. Bitte zerlege etwas Ausrüstung",
+    " · 진행은 자동으로 저장돼요. 다른 기기에서도 이어서 할 수 있어요": " · Der Fortschritt wird automatisch gespeichert. Du kannst auch auf anderen Geräten weiterspielen",
+    " · 진행은 이 기기에 자동으로 저장돼요": " · Der Fortschritt wird automatisch auf diesem Gerät gespeichert",
+    "계정과 서버의 모든 데이터(프로필, 저장된 진행, 랭킹 기록)를 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.": "Löscht dein Konto und alle Serverdaten (Profil, gespeicherter Fortschritt, Ranglisten-Einträge)\nund startet den Fortschritt auf diesem Gerät von vorn.\nDas kann nicht rückgängig gemacht werden. Käufe bleiben bei Google Play erhalten.",
+    "저장된 진행 고르기": "Gespeicherten Fortschritt wählen",
+    "다른 기기": "Anderes Gerät",
+    "다른 기기 진행 불러오기": "Fortschritt des anderen Geräts laden",
     "앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요": "Frontlinien-Tank · -25% erlittener Schaden · Fähigkeiten betäuben",
     "범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함": "Flächenmagie · Heilfrost heilt Verbündete · stark gegen gepanzerte Gegner",
     "긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함": "Größte Reichweite · doppelter Schaden an betäubten oder gefrorenen Gegnern · stark gegen Magieresistenz",

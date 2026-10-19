@@ -1,6 +1,13 @@
 'use strict';
 // fr translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['fr'] = {
+    "진행을 저장하지 못했습니다. 가방에 장비가 너무 많아요. 장비를 분해해 주세요": "Impossible d'enregistrer la progression. Ton sac contient trop d'équipement. Démonte-en une partie",
+    " · 진행은 자동으로 저장돼요. 다른 기기에서도 이어서 할 수 있어요": " · La progression est enregistrée automatiquement. Tu peux aussi continuer sur d'autres appareils",
+    " · 진행은 이 기기에 자동으로 저장돼요": " · La progression est enregistrée automatiquement sur cet appareil",
+    "계정과 서버의 모든 데이터(프로필, 저장된 진행, 랭킹 기록)를 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.": "Supprime ton compte et toutes les données du serveur (profil, progression enregistrée, classements)\net recommence la progression de cet appareil depuis le début.\nIrréversible. L'historique d'achats reste sur Google Play.",
+    "저장된 진행 고르기": "Choisir la progression enregistrée",
+    "다른 기기": "Autre appareil",
+    "다른 기기 진행 불러오기": "Charger la progression de l'autre appareil",
     "앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요": "Tank de première ligne · -25% de dégâts subis · ses compétences étourdissent",
     "범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함": "Magie de zone · Givre guérisseur soigne les alliés · fort contre les ennemis blindés",
     "긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함": "Plus longue portée · dégâts x2 aux ennemis étourdis ou gelés · fort contre la résistance magique",

@@ -57,7 +57,7 @@ const Online = {
         const p = Save.p;
         const { error } = await this.sb.from('saves').upsert({ uid: this.user.id, data: p, rev: p.rev || 0, saved_ms: Math.round(p.savedMs || nowMs()), updated_at: new Date(nowMs()).toISOString() });
         // the server refuses saves over its size limit (saves.save_size): huge bags after 연속 소환. Say so once per session
-        if (error && /save_size/.test(error.message || '') && !this.sizeWarned) { this.sizeWarned = true; toast(L('클라우드 저장 실패: 진행 데이터가 너무 큽니다. 가방의 장비를 분해해 주세요')); }
+        if (error && /save_size/.test(error.message || '') && !this.sizeWarned) { this.sizeWarned = true; toast(L('진행을 저장하지 못했습니다. 가방에 장비가 너무 많아요. 장비를 분해해 주세요')); }
     },
     async pullSave() {
         const { data } = await this.sb.from('saves').select('data, rev, saved_ms').eq('uid', this.user.id).maybeSingle();

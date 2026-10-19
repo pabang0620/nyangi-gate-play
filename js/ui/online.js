@@ -110,13 +110,13 @@
             h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.7 } },
                 h('b', L('내 계정')),
                 h('div', L('서버 '), h('b', onlineStatusText())),
-                h('div', L('계정 '), h('b', accountText()), L(' · 진행은 자동으로 클라우드에 저장됩니다')),
+                h('div', L('계정 '), h('b', accountText()), linked ? L(' · 진행은 자동으로 저장돼요. 다른 기기에서도 이어서 할 수 있어요') : L(' · 진행은 이 기기에 자동으로 저장돼요')),
                 Online.on && !linked ? h('div.tip', L('게스트 계정은 앱을 지우거나 기기를 바꾸면 진행을 잃을 수 있습니다. 계정을 연동하면 어느 기기에서든 이어서 할 수 있습니다.')) : null,
                 linkButtons(err, reopen),
                 Online.sb ? h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => { click(); switchModal(); } }, L('다른 계정으로 로그인')) : null),
             Online.on ? h('button.btn.small.red', { style: { marginTop: '8px' }, onclick: () => {
                 click();
-                UI.confirmBox(L('계정과 서버의 모든 데이터(프로필, 클라우드 저장, 랭킹 기록)를 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.'), async () => {
+                UI.confirmBox(L('계정과 서버의 모든 데이터(프로필, 저장된 진행, 랭킹 기록)를 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.'), async () => {
                     try { await Online.deleteAccount(); } catch (e) { toast(e.message); }
                 });
             } }, L('계정 및 데이터 삭제')) : null,
@@ -199,11 +199,11 @@
         const sum = s => { let st = 0, hs = 0; for (const k in s.stars || {}) st += s.stars[k]; for (const k in s.hstars || {}) hs += s.hstars[k];
             const lv = Math.max(...Object.values(s.heroes || { a: { lv: 1 } }).map(x => x.lv)); return L('별 {0}{1} · 영웅 Lv.{2} · 보석 {3}', st, hs ? L(' · 영웅 별 ') + hs : '', lv, fmt(s.gems || 0)); };
         const when = ms => ms ? new Date(ms).toLocaleString('ko-KR') : '-';
-        const d = modal([h('h2', L('클라우드 저장')),
+        const d = modal([h('h2', L('저장된 진행 고르기')),
             h('div', { style: { margin: '6px 0 10px', textAlign: 'center' } }, L('다른 기기에서 더 최근에 저장한 진행이 있습니다. 어느 쪽으로 할까요?')),
             h('div.row', { style: { gap: '12px' } },
-                h('div.inset.cloudopt', h('b', L('클라우드')), h('div', sum(remote)), h('div.tip', when(remote.savedMs)),
-                    h('button.btn.gold', { onclick: () => { click(); d.remove(); cb(true); } }, L('클라우드 불러오기'))),
+                h('div.inset.cloudopt', h('b', L('다른 기기')), h('div', sum(remote)), h('div.tip', when(remote.savedMs)),
+                    h('button.btn.gold', { onclick: () => { click(); d.remove(); cb(true); } }, L('다른 기기 진행 불러오기'))),
                 h('div.inset.cloudopt', h('b', L('이 기기')), h('div', sum(local)), h('div.tip', when(local.savedMs)),
                     h('button.btn', { onclick: () => { click(); d.remove(); cb(false); } }, L('이 기기 유지')))),
             h('div.tip', L('선택하지 않은 쪽의 진행은 덮어쓰여 사라집니다.'))]);
