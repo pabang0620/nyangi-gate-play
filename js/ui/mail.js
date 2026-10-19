@@ -38,29 +38,42 @@
                     h('div.mail-txt', h('b', Online.mailTitle(r)), P.body ? h('div', P.body) : null),
                     h('div.mail-rw', P.reward ? UI.rewardIcons(P.reward) : null), btn));
             }
-            const code = h('input.coupon-in', { type: 'text', maxLength: 24, placeholder: L('쿠폰 번호'), autocomplete: 'off', spellcheck: false });
-            const use = h('button.btn.small', { onclick: async () => {
-                const v = code.value.trim(); if (!v) { toast(L('쿠폰 번호를 입력해 주세요')); return; }
-                click(); use.classList.add('off');
-                const err = await Online.redeemCoupon(v);
-                use.classList.remove('off');
-                if (err) { toast(err); return; }
-                toast(L('쿠폰 보상이 우편함에 도착했어요')); draw();
-            } }, L('사용'));
             const left = items.filter(m => !m.claimed_at).length;
             d = modal([
                 h('div.title-t', L('우편함')),
                 list,
                 h('div.tip', L('받은 우편은 7일 뒤 목록에서 사라져요')),
-                on ? h('div.coupon-row', code, use) : null,
                 h('div.row',
                     left ? h('button.btn.gold', { onclick: async () => { click(); await Online.claimRewards(); draw(); } }, L('모두 받기 ({0})', left)) : null,
+                    on ? h('button.btn', { onclick: () => { click(); couponModal(draw); } }, L('쿠폰 등록')) : null,
                     h('button.btn.ghost', { onclick: () => { click(); close(); if (UI.S.screen === 'hub') UI.showHub(); } }, L('닫기'))),
             ], { dismiss: true });
             d.firstChild.classList.add('mailwin');
         };
         draw();
         if (Online.on) Online.refreshMail().then(() => { if (d && d.isConnected) draw(); }).catch(() => { });
+    }
+
+    // coupon input in its own window (the mailbox is too narrow for an input row); after: redraw the mailbox
+    function couponModal(after) {
+        let d = null;
+        const code = h('input.coupon-in', { type: 'text', maxLength: 24, placeholder: L('쿠폰 번호'), autocomplete: 'off', spellcheck: false });
+        const use = h('button.btn.gold', { onclick: async () => {
+            const v = code.value.trim(); if (!v) { toast(L('쿠폰 번호를 입력해 주세요')); return; }
+            click(); use.classList.add('off');
+            const err = await Online.redeemCoupon(v);
+            use.classList.remove('off');
+            if (err) { toast(err); return; }
+            toast(L('쿠폰 보상이 우편함에 도착했어요')); d.remove(); after();
+        } }, L('사용'));
+        code.addEventListener('keydown', e => { if (e.key === 'Enter') use.click(); });
+        d = modal([
+            h('div.title-t', L('쿠폰 등록')),
+            h('div.tip', L('쿠폰 번호를 입력하면 보상이 우편함으로 와요')),
+            h('div.coupon-row', code),
+            h('div.row', use, h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기'))),
+        ], { dismiss: true });
+        setTimeout(() => code.focus(), 50);
     }
 
     // keep the top bar count in step when the mail list changes

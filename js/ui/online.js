@@ -29,16 +29,52 @@
         if (!Online.on) return '-';
         const names = { google: 'Google', kakao: L('카카오'), id: L('아이디 {0}', Online.loginId()) };
         const ls = Online.logins();
-        return ls.length ? L('연결됨: {0}', ls.map(k => names[k]).join(' · ')) : L('게스트');
+        return ls.length ? ls.map(k => names[k]).join(' · ') : L('게스트');
+    }
+    // sign-in brand marks (title buttons, the account line): inline SVG, no image asset, no OS emoji
+    const SIGNIN_ICON = {
+        guest: '<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="8" r="4.2" fill="currentColor"/><path d="M3.5 21c0-4.4 3.8-7.5 8.5-7.5s8.5 3.1 8.5 7.5z" fill="currentColor"/></svg>',
+        kakao: '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M12 3C6.5 3 2 6.5 2 10.8c0 2.8 1.9 5.2 4.7 6.6l-1 3.6c-.1.3.3.6.6.4l4.3-2.8c.5.1.9.1 1.4.1 5.5 0 10-3.5 10-7.9S17.5 3 12 3z" fill="#191919"/></svg>',
+        google: '<svg viewBox="0 0 48 48" width="22" height="22"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.2l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.7c-.5-1.5-.8-3.1-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.2 1.5-5 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.8l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>',
+    };
+    // "name#tag [kakao mark]" for the account lines; the brand mark says how this account signs in (id: "아이디 x", guest: "게스트")
+    function accountLine() {
+        const pr = Online.on && Online.profile, ls = Online.on ? Online.logins() : [];
+        const marks = ls.map(k => k === 'id' ? h('span.acct-id', L('아이디 {0}', Online.loginId())) : h('span.acct-mark.' + k, { title: k === 'kakao' ? L('카카오') : 'Google', html: SIGNIN_ICON[k] }));
+        return h('span.acct-line', pr ? h('b', `${pr.name}#${pr.tag}`) : null, ...marks,
+            Online.on && !ls.length ? h('span.acct-id', L('게스트')) : null,
+            !Online.on ? h('span.tip', onlineStatusText()) : null);
+    }
+    // what this account owns from the shop (월간 보급권 days left, 가호, 패스, 3배속). None of them renew by themselves
+    function perksBox(p) {
+        const sh = p.shop || {}, has = v => v ? h('b.perk-on', L('보유 중')) : h('span.tip', L('없음'));
+        const row = (k, v) => h('div.perk-row', h('span', PRODUCTS[k].name), v);
+        return h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.7 } },
+            h('b', L('내 구독·혜택')),
+            row('monthly', sh.monthlyLeft > 0 ? h('b.perk-on', L('남은 {0}일', sh.monthlyLeft)) : h('span.tip', L('없음'))),
+            row('premium', has(sh.premium)),
+            row('pass', has(sh.pass)),
+            row('speed3', sh.speed3 ? has(true) : sh.premium ? h('b.perk-on', L('냥이의 가호에 포함')) : has(false)),
+            h('div.tip', L('모두 한 번 결제하는 상품이에요. 자동으로 다시 결제되지 않아요')));
+    }
+
+    // linked accounts: sign out here (the next start asks for a login like a fresh install)
+    function logoutButton() {
+        return h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => {
+            click();
+            confirmBox(L('로그아웃할까요?\n진행은 계정에 저장되어 있어서 다시 로그인하면 이어서 할 수 있어요.'), async () => {
+                try { await Online.logout(); } catch (e) { toast((e && e.message) || L('잠시 후 다시 해 주세요')); }
+            });
+        } }, L('로그아웃'));
     }
     const field = (ph, type, value) => h('input.nick', { type: type || 'text', value: value || '', placeholder: ph, maxLength: type === 'password' ? 64 : 16,
         autocapitalize: 'off', autocomplete: 'off', spellcheck: false, style: { width: '100%', boxSizing: 'border-box' } });
     const errLine = () => h('div.tip', { style: { color: '#a8401a', minHeight: '20px' } });
-    async function run(err, fn) { try { await fn(); } catch (e) { err.textContent = (e && e.message) || String(e); } }
+    async function run(err, fn) { try { await fn(); } catch (e) { err.textContent = (e && e.message) || L('잠시 후 다시 해 주세요'); } }
 
     // buttons to attach a login to this account (Google, Kakao when set up, game id). after(): redraw the caller
     function linkButtons(err, after) {
-        if (!Online.on) return null;
+        if (!Online.on || Online.isLinked()) return null;   // one login per account: a linked account only signs out
         const ls = Online.logins(), row = h('div.row', { style: { gap: '8px', justifyContent: 'center', flexWrap: 'wrap', marginTop: '6px' } });
         if (Online.googleOn() && !ls.includes('google')) row.appendChild(h('button.btn.small', { onclick: () => { click(); run(err, async () => {
             await Online.linkGoogle(); if (Online.logins().includes('google')) { toast(L('Google 계정을 연동했습니다')); after && after(); } }); } }, L('Google 계정 연동')));
@@ -137,11 +173,13 @@
                 } }, L('저장'))),
             h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.7 } },
                 h('b', L('내 계정')),
-                h('div', L('연결 '), h('b', onlineStatusText())),
-                h('div', L('계정 '), h('b', accountText()), linked ? L(' · 진행은 자동으로 저장돼요. 다른 기기에서도 이어서 할 수 있어요') : L(' · 진행은 이 기기에 자동으로 저장돼요')),
+                h('div', accountLine()),
+                h('div.tip', linked ? L('진행은 자동으로 저장돼요. 다른 기기에서도 이어서 할 수 있어요') : L('진행은 이 기기에 자동으로 저장돼요')),
                 Online.on && !linked ? h('div.tip', L('게스트 계정은 앱을 지우거나 기기를 바꾸면 진행을 잃을 수 있습니다. 계정을 연동하면 어느 기기에서든 이어서 할 수 있습니다.')) : null,
                 linkButtons(err, reopen),
-                Online.sb ? h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => { click(); switchModal(); } }, L('다른 계정으로 로그인')) : null),
+                Online.on && linked ? logoutButton() : null,
+                Online.sb && !linked ? h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => { click(); switchModal(); } }, L('다른 계정으로 로그인')) : null),
+            perksBox(p),
             Online.on ? h('button.btn.small.red', { style: { marginTop: '8px' }, onclick: () => {
                 click();
                 UI.confirmBox(L('계정과 모든 기록(프로필, 저장된 진행, 랭킹 기록)을 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.'), async () => {
@@ -199,29 +237,60 @@
         const src = 'policy/' + (LANG !== 'ko' && POLICY_EN.includes(file) ? 'en/' : '') + file;
         const d = modal([h('h2', title), h('iframe.policy-frame', { src }), h('button.btn', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
     }
-    // 확률 정보 (게임산업법 확률형 아이템 표시): summon, gear drops, enhancement
+    // 확률 정보 (게임산업법 확률형 아이템 표시): every random reward with its exact odds (docs/site-probability.md is the same text for the public site; keep both in step)
     function probModal() {
         const pct = v => (Math.round(v * 1000) / 10) + '%';
+        const pc2 = v => (v < 1 ? Math.round(v * 1000) / 1000 : Math.round(v * 100) / 100) + '%';   // v already in percent; under 1% keeps 3 decimals
         const row = (k, v) => h('tr', h('td', k), h('td', v));
         const tbl = (head, rows) => h('table.prob', h('tr', ...head.map(x => h('th', x))), ...rows);
         const names = RARITY.map(r => r.name);
+        // raid reward cards: the server's live table (game_config 'raid'), else the same values shipped with the game
+        const rc = (Online.cfg && Online.cfg.raid && Online.cfg.raid.cards) ? Online.cfg.raid : {
+            mul: [1, 1.6, 2.4, 3.5], pity: RAID_ON.pity,
+            cards: [{ k: 'gems', n: 60, w: 30 }, { k: 'stones', n: 4, w: 20 }, { k: 'tickets', n: 1, w: 15, ceil: true }, { k: 'guards', n: 0.5, w: 12, ceil: true },
+                { k: 'shields', n: 1, w: 8, fixed: true }, { k: 'medals', n: 30, w: 10 }, { k: 'item', w: 4, grade: 2 }, { k: 'item', w: 2, wm: true, grade: 3 },
+                { k: 'item', w: 0.15, wm: true, grade: 4 }, { k: 'gold', n: 20, w: 12 }] };
+        const cardName = { gems: L('보석'), stones: L('강화석'), tickets: L('소환권'), guards: L('하락방지권'), shields: L('파괴방지권'), medals: L('토벌 훈장'), gold: L('거래 금화') };
+        const cardRows = rc.cards.map(c => h('tr', h('td', c.k === 'item' ? names[c.grade] + ' ' + L('장비') : cardName[c.k] || c.k),
+            ...RAID_ON.diffs.map((_, d) => { const m = rc.mul[d], tot = rc.cards.reduce((s, x) => s + x.w * (x.wm ? m : 1), 0);
+                const n = c.k === 'item' ? 1 : c.fixed ? c.n : c.ceil ? Math.ceil(c.n * m) : Math.round(c.n * m);
+                return h('td', pc2(c.w * (c.wm ? m : 1) / tot * 100) + ' · ' + fmt(n)); })));
         const d = modal([h('h2', L('확률 정보')),
             h('div.prob-wrap',
                 h('b', L('장비 소환 (1회 보석 ') + SUMMON.cost1 + L(', 10회 ') + SUMMON.cost10 + ')'),
                 tbl([L('등급'), L('확률')], names.map((n, i) => row(n, SUMMON.table[i] + '%'))),
                 h('div.tip', L('{0}번째 소환까지 전설 등급 이상이 나오지 않으면 전설 확정', SUMMON.pity)),
                 h('div.tip', L('장비 종류: 전체(무작위) 소환은 무기·갑옷·부적 각 33.3%, 종류를 고르면 그 종류 100%. 등급 확률과 가격은 같습니다.')),
+                h('div.tip', L('소환권 소환과 하루 1번 광고 무료 소환도 같은 확률입니다.')),
                 h('b', L('스킨 소환 (1회 보석 {0}, 10회 {1})', SKIN_SUMMON.cost1, SKIN_SUMMON.cost10)),
                 tbl([L('등급'), L('확률'), L('스킨 1종당'), L('중복 시')], SKIN_SUMMON.table.map((v, r) => { const pool = skinPool(r);
-                    return h('tr', h('td', names[r]), h('td', v + '%'), h('td', (Math.round(v / pool.length * 1000) / 1000) + '%'), h('td', L('보석 {0}', SKIN_SUMMON.dupGems[r]))); })),
-                h('div.tip', L('{0}번째 소환까지 전설 등급이 나오지 않으면 전설 확정', SKIN_SUMMON.pity)),
+                    return h('tr', h('td', names[r]), h('td', v + '%'), h('td', (Math.round(v / pool.length * 10000) / 10000) + '%'), h('td', L('보석 {0}', SKIN_SUMMON.dupGems[r]))); })),
+                h('div.tip', L('{0}번째 소환까지 전설 등급 이상이 나오지 않으면 전설 확정', SKIN_SUMMON.pity) + ' ' + L('신화 등급은 확정 획득이 없습니다.')),
                 h('div.tip', L('같은 등급 안의 스킨은 모두 같은 확률입니다. 성장 패스 스킨은 나오지 않습니다.')),
-                h('div.prob-skins', [0, 1, 2, 3].map(r => h('div', h('b', { style: { color: RARITY[r].color, textShadow: 'var(--stroke-s)' } }, names[r] + ': '), skinPool(r).map(id => skinById(id).name).join(', ')))),
+                h('div.prob-skins', SKIN_SUMMON.table.map((_, r) => h('div', h('b', { style: { color: RARITY[r].color, textShadow: 'var(--stroke-s)' } }, names[r] + ': '), skinPool(r).map(id => skinById(id).name).join(', ')))),
                 h('div.tip', L('연속 소환은 10회 소환을 반복하는 것으로, 확률과 확정 횟수는 같습니다.')),
+                h('b', L('장비 옵션 (모든 장비 공통)')),
+                tbl([L('등급'), L('옵션 수'), L('옵션 값 배율')], names.map((n, r) => h('tr', h('td', n), h('td', String(r >= 4 ? r + 1 : r)), h('td', 'x' + (r >= 4 ? 2 : Math.round((1 + 0.15 * r) * 100) / 100))))),
+                tbl([L('옵션'), L('기본 범위')], Object.values(SUB_OPTS).map(o => row(o.name, o.pct ? pct(o.min) + ' ~ ' + pct(o.max) : o.min + ' ~ ' + o.max))),
+                h('div.tip', L('옵션 종류는 10가지 중 겹치지 않게 같은 확률로 고르고, 값은 기본 범위 안에서 같은 확률로 정한 뒤 등급 배율을 곱합니다. 소환·합성·상자·카드·처치 등 얻는 방법과 상관없이 같습니다.')),
+                h('b', L('장비 합성 (같은 등급 3개)')),
+                tbl([L('등급'), L('성공')], FUSE.rate.map((v, r) => row(names[r] + ' → ' + names[r + 1], v + '%'))),
+                h('div.tip', L('실패하면 같은 등급 장비 1개가 나옵니다. 종류는 넣은 3개 중 하나(각 33.3%)를 따릅니다.')),
                 h('b', L('적 처치 시 장비 등급 (장비가 떨어졌을 때)')),
                 tbl([L('등급'), L('일반 적'), L('정예'), L('보스')], names.map((n, i) => h('tr', h('td', n), h('td', DROP.table.normal[i] + '%'), h('td', DROP.table.elite[i] + '%'), h('td', DROP.table.boss[i] + '%')))),
+                h('div.tip', L('장비가 떨어질 확률: 일반 적 {0}, 정예 {1}, 보스 {2} ({3}번)', pct(DROP.chance.normal), pct(DROP.chance.elite), pct(DROP.chance.boss), DROP.rolls.boss)),
+                h('div.tip', L('영웅 난이도에서는 정예·보스가 1번씩 더 굴립니다. 소탕도 같은 표를 씁니다.')),
                 h('b', L('장비 강화 성공 확률')),
-                tbl([L('단계'), L('성공')], ENHANCE.rate.map((r, i) => row(`+${i} → +${i + 1}`, pct(r) + (i >= ENHANCE.dropFrom ? L(' (실패 시 1단계 하락)') : '') + (i >= ENHANCE.destroyFrom ? L(' · 파괴 {0}', destroyPct(i)) : ''))))),
+                tbl([L('단계'), L('성공')], ENHANCE.rate.map((r, i) => row(`+${i} → +${i + 1}`, pct(r) + (i >= ENHANCE.dropFrom ? L(' (실패 시 1단계 하락)') : '') + (i >= ENHANCE.destroyFrom ? L(' · 파괴 {0}', destroyPct(i)) : '')))),
+                h('div.tip', L('하락방지권·파괴방지권은 성공 확률을 바꾸지 않고, 실제로 막았을 때만 줄어듭니다.')),
+                h('b', L('레이드 보상 카드 (확률 · 수량)')),
+                tbl([L('보상'), ...RAID_ON.diffs.map(x => x.name)], cardRows),
+                h('div.tip', L('카드 4장은 따로 정해지고, 1장을 골라 받습니다. 받은 장비의 종류는 각 33.3%입니다.')),
+                h('div.tip', L('{0}번째 카드까지 전설 이상이 없으면 전설, {1}번째 카드까지 신화가 없으면 신화 장비로 바뀝니다.', rc.pity.leg, rc.pity.myth)),
+                h('b', L('등급이 정해진 장비 상자')),
+                h('div.tip', L('상점 꾸러미, 성장 패스, 훈장 상점, 탑 상점의 장비는 등급이 정해져 있습니다. 종류를 고르지 않으면 각 33.3%, 옵션은 위 표와 같습니다.')),
+                h('div.tip', L('거래소 장비는 판매자가 올린 그대로라 확률이 없습니다.')),
+                h('div.tip', L('확률이 바뀌면 적용 전에 게임 안 공지와 확률 정보 페이지로 미리 알려요.'))),
             h('button.btn', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
     }
 
@@ -273,5 +342,5 @@
         if (box && x) box.textContent = L('주간 순위에 등록했습니다 · 이번 주 최고 {0}점{1}', fmt(x.value), x.flagged ? L(' (검토 중)') : '');
     }
 
-    Object.assign(UI, { tierName, tierBadge, ensureProfile, profileModal, accountText, linkButtons, idModal, idLoginModal, signUpModal, switchModal, linkModal, accountPrompts, cloudChoice, rankList, myRankLine, leagueRows, cupRankLine, onlineStatusText, policyModal, probModal });
+    Object.assign(UI, { tierName, tierBadge, ensureProfile, profileModal, accountText, accountLine, logoutButton, SIGNIN_ICON, linkButtons, idModal, idLoginModal, signUpModal, switchModal, linkModal, accountPrompts, cloudChoice, rankList, myRankLine, leagueRows, cupRankLine, onlineStatusText, policyModal, probModal });
 })();

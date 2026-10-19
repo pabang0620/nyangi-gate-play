@@ -89,9 +89,12 @@ const Online = {
         const { data } = await this.sb.from('saves').select('data, rev, saved_ms').eq('uid', this.user.id).maybeSingle();
         const local = Save.p;
         // just signed in to another account: this device's progress belongs to the previous one, so always ask when they differ
-        let switched = false;
+        let switched = false, fresh = false;
         try { switched = localStorage.getItem('nyangi-switch') === '1'; localStorage.removeItem('nyangi-switch'); } catch (e) { }
+        try { fresh = localStorage.getItem('nyangi-fresh') === '1'; localStorage.removeItem('nyangi-fresh'); } catch (e) { }
         if (!data) { await this.pushSave(true); return; }
+        // signed out earlier (this device's progress was cleared): the account's progress comes back without asking
+        if (fresh) { Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); return; }
         // the cloud copy is from another device and newer: let the player choose
         // (compared on progress, currencies and collections, so a newer gem purchase / summon on the other device is not overwritten silently)
         const sig = s => JSON.stringify([s.stars, s.hstars, s.gems, s.tickets, (s.items || []).length, s.shop && s.shop.skins, s.shop && s.shop.purchases && s.shop.purchases.length]);
@@ -106,7 +109,7 @@ const Online = {
     // ---------------------------------------------------------------- profile
     async setProfile(name, hero, skin) {
         const { data, error } = await this.sb.rpc('set_profile', { p_name: name, p_hero: hero, p_skin: skin || null });
-        if (error) throw new Error(/length/.test(error.message) ? L('닉네임은 2~12자로 지어 주세요') : /chars/.test(error.message) ? L('글자, 숫자, 공백, _만 쓸 수 있습니다') : /reserved/.test(error.message) ? L('쓸 수 없는 닉네임입니다') : /cooldown/.test(error.message) ? L('닉네임은 하루에 한 번만 바꿀 수 있습니다') : L('저장하지 못했습니다'));
+        if (error) throw new Error(/length/.test(error.message) ? L('닉네임은 2~12자로 지어 주세요') : /chars/.test(error.message) ? L('글자, 숫자, 공백, _만 쓸 수 있습니다') : /reserved/.test(error.message) ? L('쓸 수 없는 닉네임입니다') : /cooldown/.test(error.message) ? L('닉네임은 하루에 한 번만 바꿀 수 있습니다') : /taken|duplicate|name_unique/.test(error.message) ? L('이미 쓰고 있는 닉네임이에요') : L('저장하지 못했습니다'));
         const first = !this.profile;
         this.profile = data;
         if (Save.p) { Save.p.profileName = data.name; }
@@ -309,6 +312,15 @@ const Online = {
     },
 
     // ---------------------------------------------------------------- account deletion (store policy): server data, then this device
+    // sign out: save to the account first, then clear this device like a fresh install (the title asks for a login again)
+    async logout() {
+        if (this.on) await this.pushSave(true);
+        await this.sb.auth.signOut();
+        try { localStorage.removeItem('nyangi-auth'); } catch (e) { }
+        Save.reset();
+        try { localStorage.setItem('nyangi-fresh', '1'); } catch (e) { }
+        location.reload();
+    },
     async deleteAccount() {
         if (!this.on) throw new Error(L('인터넷 연결이 필요해요'));
         const { error } = await this.sb.rpc('delete_my_account');

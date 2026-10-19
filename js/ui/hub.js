@@ -21,8 +21,8 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.8';          // keep in step with versionName in android/app/build.gradle
-    const TERMS_VERSION = '2026-10-14';    // bump when the terms/privacy policy change materially: players agree again
+    const GAME_VERSION = '3.3.9';          // keep in step with versionName in android/app/build.gradle
+    const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
     // first start (and after a material change): agree to the terms and the privacy policy before playing
@@ -66,41 +66,38 @@
     // account line under the start button: name#tag, server state + guest / linked logins, tap for the profile popup;
     // a guest also gets a 연동하기 button (losing the device loses an unlinked guest).
     // Only once the terms are agreed (a first-time player meets the account in the settings afterwards) and only with a server configured.
-    let acctLine = null;
-    function titleAccount(p) {
-        if (p.set.agreed !== TERMS_VERSION || !Online.enabled) return null;
-        const st = h('span.tip');
-        const link = h('button.btn.small.gold', { style: { display: 'none' }, onclick: () => { click(); UI.linkModal(); } }, L('연동하기'));
-        acctLine = h('div.title-acct', h('button.btn.small.ghost', { onclick: () => { click(); UI.profileModal(); } }, L('프로필 · 계정')), st, link);
-        acctLine.refresh = () => {
-            const pr = Online.on && Online.profile;
-            st.textContent = (pr ? `${pr.name}#${pr.tag} · ` : '') + UI.onlineStatusText() + (Online.on ? ' · ' + UI.accountText() : '');
-            link.style.display = Online.on && !Online.isLinked() ? '' : 'none';
-        };
-        acctLine.refresh();
-        return acctLine;
-    }
     let setAcct = null;   // the settings tab's account box
-    Online.onChange(() => { if (acctLine && acctLine.isConnected) acctLine.refresh(); if (setAcct && setAcct.isConnected) setAcct.refresh(); });
+    Online.onChange(() => { if (setAcct && setAcct.isConnected) setAcct.refresh(); });
     UI.resumeSupply = () => { if ((S.screen === 'title' || S.screen === 'hub') && !document.querySelector('.modal')) offlineSupply(Save.p); };
 
     // start area: a first visit (no account on this device yet) picks guest / Google / Kakao / id here; afterwards 시작하기
     function titleStart() {
         const wrap = h('div.title-start');
+        let entered = false;
         const go = () => showHub('map');
         const draw = () => {
             wrap.innerHTML = '';
-            if (!(Online.enabled && Online.status === 'login')) {
+            // signed in already: no start button, a spinner while the account connects, then straight in (consent first if needed)
+            if (Online.enabled && (Online.status === 'connecting' || Online.status === 'online')) {
+                wrap.appendChild(h('div.title-spin', h('div.spinner'), h('div.tip', L('불러오는 중…'))));
+                // another popup first (which progress to keep after a login): enter once it is answered
+                const enter = () => { if (S.screen !== 'title') return; if (document.querySelector('.dim')) { setTimeout(enter, 300); return; } consentThen(go); };
+                if (Online.status === 'online' && !entered) { entered = true; setTimeout(enter, 300); }
+                return;
+            }
+            if (!(Online.enabled && Online.status === 'login')) {   // offline build or no internet: play on this device
                 wrap.appendChild(h('button.btn.gold', { style: { fontSize: '26px', padding: '14px 60px' }, onclick: () => { click(); Sfx.init(); consentThen(go); } }, L('시작하기')));
                 return;
             }
             const err = h('div.tip', { style: { color: '#ffd0b0', textShadow: '0 1px 3px #000', minHeight: '18px' } });
             const run = fn => { click(); Sfx.init(); consentThen(async () => { err.textContent = ''; try { await fn(); } catch (e) { err.textContent = (e && e.message) || String(e); } }); };
+            // one column of equal-width sign-in buttons, brand icon on the left (like common sign-in pages)
+            const sign = (cls, icon, label, fn) => h('button.btn.signin.' + cls, { onclick: () => run(fn) }, h('span.signin-ico', { html: icon }), h('span.signin-txt', label));
             wrap.append(
-                h('button.btn.gold', { style: { fontSize: '22px', padding: '12px 48px' }, onclick: () => run(async () => { await Online.startGuest(); go(); }) }, L('게스트로 시작')),
-                h('div.row.title-logins',
-                    Online.kakaoOn() ? h('button.btn.kakao', { onclick: () => run(() => Online.loginKakao()) }, L('카카오로 시작')) : null,
-                    Online.nativeGoogle ? h('button.btn.google', { onclick: () => run(() => Online.loginGoogle()) }, L('Google로 시작')) : null),
+                h('div.signin-list',
+                    sign('guest', UI.SIGNIN_ICON.guest, L('게스트로 시작'), async () => { await Online.startGuest(); go(); }),
+                    Online.kakaoOn() ? sign('kakao', UI.SIGNIN_ICON.kakao, L('카카오로 시작'), () => Online.loginKakao()) : null,
+                    Online.nativeGoogle ? sign('google', UI.SIGNIN_ICON.google, L('Google로 시작'), () => Online.loginGoogle()) : null),
                 h('div.row.title-logins',
                     h('button.btn.small.ghost', { onclick: () => run(() => UI.idLoginModal()) }, L('아이디로 로그인')),
                     h('button.btn.small.ghost', { onclick: () => run(() => UI.signUpModal(go)) }, L('회원가입'))),
@@ -124,7 +121,6 @@
             titleStart(),
             Game.touch && !/NyangiApp/.test(navigator.userAgent) ? h('button.btn.ghost', { onclick: () => { click(); Game.fullscreen(); } }, L('전체 화면으로 하기')) : null,   // the app is already full screen
             h('div.tip', { style: { marginTop: '18px', color: '#fff4dc', textShadow: '0 2px 4px #000' } }, L('탑을 세우고 냥이 영웅을 움직여, 성문이 뚫리기 전에 몬스터를 막아라냥!')),
-            titleAccount(p),
             h('div.title-legal', L('전체이용가'), ' · v' + GAME_VERSION + ' · © 2026 nekolab'),
         );
         root().appendChild(box);
@@ -247,16 +243,18 @@
         const win = h('div.panel.win.settings');
         win.appendChild(h('h2', L('설정')));
         const colL = h('div.set-col'), colR = h('div.set-col.inset', { style: { padding: '12px' } });
-        const tog = (label, key, after) => {
-            const t = h('div.tog' + (p.set[key] ? '.on' : ''), h('div.sw'), label);
-            t.addEventListener('click', () => { p.set[key] = !p.set[key]; t.classList.toggle('on', p.set[key]); if (after) after(); Save.save(); click(); });
+        // inv: the save keeps an "off" flag (musicOff, muted, ...), the switch shows "on" while the feature works
+        const tog = (label, key, after, inv) => {
+            const shown = () => inv ? !p.set[key] : !!p.set[key];
+            const t = h('div.tog' + (shown() ? '.on' : ''), h('div.sw'), label);
+            t.addEventListener('click', () => { p.set[key] = !p.set[key]; t.classList.toggle('on', shown()); if (after) after(); Save.save(); click(); });
             return t;
         };
-        colL.appendChild(tog(L('배경음악 끄기'), 'musicOff', () => { Music.setEnabled(!p.set.musicOff); }));
-        colL.appendChild(tog(L('효과음 끄기'), 'muted', () => { Sfx.muted = p.set.muted; }));
-        colL.appendChild(tog(L('화면 흔들림 끄기'), 'noShake'));
-        colL.appendChild(tog(L('진동 끄기'), 'noVibrate'));
-        colL.appendChild(tog(L('필살기 컷신 끄기'), 'noCutin'));
+        colL.appendChild(tog(L('배경음악'), 'musicOff', () => { Music.setEnabled(!p.set.musicOff); }, true));
+        colL.appendChild(tog(L('효과음'), 'muted', () => { Sfx.muted = p.set.muted; }, true));
+        colL.appendChild(tog(L('화면 흔들림'), 'noShake', null, true));
+        colL.appendChild(tog(L('진동'), 'noVibrate', null, true));
+        colL.appendChild(tog(L('필살기 컷신'), 'noCutin', null, true));
         if (Game.touch && !/NyangiApp/.test(navigator.userAgent)) colL.appendChild(h('button.btn.ghost', { onclick: () => { click(); Game.fullscreen(); } }, L('전체 화면')));
         // language: device language by default, saved per device (js/i18n.js); changing it reloads the game
         const sel = document.createElement('select');
@@ -267,15 +265,16 @@
         // account: who am I, which logins open this progress elsewhere, link buttons right here (not only in the popup)
         const acct = h('div.inset', { style: { padding: '8px 10px', marginBottom: '8px' } });
         const drawAcct = () => {
-            const pr = Online.on && Online.profile, err = h('div.tip', { style: { color: '#a8401a' } });
-            acct.replaceChildren(
+            const err = h('div.tip', { style: { color: '#a8401a' } });
+            acct.replaceChildren(...[
                 h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } },
                     h('button.btn.small.gold', { onclick: () => { click(); UI.profileModal(); } }, L('프로필 · 계정')),
-                    h('span.tip', (pr ? `${pr.name}#${pr.tag} · ` : '') + UI.onlineStatusText() + (Online.on ? ' · ' + UI.accountText() : ''))),
+                    UI.accountLine()),
                 Online.on && !Online.isLinked() ? h('div.tip', L('게스트 계정이에요. 연동하면 다른 기기와 웹에서도 이어서 할 수 있어요.')) : null,
                 UI.linkButtons(err, drawAcct),
-                Online.sb ? h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => { click(); UI.switchModal(); } }, L('다른 계정으로 로그인')) : null,
-                err);
+                Online.on && Online.isLinked() ? UI.logoutButton() : null,
+                Online.sb && !Online.isLinked() ? h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => { click(); UI.switchModal(); } }, L('다른 계정으로 로그인')) : null,
+                err].filter(Boolean));   // replaceChildren prints null as text: drop the hidden parts
         };
         drawAcct(); acct.refresh = drawAcct; setAcct = acct;
         colR.appendChild(acct);

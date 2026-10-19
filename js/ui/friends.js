@@ -33,7 +33,49 @@
             return;
         }
         const me = Online.profile, myTag = `${me.name}#${me.tag}`;
-        const body = h('div', { style: { maxHeight: '52vh', overflowY: 'auto', width: '100%' } }, h('div.tip', L('불러오는 중…')));
+        const copy = h('button.btn.small', { onclick: () => { click(); try { navigator.clipboard.writeText(myTag); toast(L('내 친구 코드를 복사했어요')); } catch (e) { toast(myTag); } } }, L('복사'));
+        const reqBtn = h('button.btn.gold', { onclick: () => { click(); requestModal(); } }, L('친구 신청'));
+        const listBtn = h('button.btn.gold', { onclick: () => { click(); listModal(); } }, L('친구 목록'));
+        const invites = h('div', { style: { width: '100%' } });
+        live(modal([h('h2', L('친구')),
+            h('div', L('내 친구 코드 '), h('b.gold-t', myTag), ' ', copy),
+            h('div.tip', L('친구에게 이 코드를 알려 주거나, 친구 신청에서 친구의 코드를 입력하세요')),
+            h('div.row', { style: { gap: '10px', justifyContent: 'center', margin: '8px 0' } }, reqBtn, listBtn),
+            invites,
+            closeBtn()], { dismiss: true }), st => {
+            // counts on the two buttons: requests waiting for me, friends
+            const n = st ? st.incoming.length : 0;
+            reqBtn.replaceChildren(L('친구 신청'), n ? h('span.badge', String(n)) : '');
+            listBtn.replaceChildren(L('친구 목록'), st ? h('span.tip', ` ${st.friends.length}/${st.max}`) : '');
+            invites.replaceChildren();
+            if (!st || !st.invites.length) return;
+            invites.appendChild(sec(L('받은 초대')));
+            invites.appendChild(h('div.lg-list', st.invites.map(inv => h('div.lg-row', h('span.lg-name', L('{0}님의 {1}', inv.name, KIND[inv.kind]())), h('span.tip', RAID_ON.diffs[inv.diff] ? RAID_ON.diffs[inv.diff].name : ''),
+                h('button.btn.small.gold', { onclick: () => { click(); closeAll(); joinInvite(inv); } }, L('참가')),
+                h('button.btn.small.ghost', { onclick: () => { click(); Friends.dismiss(inv.id); } }, L('닫기'))))));
+        });
+    }
+
+    const sec = t => h('b', { style: { display: 'block', margin: '10px 0 4px' } }, t);
+    const listBox = () => h('div', { style: { maxHeight: '52vh', overflowY: 'auto', width: '100%' } }, h('div.tip', L('불러오는 중…')));
+    const opened = [];
+    function closeTop(el) { const d = opened.find(x => x.contains(el)); if (d) d.remove(); }
+    function closeAll() { opened.splice(0).forEach(d => d.remove()); }
+    // keep a friends popup in step with Friends until it closes; draw(st) gets null when the list failed to load
+    function live(d, draw) {
+        opened.push(d);
+        let off = false;
+        const run = st => { if (off || !document.body.contains(d)) { off = true; return; } draw(st); };
+        Friends.onChange(run);
+        new MutationObserver((_, ob) => { if (!document.body.contains(d)) { off = true; Friends.offChange(run); ob.disconnect(); const i = opened.indexOf(d); if (i >= 0) opened.splice(i, 1); } }).observe(d.parentNode || document.body, { childList: true });
+        if (Friends.st) run(Friends.st);
+        Friends.refresh().then(run);
+        return d;
+    }
+    const closeBtn = () => h('button.btn.ghost', { onclick: e => { click(); closeTop(e.target); } }, L('닫기'));
+
+    // 친구 신청: send one by code, answer the ones I got, cancel the ones I sent
+    function requestModal() {
         const input = h('input.nick', { maxLength: 17, placeholder: L('닉네임#태그 (예: 치즈냥#1234)') });
         const add = h('button.btn.gold', L('신청'));
         add.onclick = busy(add, async () => {
@@ -42,40 +84,21 @@
             input.value = '';
             toast(r.accepted ? L('친구가 되었어요') : L('친구 신청을 보냈어요'));
         });
-        const copy = h('button.btn.small', { onclick: () => { click(); try { navigator.clipboard.writeText(myTag); toast(L('내 친구 코드를 복사했어요')); } catch (e) { toast(myTag); } } }, L('복사'));
-        const d = modal([h('h2', L('친구')),
-            h('div', L('내 친구 코드 '), h('b.gold-t', myTag), ' ', copy),
-            h('div.tip', L('친구에게 이 코드를 알려 주거나, 친구의 코드를 아래에 입력하세요')),
+        const body = listBox();
+        live(modal([h('h2', L('친구 신청')),
+            h('div.tip', L('친구의 코드(닉네임#태그)를 입력하세요')),
             h('div.row', { style: { gap: '8px' } }, input, add),
-            body,
-            h('button.btn.ghost', { onclick: () => { click(); d.remove(); off = true; } }, L('닫기'))], { dismiss: true });
-        let off = false;
-        const draw = st => {
-            if (off || !document.body.contains(d)) { off = true; return; }
+            body, closeBtn()], { dismiss: true }), st => {
             body.innerHTML = '';
             if (!st) { body.appendChild(h('div.tip', L('친구 목록을 불러오지 못했어요'))); return; }
-            const sec = t => h('b', { style: { display: 'block', margin: '10px 0 4px' } }, t);
-            if (st.invites.length) {
-                body.appendChild(sec(L('받은 초대')));
-                body.appendChild(h('div.lg-list', st.invites.map(inv => h('div.lg-row', h('span.lg-name', L('{0}님의 {1}', inv.name, KIND[inv.kind]())), h('span.tip', RAID_ON.diffs[inv.diff] ? RAID_ON.diffs[inv.diff].name : ''),
-                    h('button.btn.small.gold', { onclick: () => { click(); d.remove(); off = true; joinInvite(inv); } }, L('참가')),
-                    h('button.btn.small.ghost', { onclick: () => { click(); Friends.dismiss(inv.id); } }, L('닫기'))))));
-            }
-            if (st.incoming.length) {
-                body.appendChild(sec(L('받은 신청 {0}', st.incoming.length)));
-                body.appendChild(h('div.lg-list', st.incoming.map(f => {
-                    const yes = h('button.btn.small.gold', L('수락')), no = h('button.btn.small.ghost', L('거절'));
-                    yes.onclick = busy(yes, async () => { if (say(await Friends.respond(f.uid, true))) toast(L('친구가 되었어요')); });
-                    no.onclick = busy(no, async () => { say(await Friends.respond(f.uid, false)); });
-                    return row(f, yes, no);
-                })));
-            }
-            body.appendChild(sec(L('친구 {0} / {1}', st.friends.length, st.max)));
-            if (!st.friends.length) body.appendChild(h('div.tip', L('아직 친구가 없어요. 친구 코드로 신청해 보세요')));
-            else body.appendChild(h('div.lg-list', st.friends.slice().sort((a, b) => (b.seen || 0) - (a.seen || 0)).map(f => row(f,
-                h('span.tip', f.highest >= 0 ? L('최고 {0}', stageLabel(f.highest)) : L('기록 없음')),
-                h('span.tip', seenText(f.seen)),
-                h('button.btn.small.ghost', { onclick: () => { click(); UI.confirmBox(L('{0}#{1} 님을 친구에서 삭제할까요?', f.name, f.tag), async () => { say(await Friends.remove(f.uid)); }); } }, L('삭제'))))));
+            body.appendChild(sec(L('받은 신청 {0}', st.incoming.length)));
+            if (!st.incoming.length) body.appendChild(h('div.tip', L('받은 신청이 없어요')));
+            else body.appendChild(h('div.lg-list', st.incoming.map(f => {
+                const yes = h('button.btn.small.gold', L('수락')), no = h('button.btn.small.ghost', L('거절'));
+                yes.onclick = busy(yes, async () => { if (say(await Friends.respond(f.uid, true))) toast(L('친구가 되었어요')); });
+                no.onclick = busy(no, async () => { say(await Friends.respond(f.uid, false)); });
+                return row(f, yes, no);
+            })));
             if (st.outgoing.length) {
                 body.appendChild(sec(L('보낸 신청')));
                 body.appendChild(h('div.lg-list', st.outgoing.map(f => {
@@ -84,11 +107,22 @@
                     return row(f, h('span.tip', L('기다리는 중')), x);
                 })));
             }
-        };
-        Friends.onChange(draw);
-        new MutationObserver((_, ob) => { if (!document.body.contains(d)) { off = true; Friends.offChange(draw); ob.disconnect(); } }).observe(d.parentNode || document.body, { childList: true });
-        if (Friends.st) draw(Friends.st);
-        Friends.refresh().then(st => draw(st));
+        });
+    }
+
+    // 친구 목록: my friends, latest seen first
+    function listModal() {
+        const body = listBox();
+        live(modal([h('h2', L('친구 목록')), body, closeBtn()], { dismiss: true }), st => {
+            body.innerHTML = '';
+            if (!st) { body.appendChild(h('div.tip', L('친구 목록을 불러오지 못했어요'))); return; }
+            body.appendChild(sec(L('친구 {0} / {1}', st.friends.length, st.max)));
+            if (!st.friends.length) body.appendChild(h('div.tip', L('아직 친구가 없어요. 친구 코드로 신청해 보세요')));
+            else body.appendChild(h('div.lg-list', st.friends.slice().sort((a, b) => (b.seen || 0) - (a.seen || 0)).map(f => row(f,
+                h('span.tip', f.highest >= 0 ? L('최고 {0}', stageLabel(f.highest)) : L('기록 없음')),
+                h('span.tip', seenText(f.seen)),
+                h('button.btn.small.ghost', { onclick: () => { click(); UI.confirmBox(L('{0}#{1} 님을 친구에서 삭제할까요?', f.name, f.tag), async () => { say(await Friends.remove(f.uid)); }); } }, L('삭제'))))));
+        });
     }
 
     // join a friend's room with the code it carries (the server checks everything as for a typed code)

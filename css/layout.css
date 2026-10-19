@@ -198,6 +198,24 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 .title-logins { gap: 10px; justify-content: center; flex-wrap: wrap; }
 .btn.kakao { border: 2px solid #c9b400; border-image: none; border-radius: 10px; background: #fee500; color: #191919; text-shadow: none; min-width: 200px; min-height: 46px; font-size: 18px; }
 .btn.google { border: 2px solid #c8c8c8; border-image: none; border-radius: 10px; background: #fff; color: #3c4043; text-shadow: none; min-width: 200px; min-height: 46px; font-size: 18px; }
+/* title sign-in column: same width, icon pinned left, label centred */
+.signin-list { display: flex; flex-direction: column; gap: 7px; width: min(300px, 86vw); }
+.btn.signin { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; height: 44px; min-height: 0; padding: 0 44px; border-image: none; border-radius: 10px; font-size: 18px; text-shadow: none; }
+.btn.signin.guest { border: 2px solid #8a6a44; background: rgba(38, 26, 16, 0.88); color: #fff4dc; }
+.signin-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; }
+.signin-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* title while a signed-in account connects */
+.title-spin { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #fff4dc; text-shadow: 0 1px 3px #000; }
+.spinner { width: 42px; height: 42px; border-radius: 50%; border: 5px solid rgba(255, 244, 220, 0.25); border-top-color: #ffd36b; animation: spin 0.9s linear infinite; }
+/* account line: name#tag + how it signs in (brand mark) */
+.acct-line { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.acct-mark { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; }
+.acct-mark svg { width: 15px; height: 15px; }
+.acct-mark.kakao { background: #fee500; }
+.acct-mark.google { background: #fff; border: 1px solid #ccc; }
+.acct-id { font-size: 13px; padding: 1px 8px; border-radius: 10px; background: rgba(106, 60, 20, 0.15); }
+.perk-row { display: flex; justify-content: space-between; gap: 16px; min-width: 240px; }
+.perk-on { color: #2e7d32; }
 .title-guest-note { color: #fff4dc; text-shadow: 0 1px 3px #000; font-size: 13px; }
 .locknote { display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 6px; color: #a8401a; }
 .locknote .icon { width: 20px; height: 20px; }
