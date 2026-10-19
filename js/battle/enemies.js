@@ -58,6 +58,8 @@ Object.assign(Battle.prototype, {
         else if (type === 'magic') v *= 1 - e.def.mres * (o.tower ? (1 - this.b.mageResIgnore) : 1);
         if (e.def.stealth && this.stealthed(e)) v *= e.def.stealth.dmgMul;
         v *= this.dmgMul || 1;                                      // codex bonus etc.
+        const weak = o.hero && e.stunUntil > this.t;                 // SYNERGY: stunned/frozen enemies take more from heroes, rangers burst them
+        if (weak) v *= o.burst ? SYNERGY.burst : SYNERGY.exposed;
         v = Math.max(1, v);
         if (e.shield > 0) {                                         // swamp witch / 늪의 장막 shield absorbs first
             const a = Math.min(e.shield, v); e.shield -= a; v -= a;
@@ -83,8 +85,8 @@ Object.assign(Battle.prototype, {
         }
         if (crit && o.hero) this.flash = Math.max(this.flash, 0.1);
         if (!o.quiet || crit) {
-            const col = crit ? '#ffb22a' : type === 'magic' ? '#c58cff' : type === 'fire' ? '#ff8a3a' : '#ffe7c0';
-            this.text(e.x + this.rng.range(-8, 8), e.y - e.def.size * 1.6 - 6, (crit ? '' : '') + Math.round(v), col, crit ? 22 : 15, crit);
+            const col = crit ? '#ffb22a' : weak && o.burst ? '#ff6a6a' : type === 'magic' ? '#c58cff' : type === 'fire' ? '#ff8a3a' : '#ffe7c0';
+            this.text(e.x + this.rng.range(-8, 8), e.y - e.def.size * 1.6 - 6, (crit ? '' : '') + Math.round(v), col, crit || (weak && o.burst) ? 22 : 15, crit);
         }
         if (o.stun) e.stunUntil = Math.max(e.stunUntil, this.t + (e.def.boss ? o.stun * 0.3 : o.stun));
         if (o.hero && crit) this.hitstop = Math.max(this.hitstop, 0.035);

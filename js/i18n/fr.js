@@ -1,6 +1,13 @@
 'use strict';
 // fr translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['fr'] = {
+    "앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요": "Tank de première ligne · -25% de dégâts subis · ses compétences étourdissent",
+    "범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함": "Magie de zone · Givre guérisseur soigne les alliés · fort contre les ennemis blindés",
+    "긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함": "Plus longue portée · dégâts x2 aux ennemis étourdis ou gelés · fort contre la résistance magique",
+    "지정 방향으로 돌진하며 경로의 적에게 300% 피해와 기절 1초. 돌진 중 무적.": "Charge dans une direction : 300% de dégâts et 1 s d'étourdissement aux ennemis sur le trajet. Invincible pendant la charge.",
+    "치유의 서리": "Givre guérisseur",
+    "주변 적 200% 피해와 빙결 2초, 가까운 아군 영웅·병사 체력 20% 회복.": "200% de dégâts aux ennemis proches et gel de 2 s ; les héros et soldats alliés proches récupèrent 20% de PV.",
+    "시너지: 기사·마법사가 기절·빙결시킨 적은 영웅 피해 +30%, 궁수는 2배 · 마법사는 아군 회복 · 협동과 냥이 총출동에서 맞물려요": "Synergie : les ennemis étourdis ou gelés subissent +30% des héros et x2 de l'Archer · le Mage soigne les alliés · tout s'enchaîne en Défense coopérative et avec Tous les chats",
     " {0}개 → ": " ×{0} → ",
     " 1개 · 성공 {0}%": " ×1 · {0}% de réussite",
     "합성할 수 있는 장비 {0}개 · 실패하면 {1} 1개가 돌아와요": "{0} pièces à fusionner · en cas d'échec, 1 {1} vous revient",

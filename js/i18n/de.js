@@ -1,6 +1,13 @@
 'use strict';
 // de translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['de'] = {
+    "앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요": "Frontlinien-Tank · -25% erlittener Schaden · Fähigkeiten betäuben",
+    "범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함": "Flächenmagie · Heilfrost heilt Verbündete · stark gegen gepanzerte Gegner",
+    "긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함": "Größte Reichweite · doppelter Schaden an betäubten oder gefrorenen Gegnern · stark gegen Magieresistenz",
+    "지정 방향으로 돌진하며 경로의 적에게 300% 피해와 기절 1초. 돌진 중 무적.": "Stürmt in eine Richtung: 300% Schaden und 1 s Betäubung für Gegner auf dem Weg. Unverwundbar beim Sturm.",
+    "치유의 서리": "Heilfrost",
+    "주변 적 200% 피해와 빙결 2초, 가까운 아군 영웅·병사 체력 20% 회복.": "200% Schaden an nahen Gegnern und 2 s Einfrieren; nahe verbündete Helden und Soldaten heilen 20% LP.",
+    "시너지: 기사·마법사가 기절·빙결시킨 적은 영웅 피해 +30%, 궁수는 2배 · 마법사는 아군 회복 · 협동과 냥이 총출동에서 맞물려요": "Synergie: betäubte oder gefrorene Gegner nehmen +30% Heldenschaden, vom Waldläufer doppelt · der Magier heilt Verbündete · greift in der Koop-Verteidigung und bei Alle Katzen raus ineinander",
     " {0}개 → ": " ×{0} → ",
     " 1개 · 성공 {0}%": " ×1 · {0}% Erfolg",
     "합성할 수 있는 장비 {0}개 · 실패하면 {1} 1개가 돌아와요": "{0} Teile fusionierbar · bei Misserfolg gibt es 1 {1} zurück",

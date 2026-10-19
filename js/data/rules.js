@@ -89,10 +89,13 @@ const SELL_RATIO = 0.6;
 
 // ---------------------------------------------------------------- heroes
 const HEROES = {
-    knight: { name: L('기사'), desc: L('앞에서 적을 막는 탱커 · 받는 피해 -25%'), hp: 470, atk: 32, rate: 0.9, range: 60, spd: 100, block: true, air: true, dmgType: 'phys' },
-    mage:   { name: L('마법사'), desc: L('마법 피해 · 범위 공격 · 물리 방어 적에 강함'), hp: 270, atk: 30, rate: 1.1, range: 165, spd: 88, block: false, air: true, dmgType: 'magic' },
-    ranger: { name: L('궁수'), desc: L('사거리 가장 김 · 빠른 연사 · 마법 저항 적에 강함'), hp: 310, atk: 17, rate: 0.6, range: 195, spd: 105, block: false, air: true, dmgType: 'phys' },
+    knight: { name: L('기사'), desc: L('앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요'), hp: 470, atk: 32, rate: 0.9, range: 60, spd: 100, block: true, air: true, dmgType: 'phys' },
+    mage:   { name: L('마법사'), desc: L('범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함'), hp: 270, atk: 30, rate: 1.1, range: 165, spd: 88, block: false, air: true, dmgType: 'magic' },
+    ranger: { name: L('궁수'), desc: L('긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함'), hp: 310, atk: 17, rate: 0.6, range: 195, spd: 105, block: false, air: true, dmgType: 'phys' },
 };
+// 영웅 시너지: 기사·마법사가 기절·빙결시킨 적은 영웅 공격에 약해지고 궁수는 그 적에게 폭딜, 마법사는 아군을 회복
+// (협동·냥이 총출동처럼 영웅이 둘 이상일 때 서로 맞물린다)
+const SYNERGY = { exposed: 1.3, burst: 2.0, allyHeal: 0.03, allyStunEvery: 3, allyStun: 0.8 };
 const HERO_GROWTH = 1.07;
 const HERO_MAX_LV = 60;
 const HERO_RESPAWN = 12;
@@ -101,14 +104,14 @@ const SKILL_UNLOCK = [1, 2, 4, 7];
 // coef x hero atk. target: 'point' needs a click (AUTO picks the best cluster), 'self' casts instantly
 const SKILLS = {
     knight: [
-        { id: 'dash',   name: L('돌진 베기'),   cd: 8,  target: 'point', coef: 3.0, range: 230, desc: L('지정 방향으로 돌진하며 경로의 적에게 300% 피해. 돌진 중 무적.') },
+        { id: 'dash',   name: L('돌진 베기'),   cd: 8,  target: 'point', coef: 3.0, range: 230, stun: 1, desc: L('지정 방향으로 돌진하며 경로의 적에게 300% 피해와 기절 1초. 돌진 중 무적.') },
         { id: 'quake',  name: L('대지 가르기'), cd: 12, target: 'self',  coef: 3.5, r: 95, stun: 1.5, desc: L('주변 적에게 350% 피해와 기절 1.5초.') },
         { id: 'oath',   name: L('수호의 맹세'), cd: 20, target: 'self',  dur: 6, reduce: 0.5, heal: 0.25, r: 130, desc: L('6초간 받는 피해 -50%, 체력 25% 회복, 주변 적 도발.') },
         { id: 'judge',  name: L('왕발 대심판'), cd: 45, target: 'point', coef: 9.0, r: 135, stun: 2, desc: L('빛의 대검 낙하. 범위 900% 피해, 기절 2초.') },
     ],
     mage: [
         { id: 'fireball', name: L('화염구'),   cd: 6,  target: 'point', coef: 3.0, r: 70, desc: L('폭발하는 화염구. 범위 300% 피해.') },
-        { id: 'frost',    name: L('서리 고리'), cd: 12, target: 'self',  coef: 2.0, r: 115, stun: 2, desc: L('주변 적 200% 피해, 빙결 2초.') },
+        { id: 'frost',    name: L('치유의 서리'), cd: 12, target: 'self',  coef: 2.0, r: 115, stun: 2, heal: 0.2, healR: 190, desc: L('주변 적 200% 피해와 빙결 2초, 가까운 아군 영웅·병사 체력 20% 회복.') },
         { id: 'chain',    name: L('연쇄 번개'), cd: 9,  target: 'self',  coef: 2.6, chain: 6, range: 220, desc: L('6명까지 튀는 번개 260% 피해.') },
         { id: 'meteor',   name: L('별똥별 냥냥'), cd: 45, target: 'point', coef: 10, r: 145, burn: 0.4, desc: L('거대한 유성. 범위 1000% 피해와 화상.') },
     ],

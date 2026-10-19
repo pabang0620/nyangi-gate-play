@@ -48,7 +48,7 @@ Object.assign(Battle.prototype, {
             case 'dash': {
                 const ang = Math.atan2(y - h.y, x - h.x), L = Math.min(s.range, dist(h.x, h.y, x, y) + 20);
                 if (h.engaged) this.releaseBlock(h);
-                h.dash = { fx: h.x, fy: h.y, tx: clamp(h.x + Math.cos(ang) * L, 20, W - 20), ty: clamp(h.y + Math.sin(ang) * L, 60, H - 20), t: 0, dur: 0.22, hit: new Set(), dmg: A * s.coef };
+                h.dash = { fx: h.x, fy: h.y, tx: clamp(h.x + Math.cos(ang) * L, 20, W - 20), ty: clamp(h.y + Math.sin(ang) * L, 60, H - 20), t: 0, dur: 0.22, hit: new Set(), dmg: A * s.coef, stun: s.stun };
                 h.dir = Math.cos(ang) >= 0 ? 1 : -1;
                 break;
             }
@@ -72,6 +72,7 @@ Object.assign(Battle.prototype, {
             case 'frost':
                 this.aoe(h.x, h.y, s.r, A * s.coef, 'magic', { stun: s.stun, crit: crit(), hero: true, frost: true });
                 this.ringFx(h.x, h.y, s.r, '#a0f0ff'); this.burstParts(h.x, h.y, '#c8ffff', 24, 160);
+                this.healAround(h.x, h.y, s.healR, s.heal);
                 break;
             case 'chain':
                 this.chainLightning(h.x, h.y - 20, A * s.coef, s.chain, s.range, 'magic', true, 0.9);
@@ -91,7 +92,7 @@ Object.assign(Battle.prototype, {
                 for (const e of this.enemies) {
                     const q = closestOnSeg(e.x, e.y, h.x, h.y, ex, ey);
                     if (dist(e.x, e.y, q.x, q.y) < s.wid / 2 + e.def.size * 0.5) {
-                        this.damage(e, A * s.coef, 'phys', { crit: crit(), hero: true });
+                        this.damage(e, A * s.coef, 'phys', { crit: crit(), hero: true, burst: true });
                         if (s.id === 'storm' && !e.def.boss) e.d = Math.max(0, e.d - 50);
                     }
                 }
@@ -102,7 +103,7 @@ Object.assign(Battle.prototype, {
             case 'rain':
                 for (let k = 0; k < s.ticks; k++) {
                     this.teles.push({ shape: 'none', t0: this.t, dur: 0.25 * (k + 1), done: () => {
-                        this.aoe(x, y, s.r, A * s.coef, 'phys', { hero: true, quiet: k % 2 === 1 });
+                        this.aoe(x, y, s.r, A * s.coef, 'phys', { hero: true, burst: true, quiet: k % 2 === 1 });
                         for (let j = 0; j < 6; j++) this.parts.push({ x: x + (Math.random() * 2 - 1) * s.r, y: y - 80 + Math.random() * 30, vx: 0, vy: 600, life: 0.15, max: 0.15, color: '#f0e0c0', size: 2, streak: true });
                     } });
                 }
@@ -114,6 +115,19 @@ Object.assign(Battle.prototype, {
                 break;
         }
         return true;
+    },
+
+    // 치유의 서리·총출동 마법사: living heroes and soldiers in reach get a share of their max health back
+    healAround(x, y, r, k) {
+        const fx = u => { this.text(u.x, u.y - 34, '+' + Math.round(u.maxHp * k), '#8dffb0', 14); this.parts.push({ x: u.x, y: u.y - 20, vx: 0, vy: -40, life: 0.5, max: 0.5, color: '#8dffb0', size: 3 }); };
+        for (const u of this.heroList()) {
+            if (u.deadUntil > this.t || u.hp >= u.maxHp || dist2(u.x, u.y, x, y) > r * r) continue;
+            u.hp = Math.min(u.maxHp, u.hp + u.maxHp * k); fx(u);
+        }
+        for (const u of this.soldiers) {
+            if (u.deadUntil > this.t || u.hp <= 0 || u.hp >= u.maxHp || dist2(u.x, u.y, x, y) > r * r) continue;
+            u.hp = Math.min(u.maxHp, u.hp + u.maxHp * k);
+        }
     },
 
     castSpell(id, x, y) {
@@ -170,9 +184,15 @@ Object.assign(Battle.prototype, {
             if (a.cd > 0) continue;
             a.cd = H0.rate * 0.6; a.lunge = 0.14;
             const crit = this.rand() < a.crit;
-            if (a.cls === 'knight') { this.damage(tgt, a.atk, 'phys', { hero: true, crit, critMul: 2, kb: 4 }); this.slash(a.x + a.dir * 14, a.y - 14, a.dir, crit); this.on('hit', 'hero'); }
-            else if (a.cls === 'mage') { this.projs.push({ kind: 'heroorb', x: a.x, y: a.y - 22, target: tgt, tx: tgt.x, ty: tgt.y, speed: 520, dmg: a.atk, type: 'magic', hero: true, crit, splash: 30 }); this.on('shoot', 'magic'); }
-            else { this.projs.push({ kind: 'arrow', x: a.x, y: a.y - 18, target: tgt, tx: tgt.x, ty: tgt.y, speed: 760, dmg: a.atk, type: 'phys', hero: true, crit }); this.on('shoot', 'arrow'); }
+            // each one brings its role: the knight stuns every few hits, the mage heals the most hurt hero, the ranger bursts stunned enemies
+            a.hits = (a.hits || 0) + 1;
+            if (a.cls === 'knight') { this.damage(tgt, a.atk, 'phys', { hero: true, crit, critMul: 2, kb: 4, stun: a.hits % SYNERGY.allyStunEvery === 0 ? SYNERGY.allyStun : 0 }); this.slash(a.x + a.dir * 14, a.y - 14, a.dir, crit); this.on('hit', 'hero'); }
+            else if (a.cls === 'mage') {
+                this.projs.push({ kind: 'heroorb', x: a.x, y: a.y - 22, target: tgt, tx: tgt.x, ty: tgt.y, speed: 520, dmg: a.atk, type: 'magic', hero: true, crit, splash: 30 }); this.on('shoot', 'magic');
+                const hurt = this.heroList().filter(u => u.deadUntil <= this.t && u.hp < u.maxHp).sort((p, q) => p.hp / p.maxHp - q.hp / q.maxHp)[0];
+                if (hurt) { hurt.hp = Math.min(hurt.maxHp, hurt.hp + hurt.maxHp * SYNERGY.allyHeal); this.beams.push({ pts: [[a.x, a.y - 22], [hurt.x, hurt.y - 18]], life: 0.18, max: 0.18, color: '#8dffb0', w: 3 }); }
+            }
+            else { this.projs.push({ kind: 'arrow', x: a.x, y: a.y - 18, target: tgt, tx: tgt.x, ty: tgt.y, speed: 760, dmg: a.atk, type: 'phys', hero: true, burst: true, crit }); this.on('shoot', 'arrow'); }
         }
         const gone = this.allies.filter(a => this.t >= a.until);
         for (const a of gone) this.ringFx(a.x, a.y, 30, '#ffe08a');
@@ -189,7 +209,7 @@ Object.assign(Battle.prototype, {
             const k = Math.min(1, h.dash.t / h.dash.dur);
             h.x = lerp(h.dash.fx, h.dash.tx, k); h.y = lerp(h.dash.fy, h.dash.ty, k);
             for (const e of this.enemies) if (!e.dead && !h.dash.hit.has(e) && !e.def.fly && dist2(e.x, e.y, h.x, h.y) < 34 * 34) {
-                h.dash.hit.add(e); this.damage(e, h.dash.dmg, 'phys', { hero: true, crit: this.rand() < h.crit });
+                h.dash.hit.add(e); this.damage(e, h.dash.dmg, 'phys', { hero: true, crit: this.rand() < h.crit, stun: h.dash.stun });
                 this.burstParts(e.x, e.y - 10, '#ffffff', 6, 160);
             }
             this.parts.push({ x: h.x, y: h.y - 10, vx: 0, vy: 0, life: 0.2, max: 0.2, color: '#7fd4ff', size: 5 });
@@ -244,7 +264,7 @@ Object.assign(Battle.prototype, {
                     this.projs.push({ kind: 'heroorb', x: h.x, y: h.y - 22, target: tgt, tx: tgt.x, ty: tgt.y, speed: 520, dmg: h.atk, type: 'magic', hero: true, crit, splash: 30 });
                     this.on('shoot', 'magic');
                 } else {
-                    this.projs.push({ kind: 'arrow', x: h.x, y: h.y - 18, target: tgt, tx: tgt.x, ty: tgt.y, speed: 760, dmg: h.atk, type: 'phys', hero: true, crit });
+                    this.projs.push({ kind: 'arrow', x: h.x, y: h.y - 18, target: tgt, tx: tgt.x, ty: tgt.y, speed: 760, dmg: h.atk, type: 'phys', hero: true, burst: true, crit });
                     this.on('shoot', 'arrow');
                 }
             } else h.cd = 0.05;
@@ -280,6 +300,8 @@ Object.assign(Battle.prototype, {
                     const tx = (boss && (i === 3 || pick.n < need)) ? boss.x : pick.x, ty = (boss && (i === 3 || pick.n < need)) ? boss.y : pick.y;
                     this.castSkill(i, tx, ty, false);
                 }
+            } else if (s.id === 'frost' && this.heroList().some(u => u.deadUntil <= this.t && u.hp < u.maxHp * 0.5 && dist2(u.x, u.y, h.x, h.y) < s.healR * s.healR)) {
+                this.castSkill(i, 0, 0, false);
             } else if (s.id === 'oath') {
                 if (h.hp < h.maxHp * 0.6 && near(120).length >= 1) this.castSkill(i, 0, 0, false);
             } else if (s.id === 'gale' || s.id === 'chain') {

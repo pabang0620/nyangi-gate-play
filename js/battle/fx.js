@@ -31,7 +31,7 @@ Object.assign(Battle.prototype, {
                     if (p.kind === 'fireball') { this.bigBoom(p.tx, p.ty, p.splash, '#ff7030'); this.addShake(5); this.hitstop = Math.max(this.hitstop, 0.05); }
                     else this.ringFx(p.tx, p.ty, p.splash, p.kind === 'frostorb' ? '#a0f0ff' : '#d8a8ff');
                 } else if (p.target && !p.target.dead) {
-                    this.damage(p.target, p.dmg, p.type, { hero: p.hero, tower: p.tower, crit: p.crit, critChance: p.critChance, critMul: p.critMul });
+                    this.damage(p.target, p.dmg, p.type, { hero: p.hero, burst: p.burst, tower: p.tower, crit: p.crit, critChance: p.critChance, critMul: p.critMul });
                     this.burstParts(p.tx, p.ty, p.kind === 'orb' ? '#d8a8ff' : '#fff4dc', 3, 60);
                 }
             } else { p.x += Math.cos(p.ang) * step; p.y += Math.sin(p.ang) * step; }

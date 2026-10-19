@@ -1,6 +1,13 @@
 'use strict';
 // en translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['en'] = {
+    "앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요": "Frontline tank · -25% damage taken · skills stun enemies",
+    "범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함": "Area magic · Healing Frost restores allies · strong vs armored foes",
+    "긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함": "Longest range · 2x damage to stunned or frozen foes · strong vs magic-resistant foes",
+    "지정 방향으로 돌진하며 경로의 적에게 300% 피해와 기절 1초. 돌진 중 무적.": "Dash in a direction, dealing 300% damage and a 1s stun to enemies in the path. Invincible while dashing.",
+    "치유의 서리": "Healing Frost",
+    "주변 적 200% 피해와 빙결 2초, 가까운 아군 영웅·병사 체력 20% 회복.": "Deal 200% damage to nearby enemies and freeze them for 2s; nearby allied heroes and soldiers recover 20% HP.",
+    "시너지: 기사·마법사가 기절·빙결시킨 적은 영웅 피해 +30%, 궁수는 2배 · 마법사는 아군 회복 · 협동과 냥이 총출동에서 맞물려요": "Synergy: stunned or frozen foes take +30% from heroes, 2x from the Ranger · the Mage heals allies · it all clicks in Co-op Defense and All-Out Cats",
     " {0}개 → ": " ×{0} → ",
     " 1개 · 성공 {0}%": " ×1 · {0}% success",
     "합성할 수 있는 장비 {0}개 · 실패하면 {1} 1개가 돌아와요": "{0} pieces can be fused · on failure you get 1 {1} back",

@@ -1,6 +1,13 @@
 'use strict';
 // pt translations (keys: Korean source text). Built by tools/i18n.mjs from reviewed JSON.
 I18N['pt'] = {
+    "앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요": "Tanque da linha de frente · -25% de dano recebido · habilidades atordoam",
+    "범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함": "Magia em área · Geada Curativa cura aliados · forte contra inimigos blindados",
+    "긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함": "Maior alcance · dano x2 em inimigos atordoados ou congelados · forte contra resistência mágica",
+    "지정 방향으로 돌진하며 경로의 적에게 300% 피해와 기절 1초. 돌진 중 무적.": "Investe numa direção: 300% de dano e 1 s de atordoamento nos inimigos do caminho. Invencível durante a investida.",
+    "치유의 서리": "Geada Curativa",
+    "주변 적 200% 피해와 빙결 2초, 가까운 아군 영웅·병사 체력 20% 회복.": "200% de dano a inimigos próximos e congela por 2 s; heróis e soldados aliados próximos recuperam 20% de vida.",
+    "시너지: 기사·마법사가 기절·빙결시킨 적은 영웅 피해 +30%, 궁수는 2배 · 마법사는 아군 회복 · 협동과 냥이 총출동에서 맞물려요": "Sinergia: inimigos atordoados ou congelados recebem +30% dos heróis e x2 do Arqueiro · o Mago cura aliados · tudo se encaixa na Defesa cooperativa e em Todos os gatos",
     " {0}개 → ": " ×{0} → ",
     " 1개 · 성공 {0}%": " ×1 · {0}% de sucesso",
     "합성할 수 있는 장비 {0}개 · 실패하면 {1} 1개가 돌아와요": "{0} peças para fundir · se falhar você recebe 1 {1}",

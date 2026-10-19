@@ -28,7 +28,8 @@
                 h('div.tip', HEROES[cls].desc),
                 h('div.bar.xp', { style: { marginTop: '6px' } }, h('i', { style: { width: (hd.lv >= HERO_MAX_LV ? 100 : hd.xp / heroXpNeed(hd.lv) * 100) + '%' } })),
                 h('div.tip', hd.lv >= HERO_MAX_LV ? L('최고 레벨') : L('경험치 {0} / {1}', hd.xp, heroXpNeed(hd.lv))),
-                h('div.tip', { style: { fontSize: '13px' } }, L('장비는 세 영웅이 같이 써요 · 출전 안 해도 경험치 {0}%', Math.round(HERO_XP_SHARE * 100)))));
+                h('div.tip', { style: { fontSize: '13px' } }, L('장비는 세 영웅이 같이 써요 · 출전 안 해도 경험치 {0}%', Math.round(HERO_XP_SHARE * 100))),
+                h('div.tip', { style: { fontSize: '13px' } }, L('시너지: 기사·마법사가 기절·빙결시킨 적은 영웅 피해 +30%, 궁수는 2배 · 마법사는 아군 회복 · 협동과 냥이 총출동에서 맞물려요'))));
         left.appendChild(port);
         Rewards.ensure(p);
         // skins: the collection button, then default + owned ones (best grade first) in a scrolling row
