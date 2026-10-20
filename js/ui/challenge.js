@@ -221,7 +221,7 @@
         const win = h('div.panel.win');
         win.appendChild(h('div.tabhead', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' } },
             h('h2', { style: { margin: 0 } }, L('보스 토벌전')), h('div.chip', L('이번 주 남은 도전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries)),
-            h('div.tip', L('3분 동안 준 피해량으로 단계 보상을 받아요. 단계 보상은 주마다 1번, 보스는 매주 월요일 05:00에 바뀌어요.'))));
+            h('div.tip', L('피해량만큼 단계 보상. 보스는 매주 바뀌어요.'))));
         if (!Meta.raidUnlocked(p)) { win.appendChild(h('div', { style: { color: '#ff9090', margin: '30px', fontSize: '20px' } }, L('2장 보스를 물리치면 열립니다'))); root().appendChild(win); return; }
         const kind = Meta.raidBoss(p), si = Meta.raidStage(p, kind), ref = Meta.raidRef(kind, si), tierNow = Meta.raidTierOf(kind, p.raid.best, si);
         const left = h('div.inset.raidleft',
@@ -267,7 +267,6 @@
             h('div.rulecard', h('b', L('이번 주 제한: {0}', c.name)), h('span', ` · ${cupRuleDesc(c)}`)),
             h('div.cup-meta', h('span', L('지도: {0} · 최대 {1}웨이브', CHAPTERS.find(x => x.theme === c.theme) ? CHAPTERS.find(x => x.theme === c.theme).name : c.theme, CUP.maxWaves)),
                 UI.helpBtn(L('점수 계산'), L('점수 = 버틴 웨이브 × 1000 + 처치 × 5 + 남은 목숨 × 100 (+30웨이브 완주 5000)'), '.mob-q')),
-            h('div.tip.cup-formula', L('점수 = 버틴 웨이브 × 1000 + 처치 × 5 + 남은 목숨 × 100 (+30웨이브 완주 5000)')),
             h('div', L('이번 주 내 최고 '), h('span.gold-t', L('{0}점', fmt(st.best))), st.bestWave ? L(' ({0}웨이브)', st.bestWave) : '', h('span.tip.norevive', ' · ' + L('이어하기 없음 · 공정한 기록'))),
             h('button.btn.gold' + (left ? '' : '.off'), { style: { fontSize: '22px' }, onclick: () => {
                 if (!left) { toast(L('오늘 도전 횟수를 다 썼습니다')); return; }

@@ -51,7 +51,13 @@ const RAID = {
 const RAID_ON = {
     diffs: [{ name: L('일반'), eq: 17 }, { name: L('어려움'), eq: 29 }, { name: L('지옥'), eq: 41 }, { name: L('악몽'), eq: 53 }],
     medals: [20, 35, 55, 80],
-    party: { hp: 800, runCap: 480, tries: 3, size: 4 },
+    // 파티 레이드: 1~4 players fight one boss live (lockstep like 협동 디펜스) on the 보스 토벌전 map, 3 entries a week.
+    // Boss health = hp[difficulty][players - 1] x Meta.raidRef(boss, strength); killing it within time wins.
+    // Tuned with tools/praidbalance.js: free players who just opened the difficulty fail alone and in any party (up to 4),
+    // a paying player helps three fresh ones. Alone gets a longer clock (time[0]) and a much tougher boss so a solo clear
+    // takes a paying player 300s+ and a party is always faster; a free player a week on (8 stages) only sometimes clears 일반 alone.
+    party: { tries: 3, size: 4, time: [420, 240, 240, 240], startGold: [1, 0.8, 0.7, 0.6], goldShare: 0.5, enrage: 0.4, enrageSpd: 1.4, enrageCd: 0.7,
+        hp: [[5.2, 4.1, 5.3, 7.0], [7.9, 5.3, 6.6, 8.2], [9.7, 5.0, 7.9, 10.5], [4.3, 4.3, 5.7, 7.2]] },
     world: { runCap: 600, tries: 3 },
     pity: { leg: 10, myth: 40 },
     // 토벌 훈장 상점: the 신화 장비 상자 is the sure ceiling (once a week)
@@ -61,7 +67,9 @@ const RAID_ON = {
         { id: 'leg', cost: 300, reward: { item: 3 }, slot: true }, { id: 'myth', cost: 1200, reward: { item: 4 }, slot: true, weekly: 1 },
     ],
     // 협동 디펜스: two roads, 15 waves, a boss at 8 and the raid boss at 15; each player keeps 60% of every kill's gold
-    coop: { waves: 15, midWave: 8, maps: ['m2', 'm8', 'm12', 'm13'], hpMul: 1.7, bossHp: 1.2, goldShare: 0.6, startGold: 0.8, tick: 1 / 30 },
+    // bossHp: the final raid boss per difficulty (each difficulty has its own boss). Tuned with tools/coopbalance.js: two free
+    // players who just opened it lose most games, a paying player with a free one wins about half (2026-10-20)
+    coop: { waves: 15, midWave: 8, maps: ['m2', 'm8', 'm12', 'm13'], hpMul: 1.7, bossHp: [3.3, 2.0, 2.4, 5.5], goldShare: 0.6, startGold: 0.8, tick: 1 / 30 },
 };
 
 // 도감: kills per enemy kind -> points; each point = all damage +0.2%

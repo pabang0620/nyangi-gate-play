@@ -106,14 +106,17 @@ class Battle {
             // 보스 토벌전: one giant boss walks the road, escorts keep coming; the score is damage dealt in RAID.time seconds
             this.raidKind = cfg.raidKind;
             this.raidDamage = 0;
-            this.timeLeft = RAID.time;
+            // 파티 레이드 (cfg.raidLive): the boss has real health; kill it before the time runs out (otherwise a loss)
+            this.raidLive = cfg.raidLive || null;
+            this.timeLeft = this.raidLive ? this.raidLive.time : RAID.time;
+            this.enraged = false;
             this.nextEscort = 8;
             this.gold = RAID.startGold + RAID.goldPerStage * Math.max(0, this.stageIdx) + this.b.startGold;   // build a full defence from the start
         }
         this.queue = [];                 // pending spawns {t, kind, path}
         this.countdown = -1;             // seconds until next wave, -1 = waiting for first call
         this.state = 'prep';             // prep | run | win | lose
-        if (this.raid) { this.queue.push({ t: 6, kind: this.raidKind, path: 0, hpMul: this.hpMul * RAID.hpMul }); this.countdown = -2; }
+        if (this.raid) { this.queue.push({ t: 6, kind: this.raidKind, path: 0, hpMul: this.raidLive ? this.raidLive.hpMul : this.hpMul * RAID.hpMul }); this.countdown = -2; }
         this.enemies = []; this.soldiers = []; this.projs = [];
         this.parts = []; this.texts = []; this.rings = []; this.beams = []; this.zones = []; this.teles = []; this.drops = [];
         this.loot = []; this.kills = 0; this.leaked = 0;
@@ -187,14 +190,22 @@ class Battle {
     updateRaid(dt) {
         if (this.state === 'prep') this.state = 'run';
         this.timeLeft -= dt;
+        const L2 = this.raidLive, boss = this.bossRef;
+        // 광폭화: below raidLive.enrage of its health the boss walks faster, casts sooner and the escorts come twice as often
+        if (L2 && !this.enraged && boss && !boss.dead && boss.hp < boss.maxHp * L2.enrage) {
+            this.enraged = true;
+            boss.spdMul *= L2.enrageSpd; boss.cdMul *= L2.enrageCd;
+            this.text(W / 2, 170, L('광폭화! 보스가 사나워졌다'), '#ff5040', 28, true); this.addShake(10);
+            this.on('enrage', boss);
+        }
         if (this.t >= this.nextEscort) {
-            this.nextEscort = this.t + RAID.escortEvery;
+            this.nextEscort = this.t + RAID.escortEvery * (this.enraged ? 0.5 : 1);
             const rng = makeRng(Math.floor(this.t) * 13 + 7);
             const pool = (this.cfg.escortPool || ['goblin', 'wolf']).filter(k => !ENEMIES[k].elite);
             const wave = this.makeWave(rng, RAID.escortBudget * (1 + 0.05 * Math.max(0, this.stageIdx)), pool, 2, 4);
             for (const s of wave) this.queue.push({ t: this.t + s.t, kind: s.kind, path: s.path, hpMul: this.hpMul * RAID.escortHp });
         }
-        if (this.timeLeft <= 0) { this.timeLeft = 0; this.state = 'win'; this.on('end', true); }
+        if (this.timeLeft <= 0) { this.timeLeft = 0; this.state = L2 ? 'lose' : 'win'; this.on('end', !L2); }
     }
 
     callWave() {
@@ -253,12 +264,12 @@ class Battle {
         }
 
         for (const sp of this.spells) sp.left = Math.max(0, sp.left - dt);
-        if (this.coop) for (const sp of this.spells2) sp.left = Math.max(0, sp.left - dt);
+        if (this.coop) for (const a of this.acts) if (a.spells !== this.spells) for (const sp of a.spells) sp.left = Math.max(0, sp.left - dt);
         this.updateEnemies(dt);
         this.updateTowers(dt);
         this.updateSoldiers(dt);
         this.updateHero(dt);
-        if (this.coop) this.asActor(1, () => this.updateHero(dt));
+        if (this.coop) for (let k = 0; k < this.acts.length; k++) if (k !== this.actor) this.asActor(k, () => this.updateHero(dt));
         if (this.allies.length) this.updateAllies(dt);
         this.updateProjs(dt);
         this.updateZones(dt);

@@ -57,6 +57,9 @@ const Meta = {
     },
     // 자기 스테이지에서는 보스별 기준(refMul), 진행도에 맞춰 강해진 경우에는 스테이지 공통 기준(refPerHpMul)
     raidRef(kind, si = RAID.bossStage[kind]) { return si > RAID.bossStage[kind] ? RAID.refPerHpMul * stageHpMul(si) : ENEMIES[kind].hp * stageHpMul(si) * (RAID.refMul[kind] || 1); },
+    // 파티 레이드 boss health multiplier (spawn hpMul): RAID_ON.party.hp[difficulty][players - 1] x the boss's raid reference
+    partyTime(n) { const t = RAID_ON.party.time; return Array.isArray(t) ? t[Math.max(1, Math.min(4, n)) - 1] : t; },
+    partyBossMul(kind, d, n) { return RAID_ON.party.hp[d][Math.max(1, Math.min(4, n)) - 1] * this.raidRef(kind, RAID_ON.diffs[d].eq) / ENEMIES[kind].hp; },
     raidTierOf(kind, dmg, si) { const ref = this.raidRef(kind, si); let n = 0; RAID.tiers.forEach((t, i) => { if (dmg >= t.x * ref) n = i + 1; }); return n; },
     finishRaid(p, kind, dmg) {
         metaEnsure(p);

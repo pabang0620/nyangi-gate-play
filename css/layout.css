@@ -274,3 +274,37 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 #app.mobile .pcard > .pbtn { min-height: 48px; font-size: 15px; }
 
 .enh-stamp { position: relative; }
+
+/* ---- spacing pass (2026-10-20): text that sat too close together ---- */
+/* Korean (and the Latin languages) break between words, never inside one; Japanese and Chinese keep their own rules */
+html:not(:lang(ja)):not(:lang(zh)) body { word-break: keep-all; overflow-wrap: anywhere; }
+/* hero info next to the portrait: lines get room, long notes wrap instead of crowding */
+.hl-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.hl-info > .tip { line-height: 1.4; }
+/* challenge sub tabs: the NEW / ! badge sits above the label, not on it */
+.subtabs .badge { top: -15px; right: -4px; font-size: 11px; line-height: 15px; padding: 0 5px; }
+/* mailbox: taller list, the title stays on one line */
+.mail-list { max-height: 56vh; gap: 10px; }
+.mail-row { padding: 10px 14px; }
+.mail-txt { min-width: 160px; display: flex; flex-direction: column; gap: 2px; }
+.mail-txt > b { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* reward rows (missions, raid tiers, dungeon): label, bar and count do not touch */
+.mrow { padding: 6px 10px; gap: 10px; }
+.mrow .bar { margin: 5px 0; }
+.raidtiers { gap: 8px 12px; }
+.raidtiers .rt-nm { line-height: 1.35; }
+.dg-rows { gap: 8px; }
+.dg-row { padding: 4px 8px; }
+/* monster book: pictures share one height so names and stars line up */
+.cx { gap: 4px; padding: 8px 6px; }
+.cx canvas { height: 64px; width: auto; max-height: none; max-width: 80px; object-fit: contain; }
+/* settings: the account chips and policy buttons are readable and spaced */
+.acct-id { font-size: 15px; padding: 2px 10px; }
+.policy-row { gap: 8px; }
+/* title with the sign-in buttons: a smaller logo and no slogan, so everything fits a phone held sideways */
+.title-screen:has(.signin-list) .logo-wrap { transform: scale(.72); margin: -46px 0 -50px; }
+.title-screen:has(.signin-list) > .tip { display: none; }
+.hl-notes { display: flex; flex-direction: column; gap: 4px; line-height: 1.4; }
+.title-screen:has(.signin-list) .logo-sub { margin-top: 14px; }
+#app.mobile .raidtiers.inset.inset { gap: 8px 12px; }   /* doubled class: fix-tabs.css loads later */
+#app.mobile .raidtiers.raidtiers .mrow { padding: 4px 8px; }

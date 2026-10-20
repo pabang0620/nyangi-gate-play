@@ -22,7 +22,7 @@ Object.assign(Battle.prototype, {
         if (def.boss) {
             e.sk = {}; for (const k of def.skills) e.sk[k] = BOSS_SKILL[k].cd * 0.6;
             e.cast = null; e.phase = 0; e.invulnUntil = 0; e.cdMul = 1; e.spdMul = this.raid ? 0.45 : (e.spdMul || 1);
-            if (this.raid) e.raidMul = RAID.hpMul;
+            if (this.raid) e.raidMul = this.raidLive ? hpMul / this.hpMul : RAID.hpMul;
             this.bossRef = e;
             this.on('boss', e);
         }
@@ -131,7 +131,10 @@ Object.assign(Battle.prototype, {
         if (D.poison) this.zones.push({ x: e.x, y: e.y, r: D.poison.r, dps: D.poison.dps * this.atkMul, until: this.t + D.poison.t, color: '#7ad040', hurtsAllies: true, tick: 0 });
         const manual = o.hero && this.t < this.hero.manualUntil;
         const bounty = Math.round(e.def.gold * this.bountyMul * (1 + this.b.bountyPct) * (manual ? 1.25 : 1) * (this.endless ? 1 + this.waveIdx * 0.03 : 1) * (this.hard ? HARD.goldMul : 1) * (this.rule === 'poor' ? 0.7 : 1));
-        if (this.raid && e.def.boss) return;                       // raid boss never really dies here
+        if (this.raid && e.def.boss) {                             // 보스 토벌전: the boss never really dies; 파티 레이드: killing it wins
+            if (this.raidLive && this.state !== 'lose') { this.state = 'win'; this.text(W / 2, 200, L('보스 처치!'), '#ffe08a', 34, true); this.on('end', true); }
+            return;
+        }
         this.gainGold(bounty);
         this.text(e.x, e.y - 20, '+' + bounty + (manual ? L(' 수동') : ''), '#ffe08a', 13);
         const col = { slime: '#3fbf5f', goblin: '#6fbf4a', wolf: '#6a7088', orc: '#5a7a3a', bat: '#7a4a9a', shaman: '#a03050',

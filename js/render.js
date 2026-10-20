@@ -218,7 +218,7 @@ const Render = (() => {
         for (const s of B.soldiers) ents.push({ y: s.y, k: 's', o: s });
         for (const e of B.enemies) ents.push({ y: e.y, k: 'e', o: e });
         if (B.heroAlive) ents.push({ y: B.hero.y, k: 'h', o: B.hero });
-        if (B.coop && B.hero2.deadUntil <= B.t) ents.push({ y: B.hero2.y, k: 'h2', o: B.hero2 });   // 협동 디펜스: the partner's hero
+        if (B.coop) for (const u of B.heroList()) if (u !== B.hero && u.deadUntil <= B.t) ents.push({ y: u.y, k: 'h2', o: u });   // 협동: the partners' heroes
         for (const a of B.allies || []) ents.push({ y: a.y, k: 'a', o: a });
         for (const d of B.drops) ents.push({ y: d.y, k: 'd', o: d });
         ents.sort((a, b) => a.y - b.y);
@@ -481,7 +481,7 @@ const Render = (() => {
         const stunned = t.stunUntil > T;
         const rc = t.recoil > 0 ? t.recoil / 0.12 : 0;
         spr(Art.tower(t.type, t.lv, t.spec != null ? TOWERS[t.type].specs[t.spec].id : null), s.x, s.y + 14, sc, false, 0, 1, 1 + rc * 0.05, 1 - rc * 0.07);
-        if (B.coop && (t.owner || 0) !== B.actor) { x.fillStyle = 'rgba(120,200,255,.9)'; x.strokeStyle = '#1a2a40'; x.lineWidth = 2; x.beginPath(); x.arc(s.x + 22, s.y + 8, 6, 0, TAU); x.fill(); x.stroke(); }   // the partner's tower
+        if (B.coop && (t.owner || 0) !== B.actor) { x.fillStyle = ['#ffd04a', 'rgba(120,200,255,.9)', '#ff8ad0', '#8aff9a'][t.owner || 0]; x.strokeStyle = '#1a2a40'; x.lineWidth = 2; x.beginPath(); x.arc(s.x + 22, s.y + 8, 6, 0, TAU); x.fill(); x.stroke(); }   // a partner's tower (one color per player)
         if (stunned) {
             x.globalAlpha = 0.45; x.fillStyle = '#2a1708'; x.fillRect(s.x - 30, s.y - 66, 60, 80); x.globalAlpha = 1;
             for (let i = 0; i < 3; i++) {

@@ -99,7 +99,7 @@ Object.assign(Battle.prototype, {
     },
 
     towerStats(t) {
-        const d = TOWERS[t.type], b = this.coop ? this.bs[t.owner || 0] : this.b;   // co-op: the builder's research
+        const d = TOWERS[t.type], b = this.coop ? this.acts[t.owner || 0].b : this.b;   // co-op: the builder's research
         const base = t.spec !== null ? d.specs[t.spec] : d.lv[t.lv];
         const s = { ...base };
         if (t.type === 'barracks') {

@@ -52,12 +52,23 @@ const Game = {
             Object.assign(cfg, { mode: 'raid', stageIdx: si, raidKind: kind, map: RAID.map, theme: CHAPTERS[STAGES[si].ch].theme,
                 escortPool: STAGES[si].pool, stageDef: { name: L('토벌전'), map: RAID.map, waves: 1, pool: STAGES[si].pool, ch: STAGES[si].ch } });
             banner = on ? (on.mode === 'party' ? L('파티 레이드 · {0}', ENEMIES[kind].name) : L('월드 보스 · {0}', ENEMIES[kind].name)) : L('보스 토벌전 · {0}', ENEMIES[kind].name); music = 'boss';
+        } else if (opt.coop && opt.coop.raid) {
+            // 파티 레이드: 1~4 players, one boss with real health on the 보스 토벌전 map (js/online/coop.js keeps every device in step)
+            const o = opt.coop, R = RAID_ON.party, si = RAID_ON.diffs[o.diff].eq, kind = o.kind, inf = o.infos, n = inf.length, [a] = inf;
+            Object.assign(cfg, { mode: 'raid', coop: true, stageIdx: si, raidKind: kind, map: RAID.map, theme: CHAPTERS[STAGES[si].ch].theme, seed: o.seed,
+                escortPool: STAGES[si].pool, stageDef: { name: L('파티 레이드'), map: RAID.map, waves: 1, pool: STAGES[si].pool, ch: STAGES[si].ch },
+                raidLive: { hpMul: Meta.partyBossMul(kind, o.diff, n), time: Meta.partyTime(n), enrage: R.enrage, enrageSpd: R.enrageSpd, enrageCd: R.enrageCd },
+                startGoldMul: R.startGold[n - 1], goldShare: R.goldShare,
+                heroCls: a.cls, heroStats: a.stats, skin: a.skin, bonuses: a.bonuses, dmgMul: inf.reduce((t, x) => t + x.dmgMul, 0) / n, party: [],
+                mates: inf.slice(1).map(x => ({ cls: x.cls, stats: x.stats, skin: x.skin, bonuses: x.bonuses })), autos: inf.map(x => x.auto), names: inf.map(x => x.name),
+                autoWave: () => false, cutinOn: () => false });
+            banner = L('파티 레이드 · {0}', ENEMIES[kind].name); music = 'boss';
         } else if (opt.coop) {
             // 협동 디펜스: both devices build the very same battle from the room seed and both players' info (host = player 0)
             const o = opt.coop, C = RAID_ON.coop, D = RAID_ON.diffs[o.diff], si = D.eq, [a, b] = o.infos;
             const bosses = RAID.order.filter(k => RAID.bossStage[k] <= si), boss = bosses[bosses.length - 1], mid = bosses[(o.week + o.diff) % Math.max(1, bosses.length - 1)];
             const map = C.maps[(o.week + o.diff) % C.maps.length];
-            Object.assign(cfg, { mode: 'coop', coop: true, stageIdx: si, map, theme: CHAPTERS[STAGES[si].ch].theme, hpMulExtra: C.hpMul, seed: o.seed,
+            Object.assign(cfg, { mode: 'coop', coop: true, coopDiff: o.diff, stageIdx: si, map, theme: CHAPTERS[STAGES[si].ch].theme, hpMulExtra: C.hpMul, seed: o.seed,
                 stageDef: { name: L('협동 디펜스'), seedName: 'coop' + o.diff, map, waves: C.waves, pool: STAGES[si].pool, ch: STAGES[si].ch, boss, midBoss: mid !== boss ? mid : null },
                 heroCls: a.cls, heroStats: a.stats, skin: a.skin, bonuses: a.bonuses, dmgMul: (a.dmgMul + b.dmgMul) / 2, party: [],
                 mate: { cls: b.cls, stats: b.stats, skin: b.skin, bonuses: b.bonuses }, autos: [a.auto, b.auto], names: [a.name, b.name],
@@ -176,12 +187,22 @@ const Game = {
             R.win = true; R.raidOn = { mode: on.mode, id: on.id, kind: B.raidKind, dmg, pts, res: null };
             R.xp = Math.round(stageRewards(B.stageIdx, 1, false).xp * 0.8);
             (on.mode === 'party' ? RaidOn.partySubmit(on.id, pts) : RaidOn.worldSubmit(pts)).then(x => { R.raidOn.res = x; if (UI.S.result === R && UI.raidResultLine) UI.raidResultLine(R); });
+        } else if (B.mode === 'raid' && this.lastOpt.coop) {
+            // 파티 레이드: the boss died (win) or the time / lives ran out; every player reports, the server checks the host's word
+            const o = this.lastOpt.coop, boss = B.bossRef, left = boss ? Math.max(0, boss.hp) / boss.maxHp : 1;
+            R.win = !!win; R.praid = { diff: o.diff, room: o.room, kind: B.raidKind, left, time: Math.round(B.t), res: null };
+            const rw = stageRewards(B.stageIdx, win ? 3 : 1, false);
+            R.silver = Math.round(rw.silver * (win ? 1.5 : 0.5 * (1 - left))); R.xp = Math.round(rw.xp * (win ? 1.2 : 0.5 * (1 - left)));
+            if (Coop.lostLink) R.praid.res = { error: 'link' };   // this device dropped out: no report, the party's win still counts for it
+            else RaidOn.praidFinish(o.room, win).then(x => { R.praid.res = x; if (UI.S.result === R && UI.raidResultLine) UI.raidResultLine(R); });
+            Coop.finished();
         } else if (B.mode === 'coop') {
             const o = this.lastOpt.coop, wave = win ? B.totalWaves : Math.max(0, B.waveIdx);
             R.coop = { diff: o.diff, room: o.room, wave, res: null };
             const rw = stageRewards(B.stageIdx, win ? 3 : 1, false);
             R.silver = Math.round(rw.silver * (win ? 1.5 : 0.4 * wave / B.totalWaves)); R.xp = Math.round(rw.xp * (win ? 1.2 : 0.5 * wave / B.totalWaves));
-            RaidOn.coopFinish(o.room, win, wave).then(x => { R.coop.res = x; if (UI.S.result === R && UI.raidResultLine) UI.raidResultLine(R); });
+            if (Coop.lostLink) R.coop.res = { error: 'link' };
+            else RaidOn.coopFinish(o.room, win, wave).then(x => { R.coop.res = x; if (UI.S.result === R && UI.raidResultLine) UI.raidResultLine(R); });
             Coop.finished();
         } else if (B.mode === 'raid') {
             const kind = B.raidKind, dmg = Math.round(B.raidDamage);

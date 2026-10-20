@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.9';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.10';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
@@ -169,6 +169,7 @@
 
     function showHub(tab) {
         UI.ensureAccount();
+        if (UI.raidLiveCheck) UI.raidLiveCheck();     // the app closed during a 파티 레이드 / 협동 디펜스: offer to go back (once)
         S.screen = 'hub';
         S.tab = tab || S.tab;
         clear();
@@ -223,7 +224,7 @@
             sec(L('자동·배속'), L('영웅 자동: 알아서 싸움 · 자동 웨이브: 알아서 시작'), L('배속: 게임 속도')),
             sec(L('별'), L('목숨을 2 이하로 잃고 이기면 별 3개. 별은 연구에 써요.')),
             sec(L('재화'), L('은화: 강화 · 보석: 소환 · 강화석: +11 이상 강화')),
-            sec(L('영웅 난이도'), L('장 보스를 물리치면 그 장의 영웅 난이도가 열립니다. 적 체력 {0}% ({2}장부터 {3}%) · 별마다 보석 {1}개 · 별 3개는 특별 조건까지 지켜야 합니다.', Math.round(HARD.hpMul * 100), HARD.gemsPerStar, HARD.lateFrom + 1, Math.round(HARD.lateHpMul * 100))),
+            sec(L('영웅 난이도'), L('이 장의 보스를 물리치면 영웅 난이도가 열립니다')),
         ]));
     }
 
@@ -233,7 +234,6 @@
             h('div', L('땅을 누르기 = 영웅 이동')),
             h('div', L('빈 자리 누르기 = 탑 설명, 한 번 더 = 건설')),
             h('div', L('스킬 버튼 누르기 = 사용할 위치 고르기 · 길게 누르기 = 설명')),
-            h('div', L('자동 중에도 직접 조작하면 3초간 수동이 되고, 그동안 영웅이 잡은 적은 금화 1.25배.')),
         ]));
     }
 
@@ -297,8 +297,7 @@
         colR.appendChild(h('div.tip.legal-line', L('전체이용가'), ` · v${GAME_VERSION} · ${L('운영: 네코랩(nekolab)')} · ${SUPPORT_MAIL}`));
         colR.appendChild(h('div.tip.kbd-help', { style: { lineHeight: 1.8 } },
             L('조작: 땅 클릭 = 영웅 이동 · 1~4 = 영웅 스킬 · Q = 유성 냥펀치 · W = 증원'), h('br'),
-            L('Space = 다음 웨이브 · Tab = 영웅 AUTO · F = 배속 · Esc = 취소/일시정지 · 우클릭 = 취소'), h('br'),
-            L('자동 중에도 직접 조작하면 3초간 수동이 되고, 그동안 영웅이 잡은 적은 금화 1.25배.')));
+            L('Space = 다음 웨이브 · Tab = 영웅 AUTO · F = 배속 · Esc = 취소/일시정지 · 우클릭 = 취소')));
         colR.appendChild(h('button.btn.red', { onclick: () => { click(); confirmBox(L('모든 진행 상황을 지우고 처음부터 시작합니다.\n되돌릴 수 없습니다.'), () => { Save.reset(); showTitle(); }); } }, L('데이터 초기화')));
         colR.appendChild(h('div.tip', L('냥이 성문 수비대 v{0} · 글꼴 Jua, Black Han Sans, Lilita One (SIL OFL 1.1) · 그림·음악 Google Flow / Flow Music', GAME_VERSION)));
         win.appendChild(h('div.set-wrap', colL, colR));

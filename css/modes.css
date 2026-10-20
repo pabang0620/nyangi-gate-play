@@ -178,6 +178,7 @@
 .rd-snm { flex: 1; text-align: left; }
 .rd-srow .btn .icon { width: 22px; height: 22px; vertical-align: -4px; }
 .rd-result { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 360px; }
+.paper .rd-result .gold-t, .paper .res-num { color: #a85a06; text-shadow: none; font-weight: bold; }   /* gold on parchment is too faint */
 .hud-box.mate { color: #bfe4ff; font-size: 17px; }
 #app.mobile .rd-left { width: 330px; }
 #app.mobile .rd-boss { max-height: 70px; }

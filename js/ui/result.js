@@ -40,8 +40,12 @@
             }
         } else if (R.raidOn) {
             content.push(h('div.ribbon', h('span', R.raidOn.mode === 'party' ? L('파티 레이드') : L('월드 보스'))));
-            content.push(h('div', { style: { fontSize: '22px' } }, L('피해량 '), h('span.gold-t', fmt(R.raidOn.dmg)), L(' · {0}점', fmt(R.raidOn.pts))));
+            content.push(h('div', { style: { fontSize: '22px' } }, L('피해량 '), h('span.gold-t.res-num', fmt(R.raidOn.dmg)), L(' · {0}점', fmt(R.raidOn.pts))));
             content.push(h('div.rd-result', L('기록을 보내는 중…')));
+        } else if (R.praid) {
+            content.push(h('div.ribbon' + (R.win ? '' : '.lose'), h('span', R.win ? L('레이드 승리!') : L('레이드 실패'))));
+            content.push(h('div', R.win ? L('{0}초 만에 {1}을(를) 쓰러뜨렸어요', R.praid.time, ENEMIES[R.praid.kind].name) : L('{0} 체력이 {1}% 남았어요', ENEMIES[R.praid.kind].name, Math.ceil(R.praid.left * 100))));
+            content.push(h('div.rd-result', L('결과를 보내는 중…')));
         } else if (R.coop) {
             content.push(h('div.ribbon' + (R.win ? '' : '.lose'), h('span', R.win ? L('협동 승리!') : L('협동 실패'))));
             content.push(h('div', L('{0}웨이브까지 막았어요', R.coop.wave)));
@@ -68,10 +72,10 @@
         if (cells.length) content.push(h('div.row.res-row', cells));
         if (gear.length) content.push(h('div.row.res-row', gear));
         const btns = h('div.row');
-        const toChallenge = R.endless || R.dungeon || R.raid || R.raidOn || R.coop || R.tower;
-        btns.appendChild(h('button.btn.ghost', { onclick: () => { click(); if (R.dungeon) S.ctab = 'dungeon'; if (R.raid) S.ctab = 'raid'; if (R.raidOn || R.coop) S.ctab = 'online'; if (R.cup) S.ctab = 'cup'; if (R.tower) S.ctab = 'tower'; showHub(toChallenge ? 'endless' : 'map'); } }, toChallenge ? L('돌아가기') : L('지도로')));
+        const toChallenge = R.endless || R.dungeon || R.raid || R.raidOn || R.coop || R.praid || R.tower;
+        btns.appendChild(h('button.btn.ghost', { onclick: () => { click(); if (R.dungeon) S.ctab = 'dungeon'; if (R.raid) S.ctab = 'raid'; if (R.raidOn || R.coop || R.praid) S.ctab = 'online'; if (R.cup) S.ctab = 'cup'; if (R.tower) S.ctab = 'tower'; showHub(toChallenge ? 'endless' : 'map'); } }, toChallenge ? L('돌아가기') : L('지도로')));
         const again = R.cup ? { cup: true } : R.endless ? { endless: true } : R.dungeon ? { dungeon: R.dungeon.kind, tier: R.dungeon.tier } : R.raid ? { raid: true } : { stageIdx: R.stageIdx, hard: R.hard };
-        const canAgain = R.raidOn || R.coop || R.tower ? false : R.cup ? Meta.cupLeft(p) > 0 : R.dungeon ? Meta.dungeonLeft(p) > 0 : R.raid ? p.raid.runs < RAID.tries : true;   // online raids start from the 레이드 tab
+        const canAgain = R.raidOn || R.coop || R.praid || R.tower ? false : R.cup ? Meta.cupLeft(p) > 0 : R.dungeon ? Meta.dungeonLeft(p) > 0 : R.raid ? p.raid.runs < RAID.tries : true;   // online raids start from the 레이드 tab
         if (canAgain) btns.appendChild(h('button.btn', { onclick: () => { click(); Game.startBattle(again); } }, L('다시 하기')));
         if (R.tower && R.tower.win) btns.appendChild(h('button.btn.gold', { onclick: () => { click(); d.remove(); UI.towerNext(); } }, L('다음 층으로')));
         if (R.items.length) btns.appendChild(h('button.btn', { onclick: () => { click(); S.selItem = R.items[R.items.length - 1].id; showHub('hero'); } }, L('장비 보기')));

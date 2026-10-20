@@ -35,6 +35,14 @@ const RaidOn = {
     coopQuick(diff) { return this.call('coop_quick', { p_diff: diff }); },
     coopRoom(id) { return this.call('coop_room', { p_id: id }); },
     coopSet(id, action) { return this.call('coop_set', { p_id: id, p_action: action }); },
+    // 파티 레이드 live rooms (20261027000000_party_live.sql): 1~4 seats, 3 entries a week, the battle runs over js/online/coop.js
+    praidCreate(diff) { return this.call('praid_create', { p_diff: diff }); },
+    praidJoin(code) { return this.call('praid_join', { p_code: code }); },
+    praidQuick(diff) { return this.call('praid_quick', { p_diff: diff }); },
+    praidRoom(id) { return this.call('praid_room', { p_id: id }); },
+    praidSet(id, action) { return this.call('praid_set', { p_id: id, p_action: action }); },
+    praidFinish(id, win) { return this.call('praid_finish', { p_id: id, p_win: !!win }); },
+    praidTries() { return (this.st && this.st.praid && this.st.praid.tries) || 0; },
     // 파티 찾기: open parties / waiting co-op rooms of opened difficulties, friends first (20261021000000_party_plus.sql)
     openList(kind) { return this.call('raid_open_list', { p_kind: kind }); },
     coopFinish(id, win, waves) { return this.call('coop_finish', { p_id: id, p_win: !!win, p_waves: waves | 0 }); },
@@ -54,7 +62,7 @@ const RaidOn = {
             no_profile: L('먼저 닉네임을 정해 주세요'), locked: L('진행도가 부족해요'), in_party: L('이번 주 이 난이도 파티에 이미 들어가 있어요'),
             full: L('파티가 가득 찼어요'), cleared: L('이미 처치한 파티예요'), invalid: L('코드를 다시 확인해 주세요'), contributed: L('보스에게 피해를 준 뒤에는 나갈 수 없어요'),
             no_tries: L('오늘 도전 횟수를 다 썼어요'), no_run: L('도전 기록을 찾지 못했어요'), not_cleared: L('아직 보스를 처치하지 못했어요'),
-            claimed: L('이번 주 보상을 이미 받았어요'), own_room: L('내가 만든 방이에요'), state: L('지금은 할 수 없어요'), ran_today: L('오늘 도전한 뒤에는 나갈 수 없어요'), not_member: L('파티원이 아니에요'),
+            claimed: L('이번 주 보상을 이미 받았어요'), week_tries: L('이번 주 입장 횟수를 다 썼어요'), link: L('연결이 끊겨 결과를 보내지 못했어요'), member_tries: L('이번 주 입장 횟수를 다 쓴 파티원이 있어요'), own_room: L('내가 만든 방이에요'), state: L('지금은 할 수 없어요'), ran_today: L('오늘 도전한 뒤에는 나갈 수 없어요'), not_member: L('파티원이 아니에요'),
         }[e] || L('잠시 후 다시 시도해 주세요');
     },
 };

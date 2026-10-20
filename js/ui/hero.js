@@ -23,14 +23,16 @@
         const port = h('div', { style: { display: 'flex', gap: '12px', alignItems: 'center' } },
             h('div.portrait', { style: { width: '100px', height: '100px' }, title: L('배경색 바꾸기'), onclick: () => { click(); avatarBgModal(); } },
                 (() => { const a = img(heroFace(cls, Save.p.shop && Save.p.shop.skin[cls])); a.style.background = avatarBg(); return a; })(), h('span.av-edit', L('배경'))),
-            h('div', { style: { flex: 1 } },
+            h('div.hl-info',
                 h('div', { style: { fontSize: '22px', color: '#f5c451', fontFamily: 'BlackHan', textShadow: 'var(--stroke-s)' } }, `${HERO_NAMES[cls]} (${HEROES[cls].name})  Lv.${hd.lv}`),
                 h('div.tip', HEROES[cls].desc),
                 h('div.bar.xp', { style: { marginTop: '6px' } }, h('i', { style: { width: (hd.lv >= HERO_MAX_LV ? 100 : hd.xp / heroXpNeed(hd.lv) * 100) + '%' } })),
-                h('div.tip', hd.lv >= HERO_MAX_LV ? L('최고 레벨') : L('경험치 {0} / {1}', hd.xp, heroXpNeed(hd.lv))),
-                h('div.tip', { style: { fontSize: '13px' } }, L('장비는 세 영웅이 같이 써요 · 출전 안 해도 경험치 {0}%', Math.round(HERO_XP_SHARE * 100))),
-                h('div.tip', { style: { fontSize: '13px' } }, L('시너지: 기사·마법사가 기절·빙결시킨 적은 영웅 피해 +30%, 궁수는 2배 · 마법사는 아군 회복 · 협동과 냥이 총출동에서 맞물려요'))));
+                h('div.tip', hd.lv >= HERO_MAX_LV ? L('최고 레벨') : L('경험치 {0} / {1}', hd.xp, heroXpNeed(hd.lv)))));
         left.appendChild(port);
+        // shared-gear and synergy notes under the portrait row, full width (they crowded the narrow column beside it)
+        left.appendChild(h('div.hl-notes',
+                h('div.tip', { style: { fontSize: '13px' } }, L('장비는 세 영웅이 같이 써요')),
+                h('div.tip', { style: { fontSize: '13px' } }, L('시너지: 기사·마법사가 묶은 적에게 영웅이 강해져요 · 마법사는 아군 회복'))));
         Rewards.ensure(p);
         // skins: the collection button, then default + owned ones (best grade first) in a scrolling row
         const owned = SKINS[cls].filter(s => p.shop.skins.includes(s.id)).sort((a, b2) => b2.r - a.r).map(s => s.id);

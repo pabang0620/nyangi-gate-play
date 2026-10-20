@@ -118,10 +118,10 @@
         const set = (k, v, el) => { if (S.lastHud[k] !== v) { S.lastHud[k] = v; el.textContent = v; } };
         set('lives', `${B.lives}`, hud.lives);
         set('gold', fmt(B.gold), hud.gold);
-        set('wave', B.raid ? L('남은 {0}초 · 피해 {1}', Math.ceil(B.timeLeft), fmt(Math.round(B.raidDamage))) : B.endless ? L('웨이브 {0}', Math.max(0, B.waveIdx + 1)) : L('웨이브 {0} / {1}', Math.max(0, B.waveIdx + 1), B.totalWaves), hud.wave);
+        set('wave', B.raidLive ? L('남은 {0}초 · 보스 체력 {1}%', Math.ceil(B.timeLeft), B.bossRef ? Math.ceil(Math.max(0, B.bossRef.hp) / B.bossRef.maxHp * 100) : 100) : B.raid ? L('남은 {0}초 · 피해 {1}', Math.ceil(B.timeLeft), fmt(Math.round(B.raidDamage))) : B.endless ? L('웨이브 {0}', Math.max(0, B.waveIdx + 1)) : L('웨이브 {0} / {1}', Math.max(0, B.waveIdx + 1), B.totalWaves), hud.wave);
         if (Game.speed === 3 && !Rewards.speed3Unlocked(Save.p)) { Game.speed = 2; Save.p.set.speed = 2; toast(L('3배속 시간이 끝났습니다')); }
         set('speed', (B.coop ? Coop.speed : Game.speed) + L('배'), hud.speedLbl);
-        if (hud.mate) set('mate', L('{0} · 금화 {1}', Coop.partnerName(), fmt(B.gold2)) + (Coop.partnerGone ? L(' (자동)') : ''), hud.mate);
+        if (hud.mate) set('mate', B.acts.map((a, k) => k === B.actor ? null : L('{0} · 금화 {1}', Coop.nameOf(k), fmt(B.goldOf(k))) + (Coop.goneOf(k) ? L(' (자동)') : '')).filter(Boolean).join('   '), hud.mate);
         if (hud.cond) { set('cond', L('3성: {0} {1}', B.cond.name, B.condBroken ? '✗' : '✓'), hud.cond); hud.cond.classList.toggle('broken', B.condBroken); }
         const hero = B.hero;
         hud.hpBar.style.width = (hero.hp / hero.maxHp * 100) + '%';
@@ -142,7 +142,7 @@
             u.cd.style.setProperty('--cd', (sp.left / sp.cdMax * 100) + '%');
             u.cdt.textContent = sp.left > 0 ? Math.ceil(sp.left) : '';
         });
-        const showWave = (B.state === 'prep' || B.countdown > 0) && B.waveIdx + 1 < B.totalWaves;
+        const showWave = !B.raid && (B.state === 'prep' || B.countdown > 0) && B.waveIdx + 1 < B.totalWaves;   // raids have no waves to call
         hud.waveBtns.forEach(w => {
             w.el.style.display = showWave && !S.popup && !(w.shownFor === B.waveIdx && w.empty) ? 'flex' : 'none';   // tower popup would cover it; paths with nothing coming stay hidden
             if (showWave) w.t.textContent = B.state === 'prep' ? (Save.p.set.autoWave ? L('자동 시작 {0}초', Math.max(1, Math.ceil(2.5 - (B.prepWait || 0)))) : L('시작')) : L('+{0} 금화 · {1}초', Math.ceil(B.countdown * EARLY_GOLD_PER_SEC), Math.ceil(B.countdown));
@@ -285,7 +285,7 @@
         const hud = S.hud; if (hud && hud[key]) hud[key].classList.toggle('on', on);
         if (key === 'autoHero') {
             toast(on ? L('영웅 자동 켜짐') : L('영웅 자동 꺼짐 (직접 조작)'));
-            if (!tipSeen('tog_autoHero')) coach(L('영웅 자동'), [L('켜면 알아서 싸우고, 끄면 누른 곳을 지켜요.'), L('직접 움직인 3초 동안 잡으면 금화 1.25배')], 6000);
+            if (!tipSeen('tog_autoHero')) coach(L('영웅 자동'), [L('켜면 알아서 싸우고, 끄면 누른 곳을 지켜요.')], 6000);
         } else {
             toast(on ? L('자동 웨이브 켜짐') : L('자동 웨이브 꺼짐 (뿔피리로 직접 시작)'));
             if (!tipSeen('tog_autoWave')) coach(L('자동 웨이브'), [L('켜면 적이 3마리 이하일 때 다음 웨이브를 불러요.'), L('일찍 부를수록 금화 보너스')], 6000);

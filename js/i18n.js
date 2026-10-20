@@ -26,6 +26,7 @@ function pickLang() {
     return nav.length ? 'en' : 'ko';            // unknown device language -> English; Node tools -> Korean
 }
 let LANG = pickLang();
+if (typeof document !== 'undefined') document.documentElement.lang = LANG;   // css: Korean lines break between words (word-break: keep-all)
 
 // A key may carry a context after '##' when one Korean word has two meanings ('영웅##등급' = the Epic rarity, not
 // the Hero tab). The context is only for translators: Korean (and a missing translation) shows the part before it.

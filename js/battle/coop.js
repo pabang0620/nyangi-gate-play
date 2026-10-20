@@ -1,22 +1,29 @@
 'use strict';
-// 협동 디펜스 (docs/PLAN_ONLINE_RAID.md 4): two players, one battle. Methods of Battle, loaded after hero.js.
-// The battle state is "canonical" (player 0 = host in hero/gold/spells/b, player 1 in hero2/gold2/spells2/b2) while it updates.
-// asActor(1, fn) swaps the two so commands and the second hero's update run with the usual this.hero / this.gold code.
-// The guest device keeps the swapped view between ticks (js/online/coop.js), so its HUD shows its own hero and gold.
+// 협동 디펜스 / 파티 레이드 (docs/PLAN_ONLINE_RAID.md 4): two to four players, one battle. Methods of Battle, loaded after hero.js.
+// Every player k has acts[k] = {hero, gold, spells, b}; this.hero / gold / spells / b are the current actor's. The state is
+// "canonical" (actor 0 = host) while it updates; asActor(k, fn) runs commands and player k's hero with the usual code.
+// A guest device keeps its own view (setActor(me)) between ticks (js/online/coop.js), so its HUD shows its own hero and gold.
 Object.assign(Battle.prototype, {
     initCoop(cfg) {
-        const C = RAID_ON.coop, m = cfg.mate, h0 = this.hero;
+        const C = RAID_ON.coop, mates = cfg.mates || [cfg.mate], h0 = this.hero;
         this.actor = 0;
-        this.initHero(m.cls, m.stats);
-        const h1 = this.hero; this.hero = h0;
-        h1.skin = m.skin || null; h1.owner = 1;
-        h0.auto = !!cfg.autos[0]; h1.auto = !!cfg.autos[1];
-        if (this.paths[1]) { const g = this.paths[1].at(this.paths[1].len * 0.72); h1.x = g.x; h1.y = g.y - 10; h1.guard = { x: g.x, y: g.y - 10 }; }
-        this.hero2 = h1;
-        this.b2 = m.bonuses; this.bs = [this.b, this.b2];
-        this.gold = Math.round(this.gold * C.startGold); this.gold2 = this.gold;
-        this.spells2 = this.spells.map(s => ({ ...s, left: 0, cdMax: s.id === 'beacon' ? s.cd * this.b2.beaconCdMul : s.cd }));
-        this.names = cfg.names || ['', ''];
+        this.acts = [{ hero: h0, gold: 0, spells: this.spells, b: this.b }];
+        mates.forEach((m, i) => {
+            const k = i + 1;
+            this.initHero(m.cls, m.stats);
+            const h = this.hero;
+            h.skin = m.skin || null; h.owner = k;
+            // player 1 guards the second road (or stays with the host on a one-road map); 3 and 4 spread along the roads
+            const P = k === 1 ? this.paths[1] : this.paths[k % this.paths.length];
+            if (P) { const g = P.at(P.len * (k === 1 ? 0.72 : k === 2 ? 0.55 : 0.4)); h.x = g.x; h.y = g.y - 10; h.guard = { x: g.x, y: g.y - 10 }; }
+            this.acts.push({ hero: h, gold: 0, b: m.bonuses, spells: this.spells.map(s => ({ ...s, left: 0, cdMax: s.id === 'beacon' ? s.cd * m.bonuses.beaconCdMul : s.cd })) });
+        });
+        this.hero = h0;
+        (cfg.autos || []).forEach((a, k) => { if (this.acts[k]) this.acts[k].hero.auto = !!a; });
+        this.goldShare = cfg.goldShare || C.goldShare;
+        this.gold = Math.round(this.gold * (cfg.startGoldMul || C.startGold));
+        for (const a of this.acts) a.gold = this.gold;
+        this.names = cfg.names || [];
         this.cmdLog = 0;
     },
     // waves on two roads: the stage's own waves get a boss at RAID_ON.coop.midWave and the raid boss at the end
@@ -25,26 +32,31 @@ Object.assign(Battle.prototype, {
         const last = (w, kind, mul) => { const t = w.reduce((m, s) => Math.max(m, s.t), 0) + 5; w.push({ t, kind, path: 0, bossMul: mul }); };
         this.waves.forEach((w, i) => { for (const s of w) if (this.paths.length > 1 && i % 2 === 1) s.path = (s.path + 1) % this.paths.length; });
         if (st.midBoss) last(this.waves[C.midWave - 1], st.midBoss, 1);
-        for (const w of this.waves) for (const s of w) if (s.kind === st.boss) s.bossMul = C.bossHp;
+        const bh = Array.isArray(C.bossHp) ? C.bossHp[this.cfg.coopDiff || 0] : C.bossHp;
+        for (const w of this.waves) for (const s of w) if (s.kind === st.boss) s.bossMul = bh;
     },
-    heroList() { return this.coop ? [this.hero, this.hero2] : [this.hero]; },
-    swapActor() {
-        [this.hero, this.hero2] = [this.hero2, this.hero];
-        [this.gold, this.gold2] = [this.gold2, this.gold];
-        [this.spells, this.spells2] = [this.spells2, this.spells];
-        [this.b, this.b2] = [this.b2, this.b];
-        this.actor = 1 - this.actor;
+    heroList() { return this.coop ? this.acts.map(a => a.hero) : [this.hero]; },
+    // who "this.hero / this.gold / this.spells / this.b" belong to right now (hero, spells and bonuses are shared objects; gold is copied)
+    setActor(k) {
+        if (k === this.actor) return;
+        this.acts[this.actor].gold = this.gold;
+        const a = this.acts[k];
+        this.hero = a.hero; this.gold = a.gold; this.spells = a.spells; this.b = a.b;
+        this.actor = k;
     },
+    swapActor() { this.setActor(1 - this.actor); },          // two players: host view <-> guest view
+    goldOf(k) { return k === this.actor ? this.gold : this.acts[k].gold; },
     asActor(k, fn) {
         if (!this.coop || k === this.actor) return fn();
-        this.swapActor();
-        try { return fn(); } finally { this.swapActor(); }
+        const was = this.actor;
+        this.setActor(k);
+        try { return fn(); } finally { this.setActor(was); }
     },
-    // kill gold: each player keeps a share (RAID_ON.coop.goldShare) of every kill, whoever made it
+    // kill gold: each player keeps a share (goldShare) of every kill, whoever made it
     gainGold(v) {
         if (!this.coop) { this.gold += v; return; }
-        const s = Math.round(v * RAID_ON.coop.goldShare);
-        this.gold += s; this.gold2 += s;
+        const s = Math.round(v * this.goldShare);
+        this.acts.forEach((a, k) => { if (k === this.actor) this.gold += s; else a.gold += s; });
     },
     // one player command, applied at the same tick on both devices. c = [name, ...args]
     runCmd(k, c) {
@@ -66,7 +78,8 @@ Object.assign(Battle.prototype, {
     },
     // a short number both devices compare to notice a split (hp in whole points, so float noise does not count)
     checksum() {
-        let s = this.lives * 7919 + Math.round(this.gold) * 31 + Math.round(this.gold2) * 17 + this.waveIdx * 101 + this.enemies.length * 13;
+        let s = this.lives * 7919 + this.waveIdx * 101 + this.enemies.length * 13;
+        this.acts.forEach((a, k) => { s += Math.round(this.goldOf(k)) * [31, 17, 13, 11][k]; });
         for (const e of this.enemies) s = (s * 31 + Math.round(e.hp) + Math.round(e.d)) % 1000000007;
         for (const sl of this.slots) if (sl.tower) s = (s * 7 + sl.i * 3 + sl.tower.lv + 1) % 1000000007;
         return s;
@@ -95,7 +108,7 @@ Object.assign(Battle.prototype, {
         };
         const plain = arr => arr.filter(x => !Object.values(x).some(v => typeof v === 'function')).map(x => pack(x, true));
         const nums = {};
-        for (const k of ['t', 'lives', 'gold', 'gold2', 'waveIdx', 'countdown', 'state', 'uid', 'chillUntil', 'chill', 'blindUntil', 'blind', 'hitstop', 'slowmo', 'prepWait', 'kills', 'leaked', 'nextEscort', 'timeLeft', 'raidDamage', 'condBroken', 'revived', 'mustKillLost']) if (this[k] !== undefined) nums[k] = this[k];
+        for (const k of ['t', 'lives', 'waveIdx', 'countdown', 'state', 'uid', 'chillUntil', 'chill', 'blindUntil', 'blind', 'hitstop', 'slowmo', 'prepWait', 'kills', 'leaked', 'nextEscort', 'timeLeft', 'raidDamage', 'enraged', 'condBroken', 'revived', 'mustKillLost']) if (this[k] !== undefined) nums[k] = this[k];
         return {
             nums, rng: this.rng.state(), combo: { ...this.combo }, boss: this.bossRef ? this.bossRef.id : null,
             q: this.queue.map(q => pack(q, true)),
@@ -103,7 +116,8 @@ Object.assign(Battle.prototype, {
             so: this.soldiers.map(x => pack(x, true)),
             tw: this.slots.map(sl => sl.tower ? pack(sl.tower, true) : 0),
             hs: this.heroList().map(x => pack(x, true)),
-            sp: [this.spells.map(x => x.left), this.spells2.map(x => x.left)],
+            golds: this.acts.map((a, k) => this.goldOf(k)),
+            sp: this.acts.map(a => a.spells.map(x => x.left)),
             pr: plain(this.projs), zn: plain(this.zones),
         };
     },
@@ -135,8 +149,8 @@ Object.assign(Battle.prototype, {
         this.slots.forEach((sl, i) => { sl.tower = tws[i] ? fill(tws[i], S.tw[i]) : null; });
         heroes.forEach((h, i) => { const skills = h.skills; fill(h, S.hs[i]); if (!h.skills || !h.skills.length) h.skills = skills; });
         this.queue = S.q.map(un);
-        S.sp[0].forEach((v, i) => { if (this.spells[i]) this.spells[i].left = v; });
-        S.sp[1].forEach((v, i) => { if (this.spells2[i]) this.spells2[i].left = v; });
+        S.golds.forEach((g, k) => { if (k === this.actor) this.gold = g; else if (this.acts[k]) this.acts[k].gold = g; });
+        S.sp.forEach((list, k) => { const a = this.acts[k]; if (a) list.forEach((v, i) => { if (a.spells[i]) a.spells[i].left = v; }); });
         this.projs = S.pr.map(un).filter(p => !p.target || p.target.def);
         this.zones = S.zn.map(un);
         this.bossRef = S.boss !== null ? ens.get(S.boss) || null : null;
