@@ -7,7 +7,7 @@
     const img = (...a) => UI.img(...a);
     const modal = (...a) => UI.modal(...a);
     const root = (...a) => UI.root(...a);
-    const busy = (b, fn) => async () => { if (b.disabled) return; click(); b.disabled = true; try { await fn(); } finally { b.disabled = false; } };
+    const busy = (b, fn) => UI.busyBtn(b, fn);
     const say = r => { if (r && r.error) { toast(Friends.errText(r.error)); return false; } return true; };
     const KIND = { party: () => L('파티 레이드'), coop: () => L('협동 디펜스') };
 
@@ -57,7 +57,7 @@
     }
 
     const sec = t => h('b', { style: { display: 'block', margin: '10px 0 4px' } }, t);
-    const listBox = () => h('div', { style: { maxHeight: '52vh', overflowY: 'auto', width: '100%' } }, h('div.tip', L('불러오는 중…')));
+    const listBox = () => h('div', { style: { maxHeight: '52vh', overflowY: 'auto', width: '100%' } }, UI.catLoad(null, 'sm'));
     const opened = [];
     function closeTop(el) { const d = opened.find(x => x.contains(el)); if (d) d.remove(); }
     function closeAll() { opened.splice(0).forEach(d => d.remove()); }
@@ -147,7 +147,7 @@
 
     // pick friends to invite to a party raid / co-op room
     function friendPick(kind, code) {
-        const list = h('div.lg-list', { style: { maxHeight: '48vh', overflowY: 'auto' } }, h('div.tip', L('불러오는 중…')));
+        const list = h('div.lg-list', { style: { maxHeight: '48vh', overflowY: 'auto' } }, UI.catLoad(null, 'sm'));
         const d = modal([h('h2', L('친구 초대')), h('div.tip', L('{0} 코드 {1}로 초대해요 · 10분 동안 유효', KIND[kind](), code)), list,
             h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
         Friends.refresh().then(st => {

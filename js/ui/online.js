@@ -63,7 +63,7 @@
         return h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => {
             click();
             confirmBox(L('로그아웃할까요?\n진행은 계정에 저장되어 있어서 다시 로그인하면 이어서 할 수 있어요.'), async () => {
-                try { await Online.logout(); } catch (e) { toast((e && e.message) || L('잠시 후 다시 해 주세요')); }
+                try { await UI.waitCat(Online.logout()); } catch (e) { toast((e && e.message) || L('잠시 후 다시 해 주세요')); }
             });
         } }, L('로그아웃'));
     }
@@ -96,7 +96,7 @@
             h('div.row', { style: { gap: '10px', justifyContent: 'center' } },
                 h('button.btn.gold', { onclick: () => { click(); run(err, async () => {
                     if (pw.value !== pw2.value) throw new Error(L('비밀번호가 서로 달라요'));
-                    const v = await Online.setLogin(id.value, pw.value);
+                    const v = await UI.waitCat(Online.setLogin(id.value, pw.value));
                     d.remove(); toast(has ? L('저장했어요. 아이디 {0}', v) : L('아이디 {0}를 만들었어요. 다른 기기에서 이 아이디로 로그인할 수 있어요', v)); after && after();
                 }); } }, L('저장')),
                 h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기')))], { dismiss: true });
@@ -124,7 +124,7 @@
             h('div.row', { style: { gap: '10px', justifyContent: 'center' } },
                 h('button.btn.gold', { onclick: () => { click(); run(err, async () => {
                     if (pw.value !== pw2.value) throw new Error(L('비밀번호가 서로 달라요'));
-                    const v = await Online.signUp(id.value, pw.value);
+                    const v = await UI.waitCat(Online.signUp(id.value, pw.value));
                     d.remove(); toast(L('아이디 {0}를 만들었어요. 다른 기기에서 이 아이디로 로그인할 수 있어요', v)); after && after();
                 }); } }, L('가입하기')),
                 h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기')))], { dismiss: true });
@@ -167,7 +167,7 @@
                     if (!Online.on) { err.textContent = L('인터넷에 연결되지 않았어요'); return; }
                     try {
                         const sk = p.shop && p.shop.skin ? p.shop.skin[p.hero] : null;
-                        await Online.setProfile(input.value.trim(), p.hero, sk); Save.save();
+                        await UI.waitCat(Online.setProfile(input.value.trim(), p.hero, sk)); Save.save();
                         d.remove(); toast(L('프로필을 저장했습니다')); if (then) then(); else showHub(UI.S.tab);
                     } catch (e) { err.textContent = e.message; }
                 } }, L('저장'))),
@@ -183,7 +183,7 @@
             Online.on ? h('button.btn.small.red', { style: { marginTop: '8px' }, onclick: () => {
                 click();
                 UI.confirmBox(L('계정과 모든 기록(프로필, 저장된 진행, 랭킹 기록)을 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.'), async () => {
-                    try { await Online.deleteAccount(); } catch (e) { toast(e.message); }
+                    try { await UI.waitCat(Online.deleteAccount()); } catch (e) { toast(e.message); }
                 });
             } }, L('계정 및 데이터 삭제')) : null,
             h('button.btn.ghost', { style: { marginTop: '8px' }, onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
@@ -212,7 +212,7 @@
             h('div.row', { style: { gap: '10px', justifyContent: 'center' } },
                 h('button.btn.gold', { onclick: () => { click(); run(err, async () => {
                     const sk = p.shop && p.shop.skin ? p.shop.skin[p.hero] : null;
-                    const pr = await Online.setProfile(input.value.trim(), p.hero, sk); Save.save();
+                    const pr = await UI.waitCat(Online.setProfile(input.value.trim(), p.hero, sk)); Save.save();
                     d.remove(); toast(L('반가워요, {0}님!', pr.name)); UI.showHub(UI.S.tab);
                 }); } }, L('저장')),
                 h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('나중에')))]);

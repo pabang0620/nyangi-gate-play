@@ -145,6 +145,30 @@ const UI = {};
         return d;
     }
 
+    // 냥이 로딩: a hero cat hops across a little track leaving paw prints (css/layout.css .cat-load).
+    // size '' = centred block, 'sm' = inside lists, 'mini' = inline in a text row; text null = 불러오는 중…, '' = none
+    function catLoad(text, size = '') {
+        const cls = ['knight', 'mage', 'ranger'][Math.floor(Math.random() * 3)];
+        const paws = [0, 1, 2, 3].map(i => h('img.cl-paw.p' + i, { src: 'img/ui_paw.png', draggable: 'false' }));
+        return h('div.cat-load' + (size ? '.' + size : ''),
+            h('div.cl-track', paws, h('div.cl-run', h('img.cl-cat', { src: `img/h_${cls}.png`, draggable: 'false' }))),
+            text === '' ? null : h('div.tip.cl-text', text == null ? L('불러오는 중…') : text));
+    }
+    // a slow wait (server, store, ad): the cat over a dimmed screen, only when it takes longer than a moment
+    async function waitCat(p, text) {
+        let d = null;
+        const tm = setTimeout(() => { d = h('div.dim.cl-dim', catLoad(text)); root().appendChild(d); }, 350);
+        try { return await (typeof p === 'function' ? p() : p); } finally { clearTimeout(tm); if (d) d.remove(); }
+    }
+    // buttons that wait for the server: locked, and a paw blinks on them after a moment
+    function busyBtn(b, fn) {
+        return async () => {
+            if (b.disabled) return; click(); b.disabled = true;
+            const tm = setTimeout(() => b.classList.add('is-busy'), 250);
+            try { await fn(); } finally { clearTimeout(tm); b.disabled = false; b.classList.remove('is-busy'); }
+        };
+    }
+
     function confirmBox(msg, onYes) {
         const d = modal([h('div', { style: { fontSize: '20px', lineHeight: '1.6', whiteSpace: 'pre-line' } }, msg),
             h('div.row', h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('취소')),
@@ -281,5 +305,5 @@ const UI = {};
         const pr = v.play(); if (pr && pr.catch) pr.catch(done);
         return v;
     }
-    Object.assign(UI, { vfx, vfxWarm, foeTip, itemInfo, gearAny, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, markDouble, modal, confirmBox, longPress, showGot, rewardIcons, testPurchase, testAd });
+    Object.assign(UI, { vfx, vfxWarm, foeTip, itemInfo, gearAny, currencyInfo, infoModal, helpBtn, gemGate, enemyInfo, fitAll, fitText, root, S, clear, ico, click, img, starsStr, currencyBar, itemCell, rewardCell, markDouble, modal, confirmBox, catLoad, waitCat, busyBtn, longPress, showGot, rewardIcons, testPurchase, testAd });
 })();

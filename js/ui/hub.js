@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.10';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.11';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
@@ -77,9 +77,9 @@
         const go = () => showHub('map');
         const draw = () => {
             wrap.innerHTML = '';
-            // signed in already: no start button, a spinner while the account connects, then straight in (consent first if needed)
+            // signed in already: no start button, the hopping cat while the account connects, then straight in (consent first if needed)
             if (Online.enabled && (Online.status === 'connecting' || Online.status === 'online')) {
-                wrap.appendChild(h('div.title-spin', h('div.spinner'), h('div.tip', L('불러오는 중…'))));
+                wrap.appendChild(h('div.title-spin', UI.catLoad()));
                 // another popup first (which progress to keep after a login): enter once it is answered
                 const enter = () => { if (S.screen !== 'title') return; if (document.querySelector('.dim')) { setTimeout(enter, 300); return; } consentThen(go); };
                 if (Online.status === 'online' && !entered) { entered = true; setTimeout(enter, 300); }
@@ -95,7 +95,7 @@
             const sign = (cls, icon, label, fn) => h('button.btn.signin.' + cls, { onclick: () => run(fn) }, h('span.signin-ico', { html: icon }), h('span.signin-txt', label));
             wrap.append(
                 h('div.signin-list',
-                    sign('guest', UI.SIGNIN_ICON.guest, L('게스트로 시작'), async () => { await Online.startGuest(); go(); }),
+                    sign('guest', UI.SIGNIN_ICON.guest, L('게스트로 시작'), async () => { await UI.waitCat(Online.startGuest()); go(); }),
                     Online.kakaoOn() ? sign('kakao', UI.SIGNIN_ICON.kakao, L('카카오로 시작'), () => Online.loginKakao()) : null,
                     Online.nativeGoogle ? sign('google', UI.SIGNIN_ICON.google, L('Google로 시작'), () => Online.loginGoogle()) : null),
                 h('div.row.title-logins',

@@ -207,6 +207,30 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 /* title while a signed-in account connects */
 .title-spin { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #fff4dc; text-shadow: 0 1px 3px #000; }
 .spinner { width: 42px; height: 42px; border-radius: 50%; border: 5px solid rgba(255, 244, 220, 0.25); border-top-color: #ffd36b; animation: spin 0.9s linear infinite; }
+/* 냥이 로딩 (UI.catLoad): a hero cat hops left to right and leaves paw prints; .sm in lists, .mini inline in a row */
+.cat-load { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; }
+.cat-load .cl-track { position: relative; width: 150px; height: 66px; overflow: hidden; }
+.cat-load .cl-run { position: absolute; left: 0; bottom: 8px; width: 50px; animation: cl-run 1.8s linear infinite; }
+.cat-load .cl-cat { display: block; width: 50px; height: 50px; object-fit: contain; animation: cl-hop .3s ease-in-out infinite alternate; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
+.cat-load .cl-paw { position: absolute; width: 14px; height: 14px; opacity: 0; transform: rotate(90deg); animation: cl-paw 1.8s linear infinite; }
+.cat-load .cl-paw.p0 { left: 18px; bottom: 2px; animation-delay: .14s; }
+.cat-load .cl-paw.p1 { left: 50px; bottom: 9px; animation-delay: .58s; }
+.cat-load .cl-paw.p2 { left: 82px; bottom: 2px; animation-delay: 1.02s; }
+.cat-load .cl-paw.p3 { left: 114px; bottom: 9px; animation-delay: 1.47s; }
+.cat-load.sm { zoom: .75; padding: 4px 0; }
+.cat-load.mini { display: inline-flex; flex-direction: row; gap: 4px; padding: 0; vertical-align: middle; }
+.cat-load.mini .cl-track { zoom: .5; }
+.cl-dim { z-index: 60; }
+.cl-dim .cl-text { color: #fff4dc; text-shadow: 0 1px 3px #000; font-size: 18px; }
+@keyframes cl-run { 0% { transform: translateX(-12px); opacity: 0; } 8%, 88% { opacity: 1; } 100% { transform: translateX(124px); opacity: 0; } }
+@keyframes cl-hop { from { transform: translateY(0) rotate(-5deg); } to { transform: translateY(-11px) rotate(5deg); } }
+@keyframes cl-paw { 0% { opacity: .85; } 45%, 100% { opacity: 0; } }
+@keyframes cl-blink { from { opacity: .35; transform: scale(.85); } to { opacity: 1; transform: scale(1.1); } }
+/* a button waiting for the server (UI.busyBtn): label hidden, a paw blinks in its place */
+.btn.is-busy { position: relative; color: transparent; text-shadow: none; }
+.btn.is-busy > * { visibility: hidden; }
+.btn.is-busy::after { content: ''; position: absolute; inset: 0; margin: auto; width: 22px; height: 22px; background: url('../img/ui_paw.png') center / contain no-repeat; animation: cl-blink .45s ease-in-out infinite alternate; }
+@media (prefers-reduced-motion: reduce) { .cat-load .cl-cat { animation: none; } }
 /* account line: name#tag + how it signs in (brand mark) */
 .acct-line { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .acct-mark { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; }

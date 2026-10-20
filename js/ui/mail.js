@@ -31,7 +31,7 @@
                 const btn = done ? h('div.mail-done', L('받음'))
                     : h('button.btn.small.gold', { onclick: async () => {
                         click(); btn.classList.add('off');
-                        const got = await Online.claimMail(r.id);
+                        const got = await UI.waitCat(Online.claimMail(r.id));
                         if (got) { showGot(Online.mailTitle(r), got); draw(); } else { btn.classList.remove('off'); toast(L('받지 못했어요. 잠시 후 다시 해 주세요')); }
                     } }, L('받기'));
                 list.appendChild(h('div.mail-row' + (done ? '.done' : ''),
@@ -44,7 +44,7 @@
                 list,
                 h('div.tip', L('받은 우편은 7일 뒤 목록에서 사라져요')),
                 h('div.row',
-                    left ? h('button.btn.gold', { onclick: async () => { click(); await Online.claimRewards(); draw(); } }, L('모두 받기 ({0})', left)) : null,
+                    left ? h('button.btn.gold', { onclick: async () => { click(); await UI.waitCat(Online.claimRewards()); draw(); } }, L('모두 받기 ({0})', left)) : null,
                     on ? h('button.btn', { onclick: () => { click(); couponModal(draw); } }, L('쿠폰 등록')) : null,
                     h('button.btn.ghost', { onclick: () => { click(); close(); if (UI.S.screen === 'hub') UI.showHub(); } }, L('닫기'))),
             ], { dismiss: true });
@@ -61,7 +61,7 @@
         const use = h('button.btn.gold', { onclick: async () => {
             const v = code.value.trim(); if (!v) { toast(L('쿠폰 번호를 입력해 주세요')); return; }
             click(); use.classList.add('off');
-            const err = await Online.redeemCoupon(v);
+            const err = await UI.waitCat(Online.redeemCoupon(v));
             use.classList.remove('off');
             if (err) { toast(err); return; }
             toast(L('쿠폰 보상이 우편함에 도착했어요')); d.remove(); after();

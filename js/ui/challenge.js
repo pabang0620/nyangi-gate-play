@@ -117,7 +117,7 @@
             if (claim) card.appendChild(claim);
             return card;
         }
-        const body = h('div', { style: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' } }, h('b', L('온라인 시즌 리그 ')), tierBadge(Online.profile.tier || 0), h('span.tip', L('불러오는 중…')));
+        const body = h('div', { style: { flex: 1, display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' } }, h('b', L('온라인 시즌 리그 ')), tierBadge(Online.profile.tier || 0), UI.catLoad(null, 'mini'));
         card.appendChild(body);
         card.appendChild(h('button.btn.small', { onclick: () => { click(); leagueBoard(p); } }, L('순위표')));
         if (claim) card.appendChild(claim);
@@ -239,7 +239,7 @@
             h('span' + (p.raid.claimed.includes(i) ? '.claimed-t' : '.muted'), p.raid.claimed.includes(i) ? L('받음') : ''))));
         win.appendChild(h('div', { style: { display: 'flex', gap: '14px', flex: '1', minHeight: '0' } }, left, list));
         if (Online.on) {
-            const line = h('div.tip', { style: { marginTop: '4px' } }, L('이번 주 토벌전 랭킹 불러오는 중…'));
+            const line = UI.catLoad(null, 'mini');
             left.insertBefore(line, left.lastChild);
             Online.board('raid', 1).then(v => { line.replaceWith(v ? myRankLine(v, L('피해')) : h('div.tip', L('랭킹을 불러오지 못했습니다'))); });
         }
@@ -277,7 +277,7 @@
         const right = h('div.inset', { style: { flex: 1, padding: '10px', display: 'flex', flexDirection: 'column', minHeight: 0 } }, h('b', L('이번 주 순위')));
         if (!Online.on) right.appendChild(h('div.muted', { style: { margin: '16px' } }, Online.enabled ? L('인터넷에 연결되면 순위가 보여요') : L('온라인 기능이 설정되면 다른 냥이와 순위를 겨룹니다')));
         else if (!Online.profile) right.appendChild(h('button.btn.small.gold', { style: { margin: '16px auto' }, onclick: () => { click(); ensureProfile(() => showHub('endless')); } }, L('닉네임 만들고 순위 보기')));
-        else { const ph = h('div.tip', L('불러오는 중…')); right.appendChild(ph); Online.board('cup', 30).then(v => { ph.replaceWith(h('div', { style: { display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 } }, myRankLine(v, L('점')), rankList(v, L('점')))); }); }
+        else { const ph = UI.catLoad(); right.appendChild(ph); Online.board('cup', 30).then(v => { ph.replaceWith(h('div', { style: { display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 } }, myRankLine(v, L('점')), rankList(v, L('점')))); }); }
         win.appendChild(h('div', { style: { display: 'flex', gap: '12px', flex: 1, minHeight: 0 } }, left2, right));
         root().appendChild(win);
     }
@@ -296,7 +296,7 @@
         if (!Online.on) { box.appendChild(h('div.muted', { style: { margin: '20px' } }, Online.enabled ? L('인터넷에 연결되지 않았어요') : L('온라인 랭킹을 준비하고 있습니다'))); return; }
         if (!Online.profile) { box.appendChild(h('button.btn.gold', { style: { margin: '20px auto' }, onclick: () => { click(); ensureProfile(() => showHub('endless')); } }, L('닉네임 만들고 랭킹 보기'))); return; }
         const [id, , unit] = kinds.find(k => k[0] === S.rkind);
-        box.appendChild(h('div.tip', L('불러오는 중…')));
+        box.appendChild(UI.catLoad());
         Online.board(id, 50).then(v => { box.innerHTML = ''; box.appendChild(myRankLine(v, unit)); box.appendChild(rankList(v, unit)); });
     }
 

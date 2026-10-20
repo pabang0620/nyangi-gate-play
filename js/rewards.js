@@ -380,7 +380,7 @@ const Rewards = {
         if (p.shop.purchases.some(x => x.token === token)) { if (native) window.BonghwaBridge.finishPurchase(token, !pr.once); return []; }   // already granted on this save: just acknowledge the store (a missed acknowledge gets auto-refunded by Play)
         if (native && Online.enabled) {
             if (!Online.on) { toast(L('인터넷에 연결되면 지급돼요 (구매는 안전하게 보관돼요)')); return null; }   // not finished: restored later
-            const v = await Online.verifyPurchase(productId, token);
+            const v = await UI.waitCat(Online.verifyPurchase(productId, token));
             if (!v.ok) { toast(L('구매를 확인하지 못했습니다: ') + (v.reason || '')); return null; }
         }
         const finish = () => { if (native) window.BonghwaBridge.finishPurchase(token, !pr.once); };
@@ -486,7 +486,7 @@ function avatarBg() { return (Save.p && Save.p.set && Save.p.set.avBg) || AVATAR
 const Payments = {
     native() { return typeof window !== 'undefined' && window.BonghwaBridge && window.BonghwaBridge.purchase; },
     purchase(productId, pr) {
-        if (this.native()) return window.BonghwaBridge.purchase(productId).catch(() => ({ ok: false }));
+        if (this.native()) return UI.waitCat(window.BonghwaBridge.purchase(productId).catch(() => ({ ok: false })));
         if (ONLINE_CONFIG.release) { toast(L('결제는 앱에서만 할 수 있습니다')); return Promise.resolve({ ok: false }); }
         return UI.testPurchase(pr);                                                    // browser development only
     },
@@ -496,7 +496,7 @@ const Ads = {
         const p = Save.p;
         if (p.shop.premium) return Promise.resolve(true);   // 냥이의 가호: reward without the ad
         if (typeof window !== 'undefined' && window.BonghwaBridge && window.BonghwaBridge.showRewardedAd)
-            return window.BonghwaBridge.showRewardedAd(placement).catch(() => false);
+            return UI.waitCat(window.BonghwaBridge.showRewardedAd(placement).catch(() => false));
         if (ONLINE_CONFIG.release) { toast(L('광고 보상은 앱에서만 받을 수 있습니다')); return Promise.resolve(false); }
         return UI.testAd(placement);                                                   // browser development only
     },

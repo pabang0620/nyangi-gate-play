@@ -5,7 +5,7 @@
 (() => {
     const click = (...a) => UI.click(...a);
     const modal = (...a) => UI.modal(...a);
-    const busy = (b, fn) => async () => { if (b.disabled) return; click(); b.disabled = true; try { await fn(); } finally { b.disabled = false; } };
+    const busy = (b, fn) => UI.busyBtn(b, fn);
     const say = r => { if (r && r.error) { toast(Market.errText(r.error)); return false; } return true; };
     const SLOT_NAME = () => ({ weapon: L('무기'), armor: L('갑옷'), charm: L('부적') });
     const left = ms => { const hrs = Math.max(0, (ms - Date.now()) / 3600000); return hrs >= 1 ? L('{0}시간 남음', Math.floor(hrs)) : L('{0}분 남음', Math.max(1, Math.floor(hrs * 60))); };
@@ -45,7 +45,7 @@
             h('div.row', { style: { gap: '8px', justifyContent: 'center' } },
                 h('button.btn.small.ghost', { onclick: () => { click(); help(); } }, L('거래 규칙')),
                 h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기')))], { dismiss: true });
-        const loading = () => { body.innerHTML = ''; body.appendChild(h('div.tip', L('불러오는 중…'))); };
+        const loading = () => { body.innerHTML = ''; body.appendChild(UI.catLoad()); };
         const drawTabs = () => {
             tabs.innerHTML = '';
             [['buy', L('구매')], ['sell', L('판매')], ['mine', L('내 판매')]].forEach(([k, t]) =>
@@ -59,7 +59,7 @@
             body.appendChild(sel([[null, L('전체')], ...Object.entries(SLOT_NAME())], f.slot, v => { f.slot = v; }));
             body.appendChild(sel([[null, L('전체')], ...[2, 3, 4].map(g => [g, RARITY[g].name]), [0, RARITY[0].name], [1, RARITY[1].name]], f.grade, v => { f.grade = v; }));
             body.appendChild(sel([['new', L('최신순')], ['price', L('낮은 가격')], ['price_desc', L('높은 가격')]], f.sort, v => { f.sort = v; }));
-            const list = h('div.lg-list', h('div.tip', L('불러오는 중…')));
+            const list = h('div.lg-list', UI.catLoad(null, 'sm'));
             body.appendChild(list);
             const r = await Market.search(f.slot, f.grade, f.sort, f.page);
             list.innerHTML = '';

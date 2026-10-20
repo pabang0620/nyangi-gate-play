@@ -15,7 +15,7 @@
     const medals = () => (Save.p.mats && Save.p.mats.medal) || 0;
     const bar = (v, max, cls = '') => h('div.rd-bar' + cls, h('i', { style: { width: Math.min(100, v / Math.max(1, max) * 100) + '%' } }), h('span', `${fmt(Math.min(v, max))} / ${fmt(max)}`));
     const bossPic = (kind, k = 2.4) => { const c = Art.domCanvas(Art.enemy(kind, 0), k); c.classList.add('rd-boss'); return c; };
-    const busy = (b, fn) => async () => { if (b.disabled) return; click(); b.disabled = true; try { await fn(); } finally { b.disabled = false; } };
+    const busy = (b, fn) => UI.busyBtn(b, fn);
     const say = r => { if (r && r.error) { toast(RaidOn.errText(r.error)); return false; } return true; };
 
     // the reward card face: what was rolled (gems, stones, an item grade ...)
@@ -41,7 +41,7 @@
                 if (busyFlip) return;
                 busyFlip = true; click();
                 c.classList.add('hi');
-                const r = await RaidOn.flip(mode, ref, i);
+                const r = await UI.waitCat(RaidOn.flip(mode, ref, i));
                 c.classList.remove('hi');
                 if (r.error) { busyFlip = false; toast(RaidOn.errText(r.error)); if (r.error === 'claimed') { d.remove(); done && done(); } return; }
                 r.cards.forEach((g, k) => {
@@ -208,7 +208,7 @@
 
     // ---------------------------------------------------------------- 파티 찾기: open rooms of opened difficulties, friends first
     function finderBox(kind, sel) {
-        const list = h('div.lg-list', { style: { maxHeight: '34vh', overflowY: 'auto' } }, h('div.tip', L('불러오는 중…')));
+        const list = h('div.lg-list', { style: { maxHeight: '34vh', overflowY: 'auto' } }, UI.catLoad(null, 'sm'));
         const again = h('button.btn.small', L('새로고침'));
         const load = async () => {
             const r = await RaidOn.openList(kind);
@@ -274,7 +274,7 @@
     async function raidJoinInvite(inv) {
         if (document.querySelector('.rd-lobby-who')) { toast(L('지금은 다른 방에 있어요')); return; }
         S.ctab = 'online'; S.rtab = inv.kind === 'coop' ? 'coop' : 'party'; S.rdiff = inv.diff;
-        const r = inv.kind === 'coop' ? await RaidOn.coopJoin(inv.code) : await RaidOn.praidJoin(inv.code);   // 'party' invites carry a 파티 레이드 room code
+        const r = await UI.waitCat(inv.kind === 'coop' ? RaidOn.coopJoin(inv.code) : RaidOn.praidJoin(inv.code));   // 'party' invites carry a 파티 레이드 room code
         if (!RaidOn.st) await RaidOn.state();
         showHub('endless');
         if (sayP(r)) lobby(r);
@@ -284,7 +284,7 @@
     // raid_state 'live' = a run this player started and has not reported; the clock (whoever hosts now) sends the battle
     function rejoinLive(room) {
         const raid = room.mode === 'raid';
-        const d = modal([h('div.title-t', raid ? L('파티 레이드') : L('협동 디펜스')), h('div', L('진행 중인 판에 다시 들어가는 중…')), h('div.spinner')]);
+        const d = modal([h('div.title-t', raid ? L('파티 레이드') : L('협동 디펜스')), UI.catLoad(L('진행 중인 판에 다시 들어가는 중…'))]);
         Coop.rejoin(room, ok => {
             d.remove();
             if (!ok) { toast(L('이미 끝났거나 아무도 남아 있지 않아요')); try { localStorage.removeItem('nyangi-live'); } catch (e) { } RaidOn.at = 0; refresh(); }
@@ -340,7 +340,7 @@
             return;
         }
         if (!st || Date.now() - (RaidOn.at || 0) > 20000) {
-            win.appendChild(h('div.tip', L('불러오는 중…')));
+            win.appendChild(UI.catLoad());
             RaidOn.at = Date.now();
             RaidOn.state().then(r => { RaidOn.at = Date.now(); RaidOn.fail = r.error && !RaidOn.st ? r.error : null; if (r.error && RaidOn.st) toast(RaidOn.errText(r.error)); refresh(); });
             if (!st) return;
