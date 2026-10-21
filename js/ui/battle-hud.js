@@ -34,7 +34,7 @@
         const top = h('div.hud-top',
             h('div.hud-box', ico('heart'), hud.lives),
             h('div.hud-box', ico('gold'), hud.gold),
-            h('div.hud-box', ico('skull'), hud.wave),
+            h('div.hud-box.wv', ico('skull'), hud.wave),
             B.coop ? (hud.mate = h('div.hud-box.mate', '')) : null,
             B.coop && UI.coopSignalBtn ? UI.coopSignalBtn() : null,
             h('div.sp'),

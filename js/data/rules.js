@@ -89,9 +89,9 @@ const SELL_RATIO = 0.6;
 
 // ---------------------------------------------------------------- heroes
 const HEROES = {
-    knight: { name: L('기사'), desc: L('앞에서 막는 탱커 · 받는 피해 -25% · 스킬로 적을 기절시켜요'), hp: 470, atk: 32, rate: 0.9, range: 60, spd: 100, block: true, air: true, dmgType: 'phys' },
+    knight: { name: L('기사'), desc: L('앞에서 막는 탱커 · 스킬로 적을 기절시켜요'), hp: 470, atk: 32, rate: 0.9, range: 60, spd: 100, block: true, air: true, dmgType: 'phys' },
     mage:   { name: L('마법사'), desc: L('범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함'), hp: 270, atk: 30, rate: 1.1, range: 165, spd: 88, block: false, air: true, dmgType: 'magic' },
-    ranger: { name: L('궁수'), desc: L('긴 사거리 · 기절·빙결된 적에게 2배 피해 · 마법 저항 적에 강함'), hp: 310, atk: 17, rate: 0.6, range: 195, spd: 105, block: false, air: true, dmgType: 'phys' },
+    ranger: { name: L('궁수'), desc: L('긴 사거리 · 기절·빙결된 적에게 큰 피해 · 마법 저항 적에 강함'), hp: 310, atk: 17, rate: 0.6, range: 195, spd: 105, block: false, air: true, dmgType: 'phys' },
 };
 // 영웅 시너지: 기사·마법사가 기절·빙결시킨 적은 영웅 공격에 약해지고 궁수는 그 적에게 폭딜, 마법사는 아군을 회복
 // (협동·냥이 총출동처럼 영웅이 둘 이상일 때 서로 맞물린다)

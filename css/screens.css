@@ -100,7 +100,7 @@
 .skillrow .skill { width: 44px; height: 44px; cursor: pointer; }
 .skillrow .skill canvas { width: 30px; height: 30px; }
 .skillrow .skill.lock { filter: grayscale(1) brightness(.5); }
-.skillrow .sr-l { color: var(--gold); font-family: 'BlackHan'; font-size: 17px; text-shadow: var(--stroke-s); }
+.skillrow .sr-l { color: var(--gold); font-family: 'BlackHan'; font-size: 17px; text-shadow: var(--stroke-s); white-space: nowrap; flex: 0 1 auto; min-width: 0; overflow: hidden; }
 .skillrow .sr-more { margin-left: auto; color: #f3e3c3; font-size: 15px; white-space: nowrap; }
 .skill-list { display: flex; flex-direction: column; gap: 8px; text-align: left; white-space: normal; font-size: 17px; line-height: 1.35; }
 .skrow { display: flex; gap: 10px; align-items: center; }

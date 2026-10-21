@@ -33,7 +33,7 @@
             [img('i_calendar'), L('요일 도전'), L('요일마다 은화·강화석·보석 던전이 열려요.')],
             [img('i_stone'), L('하루 {0}번', DUNGEON.entries), L('별 3개로 깬 단계는 소탕으로 바로 받아요.')]] },
         { id: 'raid', need: RAID.unlockStage, open: p => Meta.raidUnlocked(p), name: () => L('보스 토벌전'), cards: () => [
-            [img('i_skull'), L('보스 토벌전'), L('3분 동안 거대 보스에게 피해를 최대한 줘요.')],
+            [img('i_skull'), L('보스 토벌전'), L('거대 보스에게 피해를 최대한 줘요.')],
             [img('i_gem'), L('주 {0}번', RAID.tries), L('피해량만큼 단계 보상. 보스는 매주 바뀌어요.')]] },
         { id: 'online', need: RAID_ON.diffs[0].eq, open: p => (p.stars[RAID_ON.diffs[0].eq] || 0) > 0, name: () => L('레이드'), cards: () => [
             [img('i_raid'), L('레이드'), L('다른 냥이들과 함께 거대 보스를 잡아요.')],
@@ -287,7 +287,7 @@
         const win = h('div.panel.win');
         S.rkind = S.rkind || 'wall';
         const kinds = [['wall', L('명예의 전당 (무한의 성벽)'), L('웨이브')], ['cup', L('주간 공방전'), L('점')], ['raid', L('토벌전 피해'), L('피해')], ['tower', L('심연의 탑'), L('층')]];
-        win.appendChild(h('div.tabhead', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' } },
+        win.appendChild(h('div.tabhead.rk-head', { style: { display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' } },
             h('h2', { style: { margin: 0 } }, L('랭킹')), ...kinds.map(([id, nm]) => h('button.btn.small' + (S.rkind === id ? '.gold' : '.ghost'), { onclick: () => { click(); S.rkind = id; showHub('endless'); } }, nm)),
             Online.on && Online.profile ? h('button.btn.small', { style: { marginLeft: 'auto' }, onclick: () => { click(); profileModal(); } }, L('내 프로필')) : null));
         const box = h('div.inset', { style: { flex: 1, padding: '10px', display: 'flex', flexDirection: 'column', minHeight: 0 } });

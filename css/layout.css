@@ -255,7 +255,8 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 .si-enemy { line-height: 1.15; }
 .si-enemy > div { overflow: hidden; }
 /* popups on phones: zoom 1.15 x 690px was taller than the 720px stage (title and close button cut off) */
-#app.mobile .modal { max-height: 600px; }
+#app.mobile .modal { max-height: calc(100% - 12px); }   /* of the .dim backdrop (zoom-aware): a taller popup would run off both edges and its bottom could never be scrolled into view */
+#app.mobile .heropick .hp .tip { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 /* top bar hero chip: shrink the text rather than cutting the level off */
 .topbar .herochip > span { white-space: nowrap; }
 /* hero: long skin names (German) break inside their caption instead of running into the next one */
@@ -266,6 +267,12 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 #app.mobile .pcard .pd { min-height: 0; }
 /* top bar hero chip: name over level, so big currency totals never squeeze it to "치..." */
 .topbar .herochip { flex-shrink: 0; min-width: 0; }
+/* phones: big numbers or a long hero name must not push the hero chip off the screen. The title gives way first (UI.fitAll hides it), then the hero name shortens */
+#app.mobile .topbar { gap: 7px; }
+#app.mobile .topbar .title-t { min-width: 0; flex-shrink: 20; }
+#app.mobile .topbar .herochip { flex-shrink: 1; min-width: 64px; }
+#app.mobile .topbar .herochip > span.hc { min-width: 0; overflow: hidden; }
+#app.mobile .topbar .herochip > span.hc b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar .herochip > span.hc { display: flex; flex-direction: column; line-height: 1.05; overflow: visible; }
 .topbar .herochip > span.hc b { font-weight: normal; font-size: .82em; }
 .topbar .herochip > span.hc i { font-style: normal; font-size: .9em; }

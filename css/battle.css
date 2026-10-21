@@ -4,6 +4,9 @@
 .hud-top > * { pointer-events: auto; }
 .hud-box { display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 14px 0 6px; border-radius: 8px; font-family: 'Lilita', 'BlackHan'; font-size: 22px; background: linear-gradient(#3a2412, #24150a); box-shadow: inset 0 0 0 2px #6b4a24, inset 0 2px 0 rgba(255,220,160,.15), var(--hard); text-shadow: var(--stroke-s); }
 .hud-box .ico { width: 32px; height: 32px; }
+/* lives and gold never wrap; the long raid / partner boxes give up the width on narrow screens */
+.hud-top > .hud-box { flex-shrink: 0; white-space: nowrap; }
+.hud-top > .hud-box.wv, .hud-top > .hud-box.mate { flex-shrink: 1; min-width: 0; white-space: normal; line-height: 1.05; }
 .hud-top .sp { flex: 1; pointer-events: none; }
 .iconbtn { width: 52px; height: 52px; cursor: pointer; background: url('../img/ui_btn_round.png') center / contain no-repeat; display: inline-flex; align-items: center; justify-content: center; filter: drop-shadow(0 3px 0 rgba(0,0,0,.55)); position: relative; font-family: 'Lilita'; font-size: 15px; color: #fff; text-shadow: var(--stroke-s); transition: transform .06s; flex: none; }
 .iconbtn img { width: 32px; height: 32px; object-fit: contain; }

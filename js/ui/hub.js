@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.11';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.12';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
 
@@ -131,6 +131,7 @@
     }
     // idle supply popup: on the title screen and when the app comes back from the background without restarting
     function offlineSupply(p) {
+        Rewards.ensure(p);   // a save that never reached the hub has no daily ad counts yet
         const off = offlineReward(p);
         if (off && off.silver > 0) {
             p.silver += off.silver; Save.save();

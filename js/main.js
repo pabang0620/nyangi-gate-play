@@ -354,4 +354,16 @@ const Game = {
     setInterval(() => Save.save(), 30000);
     // installable / offline on phones (service workers need http(s))
     if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !/NyangiApp/.test(navigator.userAgent)) navigator.serviceWorker.register('sw.js').catch(() => { });
+    // Android back button (MainActivity.back): close the top popup, pause a battle, leave a hub sub screen; false = let the app go to the background
+    window.nyangiBack = () => {
+        const dims = document.querySelectorAll('.dim'), d = dims[dims.length - 1];
+        if (d) {
+            const b = [...d.querySelectorAll('button')].find(x => /^(닫기|취소|나중에|돌아가기)$/.test(srcOf(x.textContent.trim())));
+            if (b) b.click(); else d.dispatchEvent(new MouseEvent('click', { bubbles: true }));   // modal({ dismiss }) closes on a backdrop click; others stay (a wrong tap must not leave a room)
+            return true;
+        }
+        if (UI.S.screen === 'battle') { if (Game.battle && !Game.paused && UI.pause) UI.pause(true); return true; }
+        if (UI.S.screen === 'hub' && UI.S.tab && UI.S.tab !== 'map') { UI.showHub('map'); return true; }
+        return false;
+    };
 })();

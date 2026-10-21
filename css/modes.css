@@ -144,6 +144,11 @@
 .rd-diffs { display: flex; gap: 8px; flex-wrap: wrap; }
 .rd-diffs .btn .icon { width: 20px; height: 20px; vertical-align: -3px; margin-right: 3px; }
 .rd-main { display: flex; gap: 12px; flex: 1; min-height: 0; overflow: hidden; }
+/* 파티 레이드·협동: boss | room buttons | 파티 찾기 side by side, the room list scrolls inside its column */
+.rd-fit > .rd-right { flex: 0 1 360px; }
+.rd-finder { padding: 8px; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.rd-flist { flex: 1; min-height: 0; overflow-y: auto; }
+.rd-flist .lg-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rd-left { width: 340px; display: flex; flex-direction: column; align-items: center; gap: 6px; overflow-y: auto; text-align: center; }
 .rd-right { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-width: 0; }
 .rd-boss { max-height: 96px; max-width: 200px; flex: none; }
@@ -153,7 +158,8 @@
 .rd-bar.done i { background: linear-gradient(#9fe07a, #3f9a2a); }
 .rd-bar span { position: relative; display: block; text-align: center; line-height: 26px; color: #fff4dc; font-family: 'Lilita', 'BlackHan'; font-size: 17px; text-shadow: var(--stroke-s); }
 .rd-empty { display: flex; flex-direction: column; gap: 10px; align-items: center; justify-content: center; text-align: center; flex: 1; }
-.rd-code { width: 190px; text-transform: uppercase; letter-spacing: 2px; text-align: center; }
+.rd-code { width: 215px; text-transform: uppercase; letter-spacing: 2px; text-align: center; }
+.rd-code::placeholder { letter-spacing: 0; }
 .rd-code-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 20px; }
 .rd-code-line b { font-size: 26px; letter-spacing: 3px; }
 .rd-mems { display: flex; flex-direction: column; gap: 4px; }

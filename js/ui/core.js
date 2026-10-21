@@ -264,6 +264,9 @@ const UI = {};
         if (navs.length) navs.forEach(e => { e.style.fontSize = minNav + 'px'; });
         scope.querySelectorAll('.btn, .topbar .title-t, .topbar .chip:not(.herochip), .tcol h3').forEach(e => fitText(e, () => e.clientWidth));
         scope.querySelectorAll('.topbar .herochip > span:not(.hc)').forEach(e => fitText(e, () => e.clientWidth, 12));
+        scope.querySelectorAll('.skillrow .sr-l').forEach(e => fitText(e, () => e.clientWidth, 12));
+        // phones: when the chips alone fill the top bar, drop the game title rather than clip the hero chip
+        scope.querySelectorAll('.topbar').forEach(tb => { const t = tb.querySelector('.title-t'); if (!t) return; t.style.display = ''; if (tb.scrollWidth > tb.clientWidth + 1 || t.scrollWidth > t.clientWidth + 1) t.style.display = 'none'; });
         scope.querySelectorAll('.skinpick .sk > span').forEach(e => fitText(e, () => e.clientWidth, 9));
         // clamped descriptions: show only whole lines that fit the box (a long title leaves less room)
         scope.querySelectorAll('.pcard .pd').forEach(e => {
