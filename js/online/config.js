@@ -7,7 +7,7 @@
 //                   asks Android Credential Manager for an ID token for it (Google account link / sign-in)
 //   release         true in store builds: hides the browser-only test payment/ad dialogs
 const ONLINE_CONFIG = {
-    url: '',
+    url: 'https://qcjskzblzvmepdazoobt.supabase.co',
     schema: 'bonghwa',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjanNremJsenZtZXBkYXpvb2J0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgyNjAxOTgsImV4cCI6MjA3MzgzNjE5OH0.vIGymiemOp120InDukrUcJrb5iga3ceQx_ylKccmM9A',
     googleWebClientId: '354656279161-0jjbifv1o8qni3smhbq22j5i12nnud9t.apps.googleusercontent.com',
