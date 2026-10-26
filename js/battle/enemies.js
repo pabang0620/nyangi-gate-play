@@ -21,7 +21,9 @@ Object.assign(Battle.prototype, {
         if (this.rule === 'fast') e.spdMul = 1.3;
         if (def.boss) {
             e.sk = {}; for (const k of def.skills) e.sk[k] = BOSS_SKILL[k].cd * 0.6;
-            e.cast = null; e.phase = 0; e.invulnUntil = 0; e.cdMul = 1; e.spdMul = this.raid ? 0.45 : (e.spdMul || 1);
+            e.cast = null; e.phase = 0; e.invulnUntil = 0; e.cdMul = 1;
+            // 파티 레이드: the road takes raidLive.walk seconds to walk, so the boss reaches the gate then (no clock on screen)
+            e.spdMul = this.raid ? (this.raidLive && this.raidLive.walk ? p.len / (def.spd * this.raidLive.walk) : 0.45) : (e.spdMul || 1);
             if (this.raid) e.raidMul = this.raidLive ? hpMul / this.hpMul : RAID.hpMul;
             this.bossRef = e;
             this.on('boss', e);
@@ -201,6 +203,7 @@ Object.assign(Battle.prototype, {
                 if (!alive || (blocker.engaged !== e && !taunted)) { e.blockedBy = null; }
             }
             if (e.charge && e.blockedBy) this.releaseBlock(e);
+            let held = 1;   // 파티 레이드: a blocked boss still creeps on (the walk time stays the clock), the blockers only slow it
             if (e.blockedBy) {
                 e.cd -= dt;
                 if (e.cd <= 0) {
@@ -213,8 +216,8 @@ Object.assign(Battle.prototype, {
                         this.ringFx(tgt.x, tgt.y, e.def.cleave, '#cfe8ff');
                     }
                 }
-                e.walk += dt * 2;
-                continue;
+                if (e.def.boss && this.raidLive && this.raidLive.gateLose) held = this.raidLive.blockSlow || 0.3;
+                else { e.walk += dt * 2; continue; }
             }
             // a boss or elite at the gate smashes it for a few seconds: last chance to bring it down
             if (e.atGate !== undefined) {
@@ -225,11 +228,18 @@ Object.assign(Battle.prototype, {
                 if (this.t - e.atGate < MUST_KILL.gateTime) continue;
                 e.d = e.path.len + 1;
             }
-            let spd = e.def.spd * (e.slowUntil > this.t ? e.slowMul : 1) * (e.hasteUntil > this.t ? 1.5 : 1) * (e.spdMul || 1);
+            let spd = e.def.spd * (e.slowUntil > this.t ? e.slowMul : 1) * (e.hasteUntil > this.t ? 1.5 : 1) * (e.spdMul || 1) * held;
             if (e.charge) spd = e.charge.spd;
             e.d += spd * dt;
             e.walk += dt * spd / 12;
             this.placeEnemy(e);
+            if (e.d >= e.path.len && this.raid && e.def.boss && this.raidLive && this.raidLive.gateLose) {
+                // 파티 레이드: the boss through the gate ends the run
+                e.d = e.path.len; this.placeEnemy(e); this.addShake(16);
+                this.text(W / 2, 170, L('보스가 성문을 뚫었다!'), '#ff4040', 30, true);
+                this.lives = 0; this.state = 'lose'; this.on('end', false);
+                continue;
+            }
             if (e.d >= e.path.len && this.raid && e.def.boss) {
                 // 토벌 보스는 성문에 닿으면 출발점으로 돌아간다 (목숨 3 감소)
                 e.d = 0; this.releaseBlock(e); this.placeEnemy(e);

@@ -184,14 +184,16 @@ const Online = {
         return got;
     },
     // claim everything at once (also the fallback when the server has no mailbox yet)
-    async claimRewards() {
+    async claimRewards(quiet) {
         if (!this.on) return [];
         const { data, error } = await this.sb.rpc('claim_rewards');
         if (error || !data || !data.length) return [];
         const got = [], lines = [];
         for (const r of data) { got.push(...this.applyMail(r)); lines.push(this.mailTitle(r)); const m = this.mail.find(x => x.id === r.id); if (m) m.claimed_at = r.claimed_at; }
         Save.save(); this.pushSave(true); this.emit();
-        if (typeof UI !== 'undefined' && got.length) UI.showGot(lines.slice(0, 3).join(' · ') + (lines.length > 3 ? L(' 외 {0}개', lines.length - 3) : ''), got);
+        this.lastGotTitle = lines.slice(0, 3).join(' · ') + (lines.length > 3 ? L(' 외 {0}개', lines.length - 3) : '');
+        // quiet: the mailbox shows the reward window itself, after it has redrawn
+        if (!quiet && typeof UI !== 'undefined' && got.length) UI.showGot(this.lastGotTitle, got);
         return got;
     },
     // coupon: the reward goes to the mailbox. Returns '' on success or an error message

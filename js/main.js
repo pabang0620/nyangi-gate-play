@@ -57,7 +57,7 @@ const Game = {
             const o = opt.coop, R = RAID_ON.party, si = RAID_ON.diffs[o.diff].eq, kind = o.kind, inf = o.infos, n = inf.length, [a] = inf;
             Object.assign(cfg, { mode: 'raid', coop: true, stageIdx: si, raidKind: kind, map: RAID.map, theme: CHAPTERS[STAGES[si].ch].theme, seed: o.seed,
                 escortPool: STAGES[si].pool, stageDef: { name: L('파티 레이드'), map: RAID.map, waves: 1, pool: STAGES[si].pool, ch: STAGES[si].ch },
-                raidLive: { hpMul: Meta.partyBossMul(kind, o.diff, n), time: Meta.partyTime(n), enrage: R.enrage, enrageSpd: R.enrageSpd, enrageCd: R.enrageCd },
+                raidLive: { hpMul: Meta.partyBossMul(kind, o.diff, n), time: Meta.partyTime(n), walk: Meta.partyWalk(n), gateLose: true, enrage: R.enrage, enrageSpd: R.enrageSpd, enrageCd: R.enrageCd },
                 startGoldMul: R.startGold[n - 1], goldShare: R.goldShare,
                 heroCls: a.cls, heroStats: a.stats, skin: a.skin, bonuses: a.bonuses, dmgMul: inf.reduce((t, x) => t + x.dmgMul, 0) / n, party: [],
                 mates: inf.slice(1).map(x => ({ cls: x.cls, stats: x.stats, skin: x.skin, bonuses: x.bonuses })), autos: inf.map(x => x.auto), names: inf.map(x => x.name),

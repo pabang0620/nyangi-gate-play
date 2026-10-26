@@ -173,7 +173,7 @@ const Coop = {
         const order = this.present();
         if (this.me !== 0 || (!this.raid && order.length < 2)) return false;
         const r = this.raid ? await RaidOn.praidSet(this.room.id, 'start') : await RaidOn.coopSet(this.room.id, 'start');
-        if (r.error) { toast(RaidOn.errText(r.error)); return false; }
+        if (r.error) { toast(RaidOn.errText(r.error, r)); return false; }
         const seats = r.seats ? r.seats.map(x => x.seat) : null;    // the server's list: someone who left in the meantime is not in
         this.order = seats ? order.filter(s => seats.includes(s)) : order;
         this.infos = this.order.map(s => this.infos[s]);

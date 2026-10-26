@@ -148,6 +148,15 @@
 .rd-fit > .rd-right { flex: 0 1 360px; }
 .rd-finder { padding: 8px; flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .rd-flist { flex: 1; min-height: 0; overflow-y: auto; }
+/* 파티 레이드·협동 화면: boss info on the left, the room list takes the rest; the room buttons are one row above the list */
+.rd-fhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rd-fhead b { font-size: 20px; }
+.rd-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.rd-codebox { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
+.rd-codebox .rd-code { width: 110px; padding-left: 4px; padding-right: 4px; }
+.rd-grade { align-self: stretch; padding: 3px 8px; border-radius: 8px; background: rgba(242,193,78,.28); font-family: 'BlackHan'; font-size: 18px; }
+.rd-dbtn { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.15; padding-top: 4px; padding-bottom: 4px; }
+.rd-dbtn .rd-db { font-size: 12px; opacity: .8; font-weight: normal; }
 .rd-flist .lg-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rd-left { width: 340px; display: flex; flex-direction: column; align-items: center; gap: 6px; overflow-y: auto; text-align: center; }
 .rd-right { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-width: 0; }
@@ -174,7 +183,11 @@
 .rd-done { color: #3a7a2a; font-family: 'BlackHan'; font-size: 20px; }
 .rd-foot { text-align: center; }
 .rd-off { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; flex: 1; text-align: center; font-size: 20px; }
-.rd-lobby-who { display: flex; flex-direction: column; gap: 6px; min-width: 320px; }
+.rd-lobby-who { display: flex; flex-direction: row; flex-wrap: wrap; justify-content: center; gap: 8px; min-width: 0; }
+.rd-lobby-who .rd-mem { flex-direction: column; width: 92px; padding: 8px 4px; gap: 4px; text-align: center; justify-content: flex-start; }
+.rd-lobby-who .rd-mem img, .rd-lobby-who .rd-mem .rd-wait { width: 52px; height: 52px; }
+.rd-lobby-who .rd-mem .nm { flex: none; max-width: 100%; }
+.rd-lobby-who .rd-mem.empty { background: none; outline: 2px dashed rgba(106,60,20,.45); outline-offset: -3px; opacity: .8; }
 .rd-cards .card .f { gap: 2px; }
 .rd-cards .card.rd-other { opacity: .65; transform: scale(.92); }
 .rd-cards .card.rd-pick { outline: 4px solid var(--gold); border-radius: 10px; }
@@ -186,13 +199,13 @@
 .rd-result { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 360px; }
 .paper .rd-result .gold-t, .paper .res-num { color: #a85a06; text-shadow: none; font-weight: bold; }   /* gold on parchment is too faint */
 .hud-box.mate { color: #bfe4ff; font-size: 17px; }
-#app.mobile .rd-left { width: 330px; }
+#app.mobile .rd-left { width: 230px; }
 #app.mobile .rd-boss { max-height: 70px; }
 #app.mobile .rd-foot { display: none; }
 .rd-left .row { margin: 0; }
 .rd-left > *, .rd-right > * { flex: none; }
 #app.mobile .rd-left .row .btn { padding-left: 12px; padding-right: 12px; }
-#app.mobile .rd-code { width: 150px; }
+#app.mobile .rd-code { width: 126px; }
 #app.mobile .rd-tabs .btn, #app.mobile .rd-diffs .btn { padding-left: 10px; padding-right: 10px; }
 #app.mobile .rd-shop { min-width: 0; width: 100%; }
 /* 심연의 탑 (js/ui/tower.js) */

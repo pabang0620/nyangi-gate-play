@@ -118,7 +118,7 @@
         const set = (k, v, el) => { if (S.lastHud[k] !== v) { S.lastHud[k] = v; el.textContent = v; } };
         set('lives', `${B.lives}`, hud.lives);
         set('gold', fmt(B.gold), hud.gold);
-        set('wave', B.raidLive ? L('남은 {0}초 · 보스 체력 {1}%', Math.ceil(B.timeLeft), B.bossRef ? Math.ceil(Math.max(0, B.bossRef.hp) / B.bossRef.maxHp * 100) : 100) : B.raid ? L('남은 {0}초 · 피해 {1}', Math.ceil(B.timeLeft), fmt(Math.round(B.raidDamage))) : B.endless ? L('웨이브 {0}', Math.max(0, B.waveIdx + 1)) : L('웨이브 {0} / {1}', Math.max(0, B.waveIdx + 1), B.totalWaves), hud.wave);
+        set('wave', B.raidLive ? L('성문까지 {0}% · 보스 체력 {1}%', B.bossRef && B.raidLive.gateLose ? Math.max(0, Math.ceil((1 - B.bossRef.d / B.bossRef.path.len) * 100)) : 100, B.bossRef ? Math.ceil(Math.max(0, B.bossRef.hp) / B.bossRef.maxHp * 100) : 100) : B.raid ? L('남은 {0}초 · 피해 {1}', Math.ceil(B.timeLeft), fmt(Math.round(B.raidDamage))) : B.endless ? L('웨이브 {0}', Math.max(0, B.waveIdx + 1)) : L('웨이브 {0} / {1}', Math.max(0, B.waveIdx + 1), B.totalWaves), hud.wave);
         if (Game.speed === 3 && !Rewards.speed3Unlocked(Save.p)) { Game.speed = 2; Save.p.set.speed = 2; toast(L('3배속 시간이 끝났습니다')); }
         set('speed', (B.coop ? Coop.speed : Game.speed) + L('배'), hud.speedLbl);
         if (hud.mate) set('mate', B.acts.map((a, k) => k === B.actor ? null : L('{0} · 금화 {1}', Coop.nameOf(k), fmt(B.goldOf(k))) + (Coop.goneOf(k) ? L(' (자동)') : '')).filter(Boolean).join('   '), hud.mate);

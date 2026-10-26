@@ -305,7 +305,12 @@
                 h('div.inset.cloudopt', h('b', L('다른 기기')), h('div', sum(remote)), h('div.tip', when(remote.savedMs)),
                     h('button.btn.gold', { onclick: () => { click(); d.remove(); cb(true); } }, L('다른 기기 진행 불러오기'))),
                 h('div.inset.cloudopt', h('b', L('이 기기')), h('div', sum(local)), h('div.tip', when(local.savedMs)),
-                    h('button.btn', { onclick: () => { click(); d.remove(); cb(false); } }, L('이 기기 유지')))),
+                    h('button.btn', { onclick: () => {
+                        click();
+                        // keeping this device overwrites the saved progress for good: two confirmations, the second one names what is lost
+                        confirmBox(L('서버에 저장된 진행이 모두 사라지고 이 기기의 진행으로 바뀝니다.') + '\n' + L('사라지는 진행: {0}', sum(remote)), () =>
+                            confirmBox(L('정말 삭제하시겠습니까? 되돌릴 수 없어요.'), () => { d.remove(); cb(false); }));
+                    } }, L('이 기기 유지')))),
             h('div.tip', L('선택하지 않은 쪽의 진행은 덮어쓰여 사라집니다.'))]);
     }
 

@@ -39,7 +39,7 @@ const Friends = {
             format: L('닉네임#태그 4자리로 입력해 주세요 (예: 치즈냥#1234)'), not_found: L('그런 냥이를 찾지 못했어요'), self: L('나 자신은 친구로 추가할 수 없어요'),
             already: L('이미 친구이거나 신청한 냥이예요'), full: L('친구가 가득 찼어요 (최대 {0}명)', (this.st && this.st.max) || 50),
             their_full: L('상대의 친구 목록이 가득 찼어요'), too_many: L('친구 신청이 너무 많아요. 잠시 후 다시 해 주세요'),
-            not_friend: L('친구에게만 초대할 수 있어요'), invalid: L('지금은 초대할 수 없는 방이에요'),
+            not_friend: L('친구에게만 초대할 수 있어요'), their_locked: L('친구의 진행도가 부족해서 초대할 수 없어요'), invalid: L('지금은 초대할 수 없는 방이에요'),
         }[e] || RaidOn.errText(e);
     },
     start() {
