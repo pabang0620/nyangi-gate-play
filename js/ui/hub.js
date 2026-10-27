@@ -68,13 +68,13 @@
     // Only once the terms are agreed (a first-time player meets the account in the settings afterwards) and only with a server configured.
     let setAcct = null;   // the settings tab's account box
     Online.onChange(() => { if (setAcct && setAcct.isConnected) setAcct.refresh(); });
-    UI.resumeSupply = () => { if ((S.screen === 'title' || S.screen === 'hub') && !document.querySelector('.modal')) offlineSupply(Save.p); };
+    UI.resumeSupply = () => { if (S.screen === 'hub' && !document.querySelector('.modal')) offlineSupply(Save.p); };   // the title screen waits: sign in and agree first
 
     // start area: a first visit (no account on this device yet) picks guest / Google / Kakao / id here; afterwards 시작하기
     function titleStart() {
         const wrap = h('div.title-start');
         let entered = false;
-        const go = () => showHub('map');
+        const go = () => { showHub('map'); offlineSupply(Save.p); };   // the idle supply comes after sign-in and consent, from the save that was kept
         const draw = () => {
             wrap.innerHTML = '';
             // signed in already: no start button, the hopping cat while the account connects, then straight in (consent first if needed)
@@ -90,17 +90,18 @@
                 return;
             }
             const err = h('div.tip', { style: { color: '#ffd0b0', textShadow: '0 1px 3px #000', minHeight: '18px' } });
-            const run = fn => { click(); Sfx.init(); consentThen(async () => { err.textContent = ''; try { await fn(); } catch (e) { err.textContent = (e && e.message) || String(e); } }); };
+            // a new account (guest / sign-up) agrees first; signing in to an existing one agrees after the login (a save that already agreed is not asked again)
+            const run = (fn, agreeFirst) => { click(); Sfx.init(); const exec = async () => { err.textContent = ''; try { await fn(); } catch (e) { err.textContent = (e && e.message) || String(e); } }; if (agreeFirst) consentThen(exec); else exec(); };
             // one column of equal-width sign-in buttons, brand icon on the left (like common sign-in pages)
-            const sign = (cls, icon, label, fn) => h('button.btn.signin.' + cls, { onclick: () => run(fn) }, h('span.signin-ico', { html: icon }), h('span.signin-txt', label));
+            const sign = (cls, icon, label, fn, agreeFirst) => h('button.btn.signin.' + cls, { onclick: () => run(fn, agreeFirst) }, h('span.signin-ico', { html: icon }), h('span.signin-txt', label));
             wrap.append(
                 h('div.signin-list',
-                    sign('guest', UI.SIGNIN_ICON.guest, L('게스트로 시작'), async () => { await UI.waitCat(Online.startGuest()); go(); }),
+                    sign('guest', UI.SIGNIN_ICON.guest, L('게스트로 시작'), async () => { await UI.waitCat(Online.startGuest()); go(); }, true),
                     Online.kakaoOn() ? sign('kakao', UI.SIGNIN_ICON.kakao, L('카카오로 시작'), () => Online.loginKakao()) : null,
                     Online.nativeGoogle ? sign('google', UI.SIGNIN_ICON.google, L('Google로 시작'), () => Online.loginGoogle()) : null),
                 h('div.row.title-logins',
                     h('button.btn.small.ghost', { onclick: () => run(() => UI.idLoginModal()) }, L('아이디로 로그인')),
-                    h('button.btn.small.ghost', { onclick: () => run(() => UI.signUpModal(go)) }, L('회원가입'))),
+                    h('button.btn.small.ghost', { onclick: () => run(() => UI.signUpModal(go), true) }, L('회원가입'))),
                 h('div.tip.title-guest-note', L('게스트는 앱을 지우면 진행이 사라지고 구매를 할 수 없어요')),
                 err);
         };
@@ -127,9 +128,8 @@
         UI.vfx('vfx/title_ambient.mp4', box, { loop: true, opacity: 0.5, z: 0, back: true });   // drifting fireflies over the title art
         // translated titles are longer: each logo line stays on one line and shrinks to the emblem width
         box.querySelectorAll('.logo > span').forEach(e => UI.fitText(e, () => 460, 28));
-        offlineSupply(p);
     }
-    // idle supply popup: on the title screen and when the app comes back from the background without restarting
+    // idle supply popup: on entering the hub and when the app comes back from the background without restarting
     function offlineSupply(p) {
         Rewards.ensure(p);   // a save that never reached the hub has no daily ad counts yet
         const off = offlineReward(p);
