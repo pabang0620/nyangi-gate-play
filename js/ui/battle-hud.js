@@ -196,7 +196,7 @@
         const left = Rewards.adLeft(p, 'speed3');
         const setSpeed3 = () => { Game.speed = 3; p.set.speed = 3; Save.save(); };
         const d = modal([h('h2', L('3배속')),
-            h('div', { style: { fontSize: '18px', margin: '6px 0 12px', textAlign: 'center', lineHeight: 1.5 } }, L('전투를 3배 빠르게 진행합니다.'), h('br'), L('광고를 보면 30분 동안 쓸 수 있고, 상점에서 영구히 해금할 수 있습니다.')),
+            h('div', { style: { fontSize: '18px', margin: '6px 0 12px', textAlign: 'center', lineHeight: 1.5 } }, L('전투를 3배 빠르게 진행합니다.'), h('br'), L('광고를 보면 30분 동안 쓸 수 있어요')),
             h('div.row', { style: { gap: '10px' } },
                 h('button.btn.gold' + (left ? '' : '.off'), { onclick: async () => {
                     if (!left) { toast(L('오늘 광고 횟수를 다 썼습니다')); return; }

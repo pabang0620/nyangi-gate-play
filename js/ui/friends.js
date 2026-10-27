@@ -39,7 +39,7 @@
         const listBtn = h('button.btn.gold', { onclick: () => { click(); listModal(); } }, L('친구 목록'));
         const invites = h('div', { style: { width: '100%' } });
         live(modal([h('h2', L('친구')),
-            h('div', L('내 친구 코드 '), h('b.gold-t', myTag), ' ', copy),
+            h('div', L('내 친구 코드 '), h('b.res-num', myTag), ' ', copy),
             h('div.tip', L('친구에게 이 코드를 알려 주거나, 친구 신청에서 친구의 코드를 입력하세요')),
             h('div.row', { style: { gap: '10px', justifyContent: 'center', margin: '8px 0' } }, reqBtn, listBtn),
             invites,
@@ -47,7 +47,7 @@
             // counts on the two buttons: requests waiting for me, friends
             const n = st ? st.incoming.length : 0;
             reqBtn.replaceChildren(L('친구 신청'), n ? h('span.badge', String(n)) : '');
-            listBtn.replaceChildren(L('친구 목록'), st ? h('span.tip', ` ${st.friends.length}/${st.max}`) : '');
+            listBtn.replaceChildren(L('친구 목록'), st ? h('span.fr-cnt', ` ${st.friends.length}/${st.max}`) : '');
             invites.replaceChildren();
             if (!st || !st.invites.length) return;
             invites.appendChild(sec(L('받은 초대')));

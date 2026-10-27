@@ -102,7 +102,7 @@
                 h('div.row.title-logins',
                     h('button.btn.small.ghost', { onclick: () => run(() => UI.idLoginModal()) }, L('아이디로 로그인')),
                     h('button.btn.small.ghost', { onclick: () => run(() => UI.signUpModal(go), true) }, L('회원가입'))),
-                h('div.tip.title-guest-note', L('게스트는 앱을 지우면 진행이 사라지고 구매를 할 수 없어요')),
+                h('div.tip.title-guest-note', L('게스트는 앱을 지우면 진행이 사라져요')),
                 err);
         };
         Online.onChange(() => { if (S.screen === 'title' && wrap.isConnected) draw(); });

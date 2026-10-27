@@ -150,7 +150,8 @@
 .rd-flist { flex: 1; min-height: 0; overflow-y: auto; }
 /* 파티 레이드·협동 화면: boss info on the left, the room list takes the rest; the room buttons are one row above the list */
 .rd-fhead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.rd-fhead b { font-size: 20px; }
+.rd-flabel { font-size: 15px; color: #f6e2b8; white-space: nowrap; }
+.rd-refresh { padding: 0 8px; display: inline-flex; align-items: center; }
 .rd-acts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .rd-codebox { display: inline-flex; align-items: center; gap: 4px; margin-left: auto; }
 .rd-codebox .rd-code { width: 110px; padding-left: 4px; padding-right: 4px; }
@@ -269,3 +270,7 @@
 .tw-sn { flex: 1; display: flex; flex-direction: column; text-align: left; }
 .tw-rank { width: 560px; max-width: 100%; max-height: 380px; overflow-y: auto; padding: 10px; }
 #app.mobile .tw-card { width: 170px; height: 230px; }
+
+.fr-cnt { color: #fff4dc; font-size: .8em; }
+#app.mobile .rd-bigico { display: none; }   /* the side panel is short on a phone: keep all of its text visible */
+#app.mobile .rd-left { font-size: 17px; gap: 4px; }

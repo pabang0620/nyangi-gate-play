@@ -123,9 +123,8 @@
     function partyView(win, head) {
         const d = S.rdiff, R = RAID_ON.party, used = RaidOn.praidTries(), left = Math.max(0, R.tries - used), kind = weekBoss(d);
         head.insertBefore(diffRow(d, i => { S.rdiff = i; refresh(); }, weekBoss), head.querySelector('.sp'));
-        const code = h('input.nick.rd-code', { maxLength: 6, placeholder: L('방 코드 6자리') });
-        const mk = h('button.btn.small.gold' + (left ? '' : '.off')), quick = h('button.btn.small' + (left ? '' : '.off')), join = h('button.btn.small' + (left ? '' : '.off'));
-        mk.textContent = L('방 만들기'); quick.textContent = L('빠른 매칭'); join.textContent = L('참가');
+        const mk = h('button.btn.small.gold' + (left ? '' : '.off')), quick = h('button.btn.small' + (left ? '' : '.off'));
+        mk.textContent = L('방 만들기'); quick.textContent = L('빠른 매칭');
         const noLeft = () => { if (left) return false; toast(RaidOn.errText('week_tries')); return true; };
         mk.onclick = busy(mk, async () => { if (noLeft()) return; const r = await RaidOn.praidCreate(d); if (sayP(r)) lobby(r); });
         quick.onclick = busy(quick, async () => {
@@ -135,7 +134,7 @@
             if (r.none) { const c = await RaidOn.praidCreate(d); if (sayP(c)) lobby(c, true); return; }
             lobby(r);
         });
-        join.onclick = busy(join, async () => { if (noLeft()) return; if (code.value.trim().length < 6) { toast(L('코드 6자리를 입력해 주세요')); return; } const r = await RaidOn.praidJoin(code.value); if (sayP(r)) lobby(r); });
+        const joinCode = async code => { if (noLeft()) return false; const r = await RaidOn.praidJoin(code); if (sayP(r)) { lobby(r); return true; } return false; };
         const wins = ((RaidOn.st.praid && RaidOn.st.praid.wins) || []).filter(x => !RaidOn.claimed('praid', x.diff));
         const seen = new Set();
         // boss on the left; on the right the party list comes first, the room buttons sit in one row above it
@@ -145,7 +144,7 @@
                 h('div.tip', L('보스 강도: {0} 기준', stageLabel(RAID_ON.diffs[d].eq))), h('div.gold-t', L('이번 주 입장 {0}/{1}', left, R.tries)),
                 h('div.tip', L('이기면 난이도마다 주 1번 보상 카드')),
                 wins.filter(x => !seen.has(x.diff) && seen.add(x.diff)).map(x => h('div.row', h('span', RAID_ON.diffs[x.diff].name), claimBtn('praid', x.id, x.diff, L('파티 레이드 보상'))))),
-            finderBox('praid', d, h('div.rd-acts', quick, mk, h('span.rd-codebox', code, join)))));
+            finderBox('praid', d, mk, quick, joinCode)));
     }
 
     // ---------------------------------------------------------------- 월드 보스
@@ -183,9 +182,8 @@
     function coopView(win, head) {
         const d = S.rdiff;
         head.insertBefore(diffRow(d, i => { S.rdiff = i; refresh(); }), head.querySelector('.sp'));
-        const code = h('input.nick.rd-code', { maxLength: 6, placeholder: L('방 코드 6자리') });
-        const mk = h('button.btn.small.gold'), quick = h('button.btn.small'), join = h('button.btn.small');
-        mk.textContent = L('방 만들기'); quick.textContent = L('빠른 매칭'); join.textContent = L('참가');
+        const mk = h('button.btn.small.gold'), quick = h('button.btn.small');
+        mk.textContent = L('방 만들기'); quick.textContent = L('빠른 매칭');
         mk.onclick = busy(mk, async () => { const r = await RaidOn.coopCreate(d); if (say(r)) lobby(r); });
         quick.onclick = busy(quick, async () => {
             const r = await RaidOn.coopQuick(d);
@@ -193,7 +191,7 @@
             if (r.none) { const c = await RaidOn.coopCreate(d); if (say(c)) lobby(c, true); return; }
             lobby(r);
         });
-        join.onclick = busy(join, async () => { if (code.value.trim().length < 6) { toast(L('코드 6자리를 입력해 주세요')); return; } const r = await RaidOn.coopJoin(code.value); if (say(r)) lobby(r); });
+        const joinCode = async code => { const r = await RaidOn.coopJoin(code); if (say(r)) { lobby(r); return true; } return false; };
         const wins = (RaidOn.st.coopWins || []).filter(x => !RaidOn.claimed('coop', x.diff));
         const seen = new Set();
         win.appendChild(h('div.rd-main.rd-fit',
@@ -202,17 +200,27 @@
                 h('div.tip', L('목숨은 함께, 금화·영웅·탑은 각자')),
                 h('div.tip', L('이기면 난이도마다 주 1번 보상 카드')),
                 wins.filter(x => !seen.has(x.diff) && seen.add(x.diff)).map(x => h('div.row', h('span', RAID_ON.diffs[x.diff].name), claimBtn('coop', x.id, x.diff, L('협동 디펜스 보상'))))),
-            finderBox('coop', d, h('div.rd-acts', quick, mk, h('span.rd-codebox', code, join)))));
+            finderBox('coop', d, mk, quick, joinCode)));
     }
 
     // ---------------------------------------------------------------- 파티 찾기: open rooms of opened difficulties, friends first
-    function finderBox(kind, sel, acts) {
+    function finderBox(kind, sel, mk, quick, joinCode) {
         const list = h('div.lg-list.rd-flist', UI.catLoad(null, 'sm'));
-        const again = h('button.btn.small', L('새로고침'));
+        const again = h('button.btn.small.rd-refresh', { title: L('새로고침'), html: '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg>' });
+        const count = h('span.tip', '');
+        const codeBtn = h('button.btn.small.ghost', { onclick: () => {
+            click();
+            const input = h('input.nick.rd-code', { maxLength: 6, placeholder: L('방 코드 6자리') });
+            const ok = h('button.btn.gold', L('참가'));
+            const d = modal([h('h2', L('코드로 참가')), input, h('div.row', h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기')), ok)], { dismiss: true });
+            ok.onclick = busy(ok, async () => { if (input.value.trim().length < 6) { toast(L('코드 6자리를 입력해 주세요')); return; } if (await joinCode(input.value)) d.remove(); });
+        } }, L('코드로 참가'));
         const load = async () => {
             const r = await RaidOn.openList(kind);
             list.innerHTML = '';
+            count.textContent = '';
             if (r.error) { list.appendChild(h('div.tip', RaidOn.errText(r.error))); return; }
+            count.textContent = ` (${r.length})`;
             const rows = r.slice().sort((a, b) => (b.diff === sel) - (a.diff === sel) || b.friend - a.friend || b.at - a.at);
             if (!rows.length) { list.appendChild(h('div.tip', L('지금 기다리는 방이 없어요. 방을 만들거나 빠른 매칭을 눌러 보세요'))); return; }
             for (const x of rows) {
@@ -231,7 +239,7 @@
         again.onclick = busy(again, load);
         load();
         return h('div.inset.rd-finder',
-            h('div.rd-fhead', h('b', kind === 'coop' ? L('협동 방 목록') : L('파티 목록')), again), acts || null, list);
+            h('div.rd-fhead', h('span.rd-flabel', kind === 'coop' ? L('협동 방 목록') : L('파티 목록'), count), h('div.rd-acts', codeBtn, mk, again, quick)), list);
     }
     // waiting room (협동 디펜스: 2 seats, 파티 레이드: 4): shows who is here, the host starts
     function lobby(room, quick) {

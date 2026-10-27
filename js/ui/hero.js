@@ -263,7 +263,7 @@
         const on = !!p.set.useGuard && n > 0;
         return h('div.btn.small' + (on ? '.gold' : ''), { onclick: () => {
             click();
-            if (!n) { toast(L('하락방지권이 없어요 (상점)')); return; }
+            if (!n) { toast(L('하락방지권이 없어요')); return; }
             p.set.useGuard = !p.set.useGuard; Save.save(); showHub('hero');
         } }, (on ? '\u2713 ' : '') + L('하락방지권 {0}개', n));
     }
@@ -273,7 +273,7 @@
         const on = !!p.set.useShield && n > 0;
         return h('div.btn.small' + (on ? '.gold' : ''), { onclick: () => {
             click();
-            if (!n) { toast(L('파괴방지권이 없어요 (상점)')); return; }
+            if (!n) { toast(L('파괴방지권이 없어요')); return; }
             p.set.useShield = !p.set.useShield; Save.save(); showHub('hero');
         } }, (on ? '\u2713 ' : '') + L('파괴방지권 {0}개', n));
     }
@@ -282,7 +282,7 @@
             h('div.ribbon.lose', h('span', L('장비 파괴'))),
             h('div.enh-stamp.fail', { style: { filter: 'grayscale(1) brightness(.6)' } }, itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '44px' } }, '+' + was)),
             h('div.bad', L('{0}이(가) 부서졌어요', itemName(it))),
-            h('div.tip', L('파괴방지권을 켜면 막을 수 있어요 (상점)')),
+            h('div.tip', L('파괴방지권을 켜면 막을 수 있어요')),
             h('button.btn', { onclick: () => { click(); d.remove(); } }, L('확인'))]);
     }
 

@@ -203,7 +203,7 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 .btn.signin { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; height: 44px; min-height: 0; padding: 0 44px; border-image: none; border-radius: 10px; font-size: 18px; text-shadow: none; }
 .btn.signin.guest { border: 2px solid #8a6a44; background: rgba(38, 26, 16, 0.88); color: #fff4dc; }
 .signin-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; }
-.signin-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.signin-txt { font-family: 'Jua', 'Noto Sans KR', 'Malgun Gothic', sans-serif; font-weight: 400; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* title while a signed-in account connects */
 .title-spin { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #fff4dc; text-shadow: 0 1px 3px #000; }
 .spinner { width: 42px; height: 42px; border-radius: 50%; border: 5px solid rgba(255, 244, 220, 0.25); border-top-color: #ffd36b; animation: spin 0.9s linear infinite; }
