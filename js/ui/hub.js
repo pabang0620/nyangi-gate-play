@@ -24,7 +24,7 @@
     const GAME_VERSION = '3.3.13';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
-    const SITE_URL = 'https://pabang0620.github.io/';   // developer home page (games, notices); the app hands external links to the phone's browser
+    const SITE_URL = 'https://pabang0620.github.io/nyangi-gate/';   // game intro page (hosted in the developer site repo); the app hands external links to the phone's browser
 
     // home page: a new tab on the web, the phone's browser in the app (MainActivity sends non-game hosts out)
     function openSite() {
