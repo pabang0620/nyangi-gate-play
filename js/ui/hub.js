@@ -24,6 +24,13 @@
     const GAME_VERSION = '3.3.13';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
+    const SITE_URL = 'https://pabang0620.github.io/';   // developer home page (games, notices); the app hands external links to the phone's browser
+
+    // home page: a new tab on the web, the phone's browser in the app (MainActivity sends non-game hosts out)
+    function openSite() {
+        if (/NyangiApp/.test(navigator.userAgent)) location.href = SITE_URL;
+        else window.open(SITE_URL, '_blank', 'noopener');
+    }
 
     // first start (and after a material change): agree to the terms and the privacy policy before playing
     function consentThen(next) {
@@ -282,6 +289,7 @@
         colR.appendChild(h('div.set-help',
             h('button.btn.small.gold', { onclick: () => { click(); howToModal(); } }, L('게임 방법')),
             h('button.btn.small', { onclick: () => { click(); UI.openMail(); } }, L('쿠폰 입력')),
+            h('button.btn.small', { onclick: () => { click(); openSite(); } }, L('홈페이지')),
             h('button.btn.small', { onclick: () => { click(); confirmBox(L('처음 했을 때 나오던 안내와 설명을 다시 보여 줍니다.'), () => { p.seenTips = {}; Save.save(); toast(L('안내를 다시 볼 수 있습니다. 지도에서 시작하세요')); }); } }, L('튜토리얼 다시 보기')),
             h('button.btn.small.touch-help', { onclick: () => { click(); touchHelpModal(); } }, L('조작 방법'))));
         const pol = (file, name) => h('button.btn.small', { onclick: () => { click(); UI.policyModal(file, name); } }, name);

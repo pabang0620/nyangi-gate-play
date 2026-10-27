@@ -137,7 +137,7 @@ const UI = {};
 
     // ------------------------------------------------------------ modal helpers
     function modal(content, opts = {}) {
-        const d = h('div.dim', h('div.paper.modal', content));
+        const d = h('div.dim', h('div.paper.modal' + (opts.cls ? '.' + opts.cls : ''), content));
         if (opts.dismiss) d.addEventListener('click', e => { if (e.target === d) d.remove(); });
         root().appendChild(d);
         // ribbon titles grow the band up to the popup width, then shrink to fit

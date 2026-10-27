@@ -154,23 +154,22 @@
         const err = errLine();
         const linked = Online.isLinked();
         const reopen = () => { d.remove(); profileModal(then); };
+        const saveBtn = h('button.btn.small.gold', { onclick: async () => {
+            click();
+            if (!Online.on) { err.textContent = L('인터넷에 연결되지 않았어요'); return; }
+            try {
+                const sk = p.shop && p.shop.skin ? p.shop.skin[p.hero] : null;
+                await UI.waitCat(Online.setProfile(input.value.trim(), p.hero, sk)); Save.save();
+                d.remove(); toast(L('프로필을 저장했습니다')); if (then) then(); else showHub(UI.S.tab);
+            } catch (e) { err.textContent = e.message; }
+        } }, L('저장'));
         const d = modal([h('h2', L('프로필 · 계정')),
             h('div.prof-row', (() => { const a = img(heroFace(p.hero, p.shop && p.shop.skin[p.hero]), '.prof-pic'); a.style.background = avatarBg(); return a; })(),
                 h('div', { style: { flex: 1 } },
-                    h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } }, input, pr ? h('span.tip', '#' + pr.tag) : null),
+                    h('div.prof-name', input, pr ? h('span.tip', '#' + pr.tag) : null, saveBtn),
                     h('div.tip', L('랭킹과 리그에서 다른 냥이에게 보이는 이름과 대표 영웅(현재 영웅·스킨)입니다.')),
                     pr ? h('div', { style: { marginTop: '6px' } }, L('리그 등급 '), tierBadge(pr.tier || 0)) : null)),
             err,
-            h('div.row', { style: { gap: '10px', justifyContent: 'center' } },
-                h('button.btn.gold', { onclick: async () => {
-                    click();
-                    if (!Online.on) { err.textContent = L('인터넷에 연결되지 않았어요'); return; }
-                    try {
-                        const sk = p.shop && p.shop.skin ? p.shop.skin[p.hero] : null;
-                        await UI.waitCat(Online.setProfile(input.value.trim(), p.hero, sk)); Save.save();
-                        d.remove(); toast(L('프로필을 저장했습니다')); if (then) then(); else showHub(UI.S.tab);
-                    } catch (e) { err.textContent = e.message; }
-                } }, L('저장'))),
             h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.7 } },
                 h('b', L('내 계정')),
                 h('div', accountLine()),
@@ -186,7 +185,7 @@
                     try { await UI.waitCat(Online.deleteAccount()); } catch (e) { toast(e.message); }
                 });
             } }, L('계정 및 데이터 삭제')) : null,
-            h('button.btn.ghost', { style: { marginTop: '8px' }, onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
+            h('button.btn.ghost', { style: { marginTop: '8px' }, onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true, cls: 'prof-modal' });
     }
 
     // guests: why and how to link (title line, settings, the one-time nudge)

@@ -39,11 +39,11 @@
         const listBtn = h('button.btn.gold', { onclick: () => { click(); listModal(); } }, L('친구 목록'));
         const invites = h('div', { style: { width: '100%' } });
         live(modal([h('h2', L('친구')),
-            h('div', L('내 친구 코드 '), h('b.res-num', myTag), ' ', copy),
+            h('div.lg-row.fr-code', h('span.lg-name', L('내 친구 코드 '), h('b.res-num', myTag)), copy),
             h('div.tip', L('친구에게 이 코드를 알려 주거나, 친구 신청에서 친구의 코드를 입력하세요')),
-            h('div.row', { style: { gap: '10px', justifyContent: 'center', margin: '8px 0' } }, reqBtn, listBtn),
+            h('div.row.fr-btns', reqBtn, listBtn),
             invites,
-            closeBtn()], { dismiss: true }), st => {
+            closeBtn()], { dismiss: true, cls: 'fr-modal' }), st => {
             // counts on the two buttons: requests waiting for me, friends
             const n = st ? st.incoming.length : 0;
             reqBtn.replaceChildren(L('친구 신청'), n ? h('span.badge', String(n)) : '');
@@ -57,8 +57,8 @@
         });
     }
 
-    const sec = t => h('b', { style: { display: 'block', margin: '10px 0 4px' } }, t);
-    const listBox = () => h('div', { style: { maxHeight: '52vh', overflowY: 'auto', width: '100%' } }, UI.catLoad(null, 'sm'));
+    const sec = t => h('b', { style: { display: 'block', margin: '10px 0 4px', textAlign: 'left' } }, t);
+    const listBox = () => h('div.fr-list', { style: { maxHeight: '52vh', overflowY: 'auto', width: '100%' } }, UI.catLoad(null, 'sm'));
     const opened = [];
     function closeTop(el) { const d = opened.find(x => x.contains(el)); if (d) d.remove(); }
     function closeAll() { opened.splice(0).forEach(d => d.remove()); }
@@ -88,8 +88,8 @@
         const body = listBox();
         live(modal([h('h2', L('친구 신청')),
             h('div.tip', L('친구의 코드(닉네임#태그)를 입력하세요')),
-            h('div.row', { style: { gap: '8px' } }, input, add),
-            body, closeBtn()], { dismiss: true }), st => {
+            h('div.row.fr-add', input, add),
+            body, closeBtn()], { dismiss: true, cls: 'fr-modal' }), st => {
             body.innerHTML = '';
             if (!st) { body.appendChild(h('div.tip', L('친구 목록을 불러오지 못했어요'))); return; }
             body.appendChild(sec(L('받은 신청 {0}', st.incoming.length)));
@@ -114,14 +114,13 @@
     // 친구 목록: my friends, latest seen first
     function listModal() {
         const body = listBox();
-        live(modal([h('h2', L('친구 목록')), body, closeBtn()], { dismiss: true }), st => {
+        live(modal([h('h2', L('친구 목록')), body, closeBtn()], { dismiss: true, cls: 'fr-modal' }), st => {
             body.innerHTML = '';
             if (!st) { body.appendChild(h('div.tip', L('친구 목록을 불러오지 못했어요'))); return; }
             body.appendChild(sec(L('친구 {0} / {1}', st.friends.length, st.max)));
             if (!st.friends.length) body.appendChild(h('div.tip', L('아직 친구가 없어요. 친구 코드로 신청해 보세요')));
             else body.appendChild(h('div.lg-list', st.friends.slice().sort((a, b) => (b.seen || 0) - (a.seen || 0)).map(f => row(f,
-                h('span.tip', f.highest >= 0 ? L('최고 {0}', stageLabel(f.highest)) : L('기록 없음')),
-                h('span.tip', seenText(f.seen)),
+                h('span.tip.lg-meta', f.highest >= 0 ? L('최고 {0}', stageLabel(f.highest)) : L('기록 없음'), h('br'), seenText(f.seen)),
                 h('button.btn.small.ghost', { onclick: () => { click(); UI.confirmBox(L('{0}#{1} 님을 친구에서 삭제할까요?', f.name, f.tag), async () => { say(await Friends.remove(f.uid)); }); } }, L('삭제'))))));
         });
     }
@@ -157,7 +156,7 @@
         const need = RAID_ON.diffs[diff] ? RAID_ON.diffs[diff].eq : 0;   // the friend must have cleared this stage to enter the difficulty
         const list = h('div.lg-list', { style: { maxHeight: '48vh', overflowY: 'auto' } }, UI.catLoad(null, 'sm'));
         const d = modal([h('h2', L('친구 초대')), h('div.tip', L('{0} 코드 {1}로 초대해요 · 10분 동안 유효', KIND[kind](), code)), list,
-            h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
+            h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true, cls: 'fr-modal' });
         Friends.refresh().then(st => {
             list.innerHTML = '';
             if (!st || !st.friends.length) { list.appendChild(h('div.tip', L('아직 친구가 없어요. 메뉴의 친구에서 신청해 보세요'))); return; }

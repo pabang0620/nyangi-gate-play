@@ -1144,6 +1144,7 @@ I18N['en'] = {
     "상위 1%": "Top 1%",
     "참가": "Entry",
     "코드로 참가": "Join by code",
+    "홈페이지": "Website",
     "일반": "Common",
     "희귀": "Rare",
     "영웅##등급": "Epic",

@@ -274,3 +274,24 @@
 .fr-cnt { color: #fff4dc; font-size: .8em; }
 #app.mobile .rd-bigico { display: none; }   /* the side panel is short on a phone: keep all of its text visible */
 #app.mobile .rd-left { font-size: 17px; gap: 4px; }
+
+/* friend popups: one width, rows in columns (picture, tier, name, details, buttons) */
+.fr-modal { width: 580px; max-width: calc(100% - 24px); min-width: 0; }
+.fr-modal .lg-list { width: 100%; max-height: 190px; margin: 4px 0; }
+.fr-modal .lg-row { text-align: left; }
+.fr-modal .lg-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fr-modal .lg-meta { text-align: right; line-height: 1.25; white-space: nowrap; font-size: .85em; }
+.fr-code { width: 100%; box-sizing: border-box; }
+.fr-btns, .fr-add { width: 100%; flex-wrap: nowrap !important; }
+.fr-btns .btn { flex: 1; min-width: 0; }
+.fr-add .nick { flex: 1; min-width: 0; width: auto; }
+/* profile popup: nickname + save on one line, boxes aligned left at one width */
+.prof-modal { width: 640px; max-width: calc(100% - 24px); min-width: 0; }
+.prof-modal .prof-row { width: 100%; box-sizing: border-box; }
+.prof-modal .prof-row > div { min-width: 0; }
+.prof-name { display: flex; gap: 8px; align-items: center; }
+.prof-name .nick { flex: 1; min-width: 0; width: auto; }
+.prof-modal .inset { width: 100%; box-sizing: border-box; text-align: left; }
+.prof-modal .inset .row { justify-content: flex-start !important; }
+.prof-modal .perk-row { display: flex; justify-content: space-between; gap: 10px; }
+.fr-list .tip { text-align: left; }

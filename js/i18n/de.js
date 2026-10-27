@@ -1144,6 +1144,7 @@ I18N['de'] = {
     "상위 1%": "Top 1%",
     "참가": "Teilnahme",
     "코드로 참가": "Mit Code beitreten",
+    "홈페이지": "Webseite",
     "일반": "Gewöhnlich",
     "희귀": "Selten",
     "영웅##등급": "Episch",
