@@ -49,7 +49,7 @@
     function perksBox(p) {
         const sh = p.shop || {}, has = v => v ? h('b.perk-on', L('보유 중')) : h('span.tip', L('없음'));
         const row = (k, v) => h('div.perk-row', h('span', PRODUCTS[k].name), v);
-        return h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.7 } },
+        return h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.4 } },
             h('b', L('내 구독·혜택')),
             row('monthly', sh.monthlyLeft > 0 ? h('b.perk-on', L('남은 {0}일', sh.monthlyLeft)) : h('span.tip', L('없음'))),
             row('premium', has(sh.premium)),
@@ -170,7 +170,7 @@
                     h('div.tip', L('랭킹과 리그에서 다른 냥이에게 보이는 이름과 대표 영웅(현재 영웅·스킨)입니다.')),
                     pr ? h('div', { style: { marginTop: '6px' } }, L('리그 등급 '), tierBadge(pr.tier || 0)) : null)),
             err,
-            h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.7 } },
+            h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.4 } },
                 h('b', L('내 계정')),
                 h('div', accountLine()),
                 h('div.tip', linked ? L('진행은 자동으로 저장돼요. 다른 기기에서도 이어서 할 수 있어요') : L('진행은 이 기기에 자동으로 저장돼요')),
@@ -185,6 +185,7 @@
                     try { await UI.waitCat(Online.deleteAccount()); } catch (e) { toast(e.message); }
                 });
             } }, L('계정 및 데이터 삭제')) : null,
+            h('button.btn.small.ghost.quiet', { onclick: () => { click(); UI.legalModal(); } }, L('약관 · 정보')),
             h('button.btn.ghost', { style: { marginTop: '8px' }, onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true, cls: 'prof-modal' });
     }
 
@@ -193,9 +194,9 @@
         const err = errLine();
         const buy = nudge === 'buy';
         const d = modal([h('h2', buy ? L('구매하려면 계정 연동이 필요해요') : nudge ? L('진행을 지켜 주세요') : L('계정 연동')),
-            buy ? h('div', { style: { margin: '4px 0 8px', textAlign: 'center', lineHeight: 1.6 } }, L('게스트 계정은 구매할 수 없어요.'), h('br'),
+            buy ? h('div', { style: { margin: '4px 0 8px', textAlign: 'center', lineHeight: 1.4 } }, L('게스트 계정은 구매할 수 없어요.'), h('br'),
                 L('구매 기록이 계정에 남아야 환불하거나 다른 기기에서 이어서 받을 수 있어요.'))
-            : h('div', { style: { margin: '4px 0 8px', textAlign: 'center', lineHeight: 1.6 } }, L('지금은 게스트 계정이라 앱을 지우거나 기기를 바꾸면 진행을 잃을 수 있어요.'), h('br'),
+            : h('div', { style: { margin: '4px 0 8px', textAlign: 'center', lineHeight: 1.4 } }, L('지금은 게스트 계정이라 앱을 지우거나 기기를 바꾸면 진행을 잃을 수 있어요.'), h('br'),
                 L('연동해 두면 다른 기기와 웹에서도 그대로 이어서 할 수 있어요.')),
             linkButtons(err, () => { d.remove(); toast(L('이제 다른 기기에서도 이어서 할 수 있어요')); }),
             err,

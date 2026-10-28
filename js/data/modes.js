@@ -49,7 +49,7 @@ const RAID = {
 // 온라인 레이드 (docs/PLAN_ONLINE_RAID.md, server 20261018000000_raid.sql). The server's game_config 'raid' decides cards, HP and caps;
 // these copies are for display and the battle setup. Points = damage / the 보스 토벌전 reference x 100 (an on-level run is about 150).
 const RAID_ON = {
-    diffs: [{ name: L('일반'), eq: 17 }, { name: L('어려움'), eq: 29 }, { name: L('지옥'), eq: 41 }, { name: L('악몽'), eq: 53 }],
+    diffs: [{ name: L('일반'), eq: 17, power: 1700 }, { name: L('어려움'), eq: 29, power: 4000 }, { name: L('지옥'), eq: 41, power: 6600 }, { name: L('악몽'), eq: 53, power: 10100 }],   // power: 권장 전투력 = Meta.power of a player at that stage (tools/balance.js profileFor, +10 gear)
     medals: [20, 35, 55, 80],
     // 파티 레이드: 1~4 players fight one boss live (lockstep like 협동 디펜스) on the 보스 토벌전 map, 3 entries a week.
     // Boss health = hp[difficulty][players - 1] x Meta.raidRef(boss, strength); killing it before it reaches the gate wins. walk[players - 1] is the
@@ -57,7 +57,7 @@ const RAID_ON = {
     // Tuned with tools/praidbalance.js: free players who just opened the difficulty fail alone and in any party (up to 4),
     // a paying player helps three fresh ones. Alone gets a longer clock (time[0]) and a much tougher boss so a solo clear
     // takes a paying player 300s+ and a party is always faster; a free player a week on (8 stages) only sometimes clears 일반 alone.
-    party: { tries: 3, size: 4, walk: [220, 120, 120, 120], time: [600, 600, 600, 600], startGold: [1, 0.8, 0.7, 0.6], goldShare: 0.5, enrage: 0.4, enrageSpd: 1.4, enrageCd: 0.7,
+    party: { tries: 3, size: 4, dripShare: 0.4, walk: [220, 120, 120, 120], time: [600, 600, 600, 600], startGold: [1, 0.8, 0.7, 0.6], goldShare: 0.5, enrage: 0.4, enrageSpd: 1.4, enrageCd: 0.7,
         hp: [[5.2, 4.9, 6.1, 9.2], [7.9, 7.2, 8.9, 12.5], [9.7, 8.5, 9.1, 13.5], [4.3, 5.2, 6.6, 10.8]] },
     world: { runCap: 600, tries: 3 },
     pity: { leg: 10, myth: 40 },

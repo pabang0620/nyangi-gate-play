@@ -18,21 +18,23 @@
         const p = Save.p, cls = p.hero, hs = heroStats(p, cls), hd = p.heroes[cls];
         const win = h('div.panel.win');
         const left = h('div.inset.hero-left');
+        left.appendChild(h('div.tip.classpick-l', L('출전 영웅 고르기')));
         left.appendChild(h('div.classpick', Object.keys(HEROES).map(c =>
-            h('button.btn.small' + (c === cls ? '.gold' : '.ghost'), { onclick: () => { click(); p.hero = c; Save.save(); showHub('hero'); } }, HEROES[c].name))));
+            h('button.btn.small.cp' + (c === cls ? '.gold' : '.ghost'), { onclick: () => { click(); p.hero = c; Save.save(); showHub('hero'); } }, h('span', HEROES[c].name), h('span.cp-r', HERO_GUIDE[c][0])))));
         const port = h('div', { style: { display: 'flex', gap: '12px', alignItems: 'center' } },
             h('div.portrait', { style: { width: '100px', height: '100px' }, title: L('배경색 바꾸기'), onclick: () => { click(); avatarBgModal(); } },
                 (() => { const a = img(heroFace(cls, Save.p.shop && Save.p.shop.skin[cls])); a.style.background = avatarBg(); return a; })(), h('span.av-edit', L('배경'))),
             h('div.hl-info',
-                h('div', { style: { fontSize: '22px', color: '#f5c451', fontFamily: 'BlackHan', textShadow: 'var(--stroke-s)' } }, `${HERO_NAMES[cls]} (${HEROES[cls].name})  Lv.${hd.lv}`),
+                h('div', { style: { fontSize: '20px', color: '#f5c451', fontFamily: 'BlackHan', textShadow: 'var(--stroke-s)' } }, `${HERO_NAMES[cls]} (${HEROES[cls].name})  Lv.${hd.lv}`),
                 h('div.tip', HEROES[cls].desc),
+                h('div.tip.hl-pc', h('span.pro', L('장점 ') + HERO_GUIDE[cls][1]), h('span.con', L('단점 ') + HERO_GUIDE[cls][2])),
                 h('div.bar.xp', { style: { marginTop: '6px' } }, h('i', { style: { width: (hd.lv >= HERO_MAX_LV ? 100 : hd.xp / heroXpNeed(hd.lv) * 100) + '%' } })),
                 h('div.tip', hd.lv >= HERO_MAX_LV ? L('최고 레벨') : L('경험치 {0} / {1}', hd.xp, heroXpNeed(hd.lv)))));
         left.appendChild(port);
         // shared-gear and synergy notes under the portrait row, full width (they crowded the narrow column beside it)
         left.appendChild(h('div.hl-notes',
-                h('div.tip', { style: { fontSize: '13px' } }, L('장비는 세 영웅이 같이 써요')),
-                h('div.tip', { style: { fontSize: '13px' } }, L('시너지: 기사·마법사가 묶은 적에게 영웅이 강해져요 · 마법사는 아군 회복'))));
+                h('div.tip', { style: { fontSize: '12px' } }, L('장비는 세 영웅이 같이 써요')),
+                h('div.tip.hl-syn', { style: { fontSize: '13px' } }, L('시너지 · {0}', SYNERGY_TEXT[cls]))));
         Rewards.ensure(p);
         // skins: the collection button, then default + owned ones (best grade first) in a scrolling row
         const owned = SKINS[cls].filter(s => p.shop.skins.includes(s.id)).sort((a, b2) => b2.r - a.r).map(s => s.id);
@@ -63,7 +65,7 @@
         right.appendChild(h('div.equiprow', h('div.eqlabel', L('장착')),
             SLOTS.map(s => { const it = itemById(p.equip[s]); return it ? itemCell(it, { onclick: () => { S.selItem = it.id; showHub('hero'); }, sel: S.selItem === it.id }) : h('div.cell', { style: { opacity: .5 } }, Art.domCanvas(Art.icon(s), 3)); })));
         right.appendChild(h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
-            h('div', { style: { fontSize: '20px', color: '#f5c451', fontFamily: 'BlackHan' } }, L('가방 {0}/{1}', p.items.length, BAG_MAX)), h('div', { style: { flex: 1 } }),
+            h('div', { style: { fontSize: '18px', color: '#f5c451', fontFamily: 'BlackHan' } }, L('가방 {0}/{1}', p.items.length, BAG_MAX)), h('div', { style: { flex: 1 } }),
             h('button.btn.small.gold', { onclick: () => { click(); bestGearPreview(cls); } }, L('최적 장착')),
             h('button.btn.small', { onclick: () => { click(); UI.fuseModal(); } }, L('합성')),
             h('button.btn.small', { onclick: () => { click(); salvageModal(); } }, L('일괄 분해'))));
@@ -118,6 +120,31 @@
     }
 
     // a skin is shown big first (that is the only way to tell which one it is); equipping needs the button
+    // how a skin looks in a fight: the hero sprite walking a road, with its trail (paw prints / afterimages) when it has one. Visual only.
+    function skinGamePreview(cls, id) {
+        const W2 = 320, H2 = 120, c = document.createElement('canvas'); c.width = W2; c.height = H2; c.className = 'skp-game';
+        const x = c.getContext('2d'), sp = heroSprite(cls, id), cfg = id && typeof skinTrail === 'function' ? skinTrail(id) : null;
+        const bg = Art.gen('bg_grass'), SC = 2, T0 = performance.now(), paws = [];
+        let lastPaw = -99;
+        const draw = now => {
+            if (!c.isConnected && now - T0 > 300) return;
+            const t = (now - T0) / 1000, k = (t % 4.2) / 4.2, hx = -20 + k * (W2 + 40), hy = 84 + Math.sin(t * 2.2) * 2;
+            x.clearRect(0, 0, W2, H2);
+            if (bg) x.drawImage(bg.img, 0, 0, bg.img.width, bg.img.height, 0, 0, W2, H2); else { x.fillStyle = '#6a9a3a'; x.fillRect(0, 0, W2, H2); }
+            x.fillStyle = '#c8a06a'; x.fillRect(0, 70, W2, 30); x.fillStyle = 'rgba(80,50,20,.35)'; x.fillRect(0, 70, W2, 2); x.fillRect(0, 98, W2, 2);
+            if (cfg && cfg.paw && hx - lastPaw > 22) { lastPaw = hx; paws.push({ x: hx, y: hy + 4 + (paws.length % 2 ? 4 : -4), t }); if (paws.length > 12) paws.shift(); }
+            if (k < 0.02) lastPaw = -99;
+            for (const p of paws) { const a = 1 - (t - p.t) / 1.2; if (a <= 0 || p.x > hx) continue; x.fillStyle = `rgba(60,40,20,${a * 0.6})`; x.beginPath(); x.ellipse(p.x, p.y, 4, 3, 0, 0, TAU); x.fill(); }
+            const wd = Math.round(sp.w * SC), ht = Math.round(sp.h * SC), bob = Math.abs(Math.sin(t * 7)) * 3;
+            if (cfg && cfg.ghost) for (let g = 3; g >= 1; g--) { x.globalAlpha = 0.18 * (4 - g) / 3; x.drawImage(sp.img, Math.round(hx - g * 14 - wd / 2), Math.round(hy - ht - bob), wd, ht); }
+            x.globalAlpha = 1; x.fillStyle = 'rgba(0,0,0,.28)'; x.beginPath(); x.ellipse(hx, hy + 2, 14, 5, 0, 0, TAU); x.fill();
+            x.drawImage(sp.img, Math.round(hx - wd / 2), Math.round(hy - ht - bob), wd, ht);
+            requestAnimationFrame(draw);
+        };
+        requestAnimationFrame(draw);
+        return h('div.skp-gamebox', c, h('div.tip', L('인게임 모습')));
+    }
+
     function skinPreview(cls, id, after) {
         const p = Save.p, s = id ? skinById(id) : null, on = (p.shop.skin[cls] || null) === (id || null);
         const own = !id || p.shop.skins.includes(id);   // the shop can open this for a skin that is not bought yet
@@ -129,6 +156,7 @@
                     h('div.skp-n', { style: { color: s ? RARITY[s.r].color : '#d8c4a0' } }, s ? s.name : L('기본')),
                     s ? h('div.tip', RARITY[s.r].name, ' \u00b7 ', skinOpt(s).text) : null,
                     s && t.short ? h('div.sknote.t-' + skinTierId(s), t.short) : null)),
+            skinGamePreview(cls, id),
             h('div.row',
                 !own ? null : on ? h('button.btn.off', L('착용 중'))
                     : h('button.btn.gold', { onclick: () => { click(); Rewards.equipSkin(cls, id || null); d.remove(); if (after) after(); else showHub('hero'); } }, L('착용')),
@@ -190,9 +218,9 @@
         box.appendChild(h('div', { style: { display: 'flex', gap: '14px' } },
             itemCell(it, { noNew: true }),
             h('div', { style: { flex: 1 } },
-                h('div', { style: { fontSize: '19px', color: RARITY[it.r].color } }, `${itemName(it)}${it.enh ? ' +' + it.enh : ''}`),
+                h('div', { style: { fontSize: '17px', color: RARITY[it.r].color } }, `${itemName(it)}${it.enh ? ' +' + it.enh : ''}`),
                 h('div.muted', L('{0} {1} · 아이템 레벨 {2}', RARITY[it.r].name, SLOT_NAME[it.slot], itemLv(it))),
-                it.mid ? h('div', { style: { color: '#7fe0d0', fontSize: '13px' } }, it.enh ? L('거래 가능 장비 (강화하지 않은 상태로만 팔 수 있어요)') : L('거래 가능 장비 · 거래소에서 팔 수 있어요')) : null,
+                it.mid ? h('div', { style: { color: '#7fe0d0', fontSize: '12px' } }, it.enh ? L('거래 가능 장비 (강화하지 않은 상태로만 팔 수 있어요)') : L('거래 가능 장비 · 거래소에서 팔 수 있어요')) : null,
                 h('div', { style: { color: '#f5c451' } }, fmtOpt(main.name, main.v, main.pct), cmp),
                 it.subs.map(sb => h('div', fmtOpt(SUB_OPTS[sb.k].name, sb.v, SUB_OPTS[sb.k].pct))),
             ),
@@ -220,7 +248,7 @@
         if (((p.mats && p.mats.stone) || 0) < enhanceStones(it.enh)) { toast(L('강화석이 {0}개 필요합니다 (요일 도전 강화석 채굴장)', enhanceStones(it.enh))); Sfx.play('click'); return; }
         const risky = it.enh >= ENHANCE.dropFrom;
         const hits = it.enh < 5 ? 1 : it.enh < ENHANCE.dropFrom ? 2 : 3, gap = it.enh < 5 ? 160 : it.enh < ENHANCE.dropFrom ? 260 : 420;
-        const d = modal([h('div.title-t', L('강화 중...')), h('div#anvil', { style: { transition: 'transform .08s' } }, itemCell(it, { noNew: true })), h('div#ehit', { style: { fontSize: '30px', height: '36px' } }, '')]);
+        const d = modal([h('div.title-t', L('강화 중...')), h('div#anvil', { style: { transition: 'transform .08s' } }, itemCell(it, { noNew: true })), h('div#ehit', { style: { fontSize: '28px', height: '36px' } }, '')]);
         const cellBox = d.querySelector('#anvil'), hit = d.querySelector('#ehit');
         let n = 0;
         const iv = setInterval(() => {
@@ -280,7 +308,7 @@
     function enhanceDestroyed(it, was) {
         const d = modal([
             h('div.ribbon.lose', h('span', L('장비 파괴'))),
-            h('div.enh-stamp.fail', { style: { filter: 'grayscale(1) brightness(.6)' } }, itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '44px' } }, '+' + was)),
+            h('div.enh-stamp.fail', { style: { filter: 'grayscale(1) brightness(.6)' } }, itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '42px' } }, '+' + was)),
             h('div.bad', L('{0}이(가) 부서졌어요', itemName(it))),
             h('div.tip', L('파괴방지권을 켜면 막을 수 있어요')),
             h('button.btn', { onclick: () => { click(); d.remove(); } }, L('확인'))]);
@@ -293,7 +321,7 @@
         const SILVER = [100000, 500000, 2000000, 10000000, Infinity], STONE = [0, 10, 30, 100, Infinity];
         let si = SILVER.indexOf(A.silver) >= 0 ? SILVER.indexOf(A.silver) : 1, ti = STONE.indexOf(A.stones) >= 0 ? STONE.indexOf(A.stones) : 2;
         const lbl = v => v === Infinity ? L('제한 없음') : fmtShort(v);
-        const tgt = h('div.num', { style: { fontSize: '30px', minWidth: '70px', textAlign: 'center' } });
+        const tgt = h('div.num', { style: { fontSize: '28px', minWidth: '70px', textAlign: 'center' } });
         const sRow = h('div.row'), tRow = h('div.row');
         const draw = () => {
             tgt.textContent = '+' + target;
@@ -319,7 +347,7 @@
                     Sfx.play(it.enh > run.start ? 'enhanceOk' : 'enhanceFail');
                     const why = { done: L('목표 달성!'), silverCap: L('은화 한도에서 멈춤'), stoneCap: L('강화석 한도에서 멈춤'), short: L('재화가 부족해 멈춤'), risk: L('파괴 위험 구간에서 멈춤') }[run.why] || '';
                     const m = modal([h('div.ribbon' + (it.enh > run.start ? '' : '.lose'), h('span', why)),
-                        h('div.enh-stamp', itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '44px' } }, '+' + it.enh)),
+                        h('div.enh-stamp', itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '42px' } }, '+' + it.enh)),
                         h('div.enh-step' + (it.enh > run.start ? '.up' : '.same'), h('span', '+' + run.start), h('b', ' \u25B6 '), h('span', '+' + it.enh)),
                         h('div', L('{0}번 시도 · 성공 {1} · 하락 {2}', run.tries, run.ok, run.drops) + (run.guards ? L(' · 방지권 {0}개 사용', run.guards) : '') + (run.shields ? L(' · 파괴방지 {0}개 사용', run.shields) : '')),
                         h('div', ico('silver', 18), ' ', fmt(run.silver), run.stones ? h('span', '  ', img('i_stone', '.icon'), ' ', run.stones) : null),
@@ -407,6 +435,7 @@
             tab('gear', Art.domCanvas(Art.icon('weapon'), 1.5), L('장비 소환')),
             tab('skin', img(heroFace('mage', 'mage_star'), '.sm-tabpic'), L('스킨 소환')),
             h('div', { style: { flex: 1 } }),
+            skin ? h('button.btn.small', { onclick: () => { click(); showHub('hero'); skinBook(Save.p.hero); } }, L('스킨 보러가기')) : null,
             h('button.btn.small.ghost', { onclick: () => { click(); UI.probModal(); } }, L('확률 정보'))));
         const left = h('div.inset.sm-left'), right = h('div.sm-right');
         const rate = (r, face, v) => h('div.sm-rate', h('div.cell.r' + r, face), h('div.rn', { style: { color: RARITY[r].color } }, RARITY[r].name), h('div.num', v + '%'));
@@ -416,8 +445,10 @@
             // gear type: random, or pick weapon / armor / charm (same price, same grade rates)
             left.appendChild(h('div.sm-slots', [['any', L('전체 (무작위)')], ...SLOTS.map(k => [k, SLOT_NAME[k]])].map(([k, nm]) =>
                 h('div.btn.small' + (slot === k ? '.gold' : ''), { onclick: () => { if (slot === k) return; click(); S.summonSlot = k; showHub('summon'); } },
-                    k === 'any' ? null : Art.domCanvas(Art.icon(k), 1.6), nm))));
-            left.appendChild(h('div.sm-rates', RARITY.map((r, i) => rate(i, Art.domCanvas(Art.icon(slot === 'any' ? 'weapon' : slot), 3), SUMMON.table[i]))));
+                    k === 'any' ? null : Art.domCanvas(Art.icon(k === 'weapon' ? 'weapon_sword' : k), 1.6), nm))));
+            // the weapon is shown in all three forms (sword, staff, bow): the gear is not tied to one hero
+            const weaponTrio = () => h('div.sm-trio', ['weapon_sword', 'weapon_staff', 'weapon_bow'].map(k => Art.domCanvas(Art.icon(k), 1.7)));
+            left.appendChild(h('div.sm-rates', RARITY.map((r, i) => rate(i, slot === 'any' || slot === 'weapon' ? weaponTrio() : Art.domCanvas(Art.icon(slot), 3), SUMMON.table[i]))));
             left.appendChild(h('div.tip', L('{0}번째 소환까지 전설이 없으면 전설 확정 (현재 {1}/{2})', SUMMON.pity, p.pity, SUMMON.pity)));
             left.appendChild(h('div.tip', L('현재 소환 장비 레벨 {0} (최고 클리어 스테이지가 높을수록 올라갑니다)', Math.round(summonIlvl(p)))));
             right.appendChild(h('div.sm-pair',
@@ -528,9 +559,16 @@
             if (!allSeen()) { notYet(); return; }
             click(); d.remove(); showHub('summon');
         } }, L('확인'));
+        // 모두 열기: turn every closed card at once (no charge-up, no spotlight), for 10-pull lists
+        const allBtn = h('button.btn', { onclick: () => {
+            if (!dealt) return;
+            click();
+            els.forEach(c => { if (!c.classList.contains('open')) { c.pending = false; open(c, false); } });
+        } }, L('모두 열기'));
         const d = modal([h('div.title-t', L('소환 결과')), cards,
             res.some(x => x.dup) ? h('div.tip', L('이미 가진 스킨은 보석으로 바뀌었습니다')) : null,
-            h('div.row', againBtn, okBtn)]);
+            h('div.row', res.length > 1 ? allBtn : null, againBtn, okBtn)]);
+        if (res.length > 1) { const iv = setInterval(() => { if (!document.body.contains(d)) { clearInterval(iv); return; } allBtn.style.display = els.every(c => c.classList.contains('open')) ? 'none' : ''; }, 250); }
         if (calm) d.classList.add('calm');
         const els = res.map((x, i) => {
             const hi = x.r >= 2;
@@ -683,7 +721,7 @@
             h('span', '+' + was), h('b', ok ? ' \u25B6 ' : dropped ? ' \u25BC ' : ' = '), h('span', '+' + it.enh));
         const d = modal([
             h('div.ribbon' + (ok ? '' : '.lose'), h('span', ok ? L('강화 성공!') : L('강화 실패'))),
-            h('div.enh-stamp' + (ok ? '' : '.fail'), itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '44px' } }, '+' + it.enh)),
+            h('div.enh-stamp' + (ok ? '' : '.fail'), itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '42px' } }, '+' + it.enh)),
             step,
             h('div', fmtOpt(main.name, main.v, main.pct)),
             dropped ? h('div.bad', L('1단계 하락했습니다')) : null,
@@ -706,5 +744,5 @@
         }
     }
 
-    Object.assign(UI, { tabHero, itemDetail, enhanceAnim, enhanceResult, autoEnhanceModal, salvageModal, tabResearch, tabSummon, runSummon, runSkinSummon, bigReveal, skinBook, skinPreview });
+    Object.assign(UI, { tabHero, skinBook, itemDetail, enhanceAnim, enhanceResult, autoEnhanceModal, salvageModal, tabResearch, tabSummon, runSummon, runSkinSummon, bigReveal, skinBook, skinPreview });
 })();

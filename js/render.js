@@ -240,6 +240,12 @@ const Render = (() => {
 
         // projectiles
         for (const p of B.projs) {
+            if (p.trail && p.trail.length > 2 && !p.dur) {          // streak behind arrows, bolts and orbs
+                const col = p.kind === 'bolt' ? '255,224,128' : p.kind === 'frostorb' ? '160,240,255' : p.kind === 'orb' || p.kind === 'heroorb' ? '216,168,255' : '255,244,220';
+                x.save(); x.lineCap = 'round';
+                for (let i = 2; i < p.trail.length; i += 2) { const a = i / p.trail.length; x.strokeStyle = `rgba(${col},${a * 0.7})`; x.lineWidth = 1 + a * (p.kind === 'orb' || p.kind === 'frostorb' ? 6 : 3); x.beginPath(); x.moveTo(p.trail[i - 2], p.trail[i - 1]); x.lineTo(p.trail[i], p.trail[i + 1]); x.stroke(); }
+                x.restore();
+            }
             const fxName = { arrow: 'fx_arrow', bolt: 'fx_arrow', orb: 'fx_orb', heroorb: 'fx_orb', frostorb: 'fx_frost', fireball: 'fx_fireball', shell: 'fx_cannonball', fireshell: 'fx_fireball' }[p.kind];
             const fx = fxName && Art.gen(fxName);
             if (fx) {
@@ -338,7 +344,7 @@ const Render = (() => {
         const sparkImg = Art.gen('fx_hit'), critImg = Art.gen('fx_crit');
         for (const sp of B.sparks) {
             const k = 1 - sp.life / sp.max, im = sp.crit ? critImg : sparkImg;
-            const sz = (sp.crit ? 70 : 38) * sp.s * (0.6 + k * 0.6);
+            const sz = (sp.crit ? 84 : 46) * sp.s * (0.6 + k * 0.6) * (view.textMul > 1 ? 1.3 : 1);
             x.save(); x.globalAlpha = 1 - k * k; x.translate(sp.x, sp.y); x.rotate(sp.ang); x.imageSmoothingEnabled = true;
             if (im) x.drawImage(im.img, -sz / 2, -sz / 2, sz, sz);
             else { x.fillStyle = sp.crit ? '#ffb22a' : '#fff4dc'; x.beginPath(); x.arc(0, 0, sz * 0.25, 0, TAU); x.fill(); }
@@ -481,6 +487,11 @@ const Render = (() => {
         const stunned = t.stunUntil > T;
         const rc = t.recoil > 0 ? t.recoil / 0.12 : 0;
         spr(Art.tower(t.type, t.lv, t.spec != null ? TOWERS[t.type].specs[t.spec].id : null), s.x, s.y + 14, sc, false, 0, 1, 1 + rc * 0.05, 1 - rc * 0.07);
+        if (rc > 0) {   // muzzle flash on the shot
+            const mc = t.type === 'mage' ? '216,168,255' : t.type === 'cannon' ? '255,176,96' : '255,244,192', gy = s.y - 30, gr = (t.type === 'cannon' ? 26 : 20) * rc + 6;
+            const gd = x.createRadialGradient(s.x, gy, 0, s.x, gy, gr * 1.6); gd.addColorStop(0, `rgba(${mc},${0.9 * rc})`); gd.addColorStop(1, `rgba(${mc},0)`);
+            x.fillStyle = gd; x.beginPath(); x.arc(s.x, gy, gr * 1.6, 0, TAU); x.fill();
+        }
         if (B.coop && (t.owner || 0) !== B.actor) { x.fillStyle = ['#ffd04a', 'rgba(120,200,255,.9)', '#ff8ad0', '#8aff9a'][t.owner || 0]; x.strokeStyle = '#1a2a40'; x.lineWidth = 2; x.beginPath(); x.arc(s.x + 22, s.y + 8, 6, 0, TAU); x.fill(); x.stroke(); }   // a partner's tower (one color per player)
         if (stunned) {
             x.globalAlpha = 0.45; x.fillStyle = '#2a1708'; x.fillRect(s.x - 30, s.y - 66, 60, 80); x.globalAlpha = 1;

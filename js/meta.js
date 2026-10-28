@@ -58,6 +58,8 @@ const Meta = {
     // 자기 스테이지에서는 보스별 기준(refMul), 진행도에 맞춰 강해진 경우에는 스테이지 공통 기준(refPerHpMul)
     raidRef(kind, si = RAID.bossStage[kind]) { return si > RAID.bossStage[kind] ? RAID.refPerHpMul * stageHpMul(si) : ENEMIES[kind].hp * stageHpMul(si) * (RAID.refMul[kind] || 1); },
     // 파티 레이드 boss health multiplier (spawn hpMul): RAID_ON.party.hp[difficulty][players - 1] x the boss's raid reference
+    // 전투력: one number for how strong the account is (hero attack x health, scaled by the tower damage bonus); RAID_ON.diffs[].power is the same number for a player at that stage
+    power(p) { const s = heroStats(p, p.hero), b = computeBonuses(p); return Math.round(Math.sqrt(s.atk * s.hp) * (1 + b.towerDmg)); },
     partyWalk(n) { const t = RAID_ON.party.walk; return Array.isArray(t) ? t[Math.max(1, Math.min(4, n)) - 1] : t; },   // seconds the boss walks to the gate
     partyTime(n) { const t = RAID_ON.party.time; return Array.isArray(t) ? t[Math.max(1, Math.min(4, n)) - 1] : t; },
     partyBossMul(kind, d, n) { return RAID_ON.party.hp[d][Math.max(1, Math.min(4, n)) - 1] * this.raidRef(kind, RAID_ON.diffs[d].eq) / ENEMIES[kind].hp; },

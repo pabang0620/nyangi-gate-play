@@ -21,6 +21,7 @@ Object.assign(Battle.prototype, {
                 continue;
             }
             if (p.target && !p.target.dead) { p.tx = p.target.x; p.ty = p.target.y - p.target.def.size * 0.6; }
+            (p.trail || (p.trail = [])).push(p.x, p.y); if (p.trail.length > 12) p.trail.splice(0, 2);   // last few positions for the streak (drawing only)
             const dd = dist(p.x, p.y, p.tx, p.ty);
             const step = p.speed * dt;
             p.ang = Math.atan2(p.ty - p.y, p.tx - p.x);
@@ -32,7 +33,8 @@ Object.assign(Battle.prototype, {
                     else this.ringFx(p.tx, p.ty, p.splash, p.kind === 'frostorb' ? '#a0f0ff' : '#d8a8ff');
                 } else if (p.target && !p.target.dead) {
                     this.damage(p.target, p.dmg, p.type, { hero: p.hero, burst: p.burst, tower: p.tower, crit: p.crit, critChance: p.critChance, critMul: p.critMul });
-                    this.burstParts(p.tx, p.ty, p.kind === 'orb' ? '#d8a8ff' : '#fff4dc', 3, 60);
+                    this.burstParts(p.tx, p.ty, p.kind === 'orb' ? '#d8a8ff' : '#fff4dc', 3, 60);   // same count as before: particles draw from the shared random stream (lockstep)
+                    this.ringFx(p.tx, p.ty, p.kind === 'orb' ? 26 : 18, p.kind === 'orb' ? '#d8a8ff' : p.kind === 'bolt' ? '#ffe080' : '#fff4dc');   // impact ring: where it landed
                 }
             } else { p.x += Math.cos(p.ang) * step; p.y += Math.sin(p.ang) * step; }
         }

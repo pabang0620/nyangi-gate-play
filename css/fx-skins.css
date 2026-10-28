@@ -3,7 +3,7 @@
 
 .skbadge {
     position: absolute; top: -4px; left: -4px; z-index: 2; pointer-events: none;
-    padding: 1px 6px; border-radius: 8px; font-family: 'BlackHan'; font-size: 11px; line-height: 1.35;
+    padding: 1px 6px; border-radius: 8px; font-family: 'BlackHan'; font-size: 12px; line-height: 1.4;
     color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.55); white-space: nowrap;
     box-shadow: 0 1px 0 rgba(0,0,0,.45), 0 0 0 1.5px rgba(255,255,255,.75);
 }
@@ -13,7 +13,7 @@
     background-size: 200% 100%; animation: skb-shine 2.4s linear infinite;
 }
 /* themed set line in the skin book */
-.skc-set { font-size: 11px; color: #8a5a1a; }
+.skc-set { font-size: 12px; color: #8a5a1a; }
 
 /* 신화: ember to gold, a little faster */
 .skbadge.t-myth { background: linear-gradient(110deg, #ff5a2a, #ffcf4a 45%, #ff7ae0); background-size: 200% 100%; animation: skb-shine 1.6s linear infinite; }
@@ -23,8 +23,8 @@
 
 /* hero screen skin picker */
 .skinpick .sk { position: relative; }
-.skinpick .sk > .skbadge { top: -2px; left: 2px; max-width: none; overflow: visible; font-size: 10px; padding: 0 5px; }
-.sknote { font-size: 12px; line-height: 1.25; }
+.skinpick .sk > .skbadge { top: -2px; left: 2px; max-width: none; overflow: visible; font-size: 12px; padding: 0 5px; }
+.sknote { font-size: 12px; line-height: 1.4; }
 .sknote::before { content: ''; display: inline-block; width: 1em; height: 1em; margin-right: .3em; vertical-align: -.12em; background: url('../img/ui_paw.png') center / contain no-repeat; }
 .skbadge .pawico { width: 1.05em; height: 1.05em; vertical-align: -.15em; filter: brightness(0) invert(1); }
 .sknote.t-rare { color: var(--sk-rare); }
@@ -33,13 +33,13 @@
 
 /* shop skin cards */
 .pcard > .skbadge { top: 0; left: 0; font-size: 12px; }
-.pcard .pd.sknote { flex: none; min-height: 0; -webkit-line-clamp: 1; font-size: 11px; }
+.pcard .pd.sknote { flex: none; min-height: 0; -webkit-line-clamp: 1; font-size: 12px; }
 .pcard .pd.sknote.t-rare { color: #2a78b8; }
 .pcard .pd.sknote.t-hidden { color: #b0389a; }
 #app.mobile .pcard .pd.sknote { font-size: 12px; }
 
 /* reward cells (pass / got popups) */
-.cell > .skbadge { top: -6px; left: -6px; font-size: 10px; padding: 0 4px; }
+.cell > .skbadge { top: -6px; left: -6px; font-size: 12px; padding: 0 4px; }
 
 @media (prefers-reduced-motion: reduce) { .skbadge.t-hidden { animation: none; } }
 
@@ -52,9 +52,9 @@
 .skinpick .sk.r2 img { box-shadow: 0 0 0 3px var(--r2), 0 0 0 5px #4a2a0e; }
 .skinpick .sk.r3 img { box-shadow: 0 0 0 3px var(--r3), 0 0 0 5px #4a2a0e; }
 .skinpick .sk.on img { box-shadow: 0 0 0 3px #fff3d6, 0 0 10px 4px var(--gold); }
-.skinpick .sk.more b { display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%; font-size: 30px; color: var(--gold); background: #3a2412; box-shadow: 0 0 0 2px #f2c14e, 0 0 0 4px #6b3e12; }
-.hero-left > .skopt { font-size: 13px; text-shadow: var(--stroke-s); margin-top: -2px; }
-#app.mobile .hero-left > .skopt { font-size: 15px; }
+.skinpick .sk.more b { display: flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 50%; font-size: 28px; color: var(--gold); background: #3a2412; box-shadow: 0 0 0 2px #f2c14e, 0 0 0 4px #6b3e12; }
+.hero-left > .skopt { font-size: 12px; text-shadow: var(--stroke-s); margin-top: -2px; }
+#app.mobile .hero-left > .skopt { font-size: 14px; }
 .skopt .sknote { font-size: inherit; }
 
 /* skin collection popup */
@@ -67,10 +67,10 @@
 .skc img { width: 66px; height: 66px; border-radius: 50%; object-fit: cover; object-position: top; background: #3a2412; box-shadow: 0 0 0 3px var(--rc); }
 .skc.lock img { filter: grayscale(1) brightness(.7); }
 .skc.on { background: rgba(242,193,78,.4); }
-.skc-g { margin-top: 5px; padding: 0 8px; border-radius: 4px; background: #2a170a; font-family: 'BlackHan'; font-size: 13px; line-height: 1.35; }
-.skc-n { font-family: 'BlackHan'; font-size: 13px; min-height: 2.3em; display: flex; align-items: center; text-align: center; }
+.skc-g { margin-top: 5px; padding: 0 8px; border-radius: 4px; background: #2a170a; font-family: 'BlackHan'; font-size: 12px; line-height: 1.4; }
+.skc-n { font-family: 'BlackHan'; font-size: 12px; min-height: 2.3em; display: flex; align-items: center; text-align: center; }
 .skc-o { color: #3f6a12; }
-.skc-t { font-size: 11px; } .skc-t.t-rare { color: #2a78b8; } .skc-t.t-hidden { color: #b0389a; }
+.skc-t { font-size: 12px; } .skc-t.t-rare { color: #2a78b8; } .skc-t.t-hidden { color: #b0389a; }
 .skc-s { font-family: 'BlackHan'; color: #8a3a12; }
 .skc.on .skc-s { color: #3f6a12; }
 
@@ -80,6 +80,6 @@
     border-radius: 12px; background: radial-gradient(ellipse at 50% 70%, rgba(255,230,180,.22), rgba(30,16,6,.5) 70%); box-shadow: inset 0 0 0 3px #6b4a24; }
 .skp-pic img { height: 100%; object-fit: contain; object-position: bottom; }
 .skp-info { min-width: 170px; max-width: 320px; display: flex; flex-direction: column; gap: 6px; }
-.skp-n { font-family: 'BlackHan'; font-size: 24px; text-shadow: var(--stroke-s); }
+.skp-n { font-family: 'BlackHan'; font-size: 22px; text-shadow: var(--stroke-s); }
 #app.mobile .skp-pic { width: 118px; height: 142px; }
-#app.mobile .skp-n { font-size: 21px; }
+#app.mobile .skp-n { font-size: 19px; }

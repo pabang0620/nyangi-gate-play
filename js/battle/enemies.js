@@ -23,7 +23,7 @@ Object.assign(Battle.prototype, {
             e.sk = {}; for (const k of def.skills) e.sk[k] = BOSS_SKILL[k].cd * 0.6;
             e.cast = null; e.phase = 0; e.invulnUntil = 0; e.cdMul = 1;
             // 파티 레이드: the road takes raidLive.walk seconds to walk, so the boss reaches the gate then (no clock on screen)
-            e.spdMul = this.raid ? (this.raidLive && this.raidLive.walk ? p.len / (def.spd * this.raidLive.walk) : 0.45) : (e.spdMul || 1);
+            e.spdMul = this.raid ? (this.raidLive && this.raidLive.walk ? p.len / (def.spd * this.raidLive.walk) : 0.45) : (e.spdMul || 1) * (this.mapDef.spdMul || 1);   // a longer road (MAPS[m].spdMul) is walked faster, so the trip takes about as long
             if (this.raid) e.raidMul = this.raidLive ? hpMul / this.hpMul : RAID.hpMul;
             this.bossRef = e;
             this.on('boss', e);
@@ -75,7 +75,7 @@ Object.assign(Battle.prototype, {
             this.text(e.x, e.y - 40, L('되감기!'), '#ffd890', 16);
             this.ringFx(e.x, e.y, 30, '#ffd890');
         }
-        e.flash = 0.08;
+        e.flash = 0.13;   // a hit must read: the enemy stays white a moment longer
         if (!o.quiet || crit) {
             e.squash = 0.14;
             // knockback scales with the share of health removed; heavy enemies barely move, bosses never
@@ -83,9 +83,11 @@ Object.assign(Battle.prototype, {
                 const kb = Math.min(22, (v / e.maxHp) * 70 + (o.kb || 0) + (crit ? 6 : 0)) * (e.def.elite ? 0.35 : 1);
                 if (kb > 0.5) e.d = Math.max(0, e.d - kb);
             }
-            if (this.sparks.length < 40) this.sparks.push({ x: e.x + this.rng.range(-8, 8), y: e.y - e.def.size * 0.9 + this.rng.range(-8, 8), life: crit ? 0.3 : 0.18, max: crit ? 0.3 : 0.18, crit: !!crit, ang: this.rng.range(0, TAU), s: crit ? 1.6 : 0.8 + Math.min(0.8, v / e.maxHp * 2) });
+            if (this.sparks.length < 40) this.sparks.push({ x: e.x + this.rng.range(-8, 8), y: e.y - e.def.size * 0.9 + this.rng.range(-8, 8), life: crit ? 0.3 : 0.18, max: crit ? 0.3 : 0.18, crit: !!crit, ang: this.rng.range(0, TAU), s: crit ? 2 : 1.1 + Math.min(1, v / e.maxHp * 2.5) });
         }
         if (crit && o.hero) this.flash = Math.max(this.flash, 0.1);
+        // hit sound by kind of blow (sound only, throttled so a volley does not stack): crit and hero hits are heavy, tower hits are light
+        if ((!o.quiet || crit) && this.t - (this._hitSfxAt || -1) > 0.07) { this._hitSfxAt = this.t; this.on('hit', crit || o.hero ? 'hero' : undefined); }
         if (!o.quiet || crit) {
             const col = crit ? '#ffb22a' : weak && o.burst ? '#ff6a6a' : type === 'magic' ? '#c58cff' : type === 'fire' ? '#ff8a3a' : '#ffe7c0';
             this.text(e.x + this.rng.range(-8, 8), e.y - e.def.size * 1.6 - 6, (crit ? '' : '') + Math.round(v), col, crit || (weak && o.burst) ? 22 : 15, crit);

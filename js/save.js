@@ -112,13 +112,16 @@ function bagOverflow(p) {
     }, 600);
     return true;
 }
-function itemName(it) { const a = it.r >= 2 && ITEM_ART_NAMES[it.slot] && ITEM_ART_NAMES[it.slot][it.r]; return a ? a[itemArt(it)] : ITEM_NAMES[it.slot][it.r]; }
+function itemName(it) { const a = it.r >= 2 && ITEM_ART_NAMES[it.slot] && ITEM_ART_NAMES[it.slot][it.r]; return a ? a[itemForm(it)] : ITEM_NAMES[it.slot][it.r]; }
 // gear grows with progress: the level used for stats is the item's own level or what a summon gives right now, whichever is higher.
 // So gear bought or summoned early (a day-1 purchase) never falls behind new drops of the same grade.
 function itemLv(it) { const p = Save.p; return Math.max(it.ilvl, p && p.stars ? Math.round(summonIlvl(p)) : 0); }
 // picture variant for the high-grade item images (img/it_{slot}_{r}_{n}.png); older items get one from their id
 const ITEM_ARTS = 4;
 function itemArt(it) { return it.art !== undefined ? it.art : it.id % ITEM_ARTS; }
+// weapons are shown in the form of the hero who wears them (gear is shared): knight sword, mage staff, ranger bow. Other slots keep their own picture
+const WEAPON_FORM = { knight: 0, mage: 1, ranger: 2 };
+function itemForm(it) { return it.slot === 'weapon' ? WEAPON_FORM[(typeof Save !== 'undefined' && Save.p && Save.p.hero) || 'knight'] || 0 : itemArt(it); }
 function itemMain(it) {
     const m = RARITY[it.r].mul * (1 + ENHANCE.perLv * it.enh), lv = itemLv(it);
     if (it.slot === 'weapon') return { k: 'atk', name: L('영웅 공격력'), v: Math.round((4 + lv * 1.2) * m) };
@@ -216,11 +219,11 @@ function bulkSalvage(maxRarity, withEnh) {
 }
 
 // 장비 합성 (FUSE): spare gear of one grade, lowest level first; equipped, 거래 가능 and (unless asked) enhanced gear stay out
-function fuseTargets(p, r, withEnh) { return p.items.filter(it => it.r === r && !isEquipped(it) && !it.mid && (withEnh || !it.enh)).sort((a, b) => a.ilvl - b.ilvl || a.enh - b.enh); }
+function fuseTargets(p, r, withEnh, skip) { return p.items.filter(it => it.r === r && !isEquipped(it) && !it.mid && (withEnh || !it.enh) && !(skip && skip.has(it.id))).sort((a, b) => a.ilvl - b.ilvl || a.enh - b.enh); }
 // one try: the result takes the slot of one of the three and the highest level among them
-function fuseOnce(p, r, withEnh) {
+function fuseOnce(p, r, withEnh, skip) {
     if (r >= FUSE.rate.length) return null;
-    const src = fuseTargets(p, r, withEnh).slice(0, FUSE.n);
+    const src = fuseTargets(p, r, withEnh, skip).slice(0, FUSE.n);
     if (src.length < FUSE.n) return null;
     const ids = new Set(src.map(x => x.id));
     p.items = p.items.filter(x => !ids.has(x.id));
@@ -229,9 +232,9 @@ function fuseOnce(p, r, withEnh) {
     return { ok, it };
 }
 // 일괄 합성: every three of one grade until fewer than three are left (a failed try's item can go in again)
-function bulkFuse(p, r, withEnh) {
+function bulkFuse(p, r, withEnh, skip) {
     const out = []; let x;
-    while ((x = fuseOnce(p, r, withEnh))) out.push(x);
+    while ((x = fuseOnce(p, r, withEnh, skip))) out.push(x);
     Save.save();
     return out;
 }

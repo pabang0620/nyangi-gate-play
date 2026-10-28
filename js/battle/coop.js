@@ -22,6 +22,12 @@ Object.assign(Battle.prototype, {
         (cfg.autos || []).forEach((a, k) => { if (this.acts[k]) this.acts[k].hero.auto = !!a; });
         this.goldShare = cfg.goldShare || C.goldShare;
         this.gold = Math.round(this.gold * (cfg.startGoldMul || C.startGold));
+        // 파티 레이드: a share of the start gold arrives later, evenly over the boss's walk (RAID_ON.party.dripShare); the rest is there at the start
+        if (this.raidLive && this.raidLive.walk) {
+            const total = this.gold, later = Math.round(total * RAID_ON.party.dripShare);
+            this.drip = { total: later, paid: 0, secs: this.raidLive.walk + 6 };   // +6: the boss appears 6s in
+            this.gold = total - later;
+        }
         for (const a of this.acts) a.gold = this.gold;
         this.names = cfg.names || [];
         this.cmdLog = 0;
@@ -51,6 +57,14 @@ Object.assign(Battle.prototype, {
         const was = this.actor;
         this.setActor(k);
         try { return fn(); } finally { this.setActor(was); }
+    },
+    // the delayed start gold, paid from the battle clock so every device gives the same amount on the same tick
+    payDrip() {
+        const d = this.drip; if (!d || d.paid >= d.total) return;
+        const due = Math.floor(d.total * Math.min(1, this.t / d.secs)), g = due - d.paid;
+        if (g <= 0) return;
+        d.paid = due;
+        this.acts.forEach((a, k) => { if (k === this.actor) this.gold += g; else a.gold += g; });
     },
     // kill gold: each player keeps a share (goldShare) of every kill, whoever made it
     gainGold(v) {

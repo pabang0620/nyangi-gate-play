@@ -27,6 +27,18 @@
         return rewardIcons(g);
     }
 
+    // 내 전투력 vs 권장 전투력 for a difficulty (green when the player has enough)
+    function powerBox(d) {
+        const mine = Meta.power(Save.p), rec = RAID_ON.diffs[d].power;
+        return h('div.rd-power', h('span' + (mine >= rec ? '.ok' : '.low'), L('내 전투력 {0}', fmt(mine))), h('span.tip', L('권장 전투력 {0}', fmt(rec))));
+    }
+
+    // the weekly limit and what a reward card can hold (icons only, no numbers): left panel of 파티 레이드 and 협동 디펜스
+    function weeklyBox() {
+        const kinds = [{ gems: 1 }, { stones: 1 }, { tickets: 1 }, { medals: 1 }, { guards: 1 }, { shields: 1 }, { gold: 1 }, { item: 3 }];
+        return h('div.rd-weekly', h('div.rd-rwgrid', kinds.map(g => rewardIcons(g)[0])), h('div.tip', L('주간 1회 제한')));
+    }
+
     // pick 1 of 4: the server rolls them, the rest are shown face up afterwards
     function flipModal(mode, ref, title, done) {
         let busyFlip = false;
@@ -91,7 +103,7 @@
                     } }, img('i_medal', '.icon'), ' ' + fmt(it.cost))));
             }
         };
-        const head = h('div.chip');
+        const head = h('div.chip.rd-mhead');
         const d = modal([h('div.title-t', L('토벌 훈장 상점')), head, h('div.tip', L('레이드 보상 카드에서 훈장을 모아요. 신화 장비 상자는 주 1번')), list,
             h('button.btn', { onclick: () => { click(); d.remove(); refresh(); } }, L('닫기'))], { dismiss: true });
         draw();
@@ -110,7 +122,7 @@
             return h('button.btn.small.rd-dbtn' + (sel === i ? '.gold' : '.ghost') + (open ? '' : '.ch-locked'), { onclick: () => {
                 if (!open) { toast(L('{0} 클리어하면 열려요', stageLabel(D.eq))); return; }
                 click(); onPick(i);
-            } }, h('span.rd-dn', open ? null : img('i_lock', '.icon'), D.name), boss ? h('span.rd-db', ENEMIES[boss].name) : null);
+            } }, h('span.rd-dn', open ? null : img('i_lock', '.icon'), D.name));
         }));
     }
     const claimBtn = (mode, ref, diff, title) => RaidOn.claimed(mode, diff)
@@ -139,10 +151,10 @@
         const seen = new Set();
         // boss on the left; on the right the party list comes first, the room buttons sit in one row above it
         win.appendChild(h('div.rd-main.rd-fit',
-            h('div.inset.rd-left', h('div.rd-grade', L('난이도 {0}', RAID_ON.diffs[d].name)), bossPic(kind),
-                h('div.title-t.rd-title', `${ENEMIES[kind].title} ${ENEMIES[kind].name}`),
-                h('div.tip', L('보스 강도: {0} 기준', stageLabel(RAID_ON.diffs[d].eq))), h('div.gold-t', L('이번 주 입장 {0}/{1}', left, R.tries)),
-                h('div.tip', L('이기면 난이도마다 주 1번 보상 카드')),
+            h('div.inset.rd-left', h('div.rd-grade', L('난이도 {0}', RAID_ON.diffs[d].name)),
+                h('div.rd-bosshead', bossPic(kind), h('div.title-t.rd-title', `${ENEMIES[kind].title} ${ENEMIES[kind].name}`)),
+                powerBox(d), h('div.gold-t', L('이번 주 입장 {0}/{1}', left, R.tries)),
+                weeklyBox(),
                 wins.filter(x => !seen.has(x.diff) && seen.add(x.diff)).map(x => h('div.row', h('span', RAID_ON.diffs[x.diff].name), claimBtn('praid', x.id, x.diff, L('파티 레이드 보상'))))),
             finderBox('praid', d, mk, quick, joinCode)));
     }
@@ -159,7 +171,7 @@
             Game.startBattle({ raid: true, raidOn: { mode: 'world', kind: w.kind, si: RaidOn.worldStage(w.kind) } });
         });
         const cfg = RaidOn.st.cfg && RaidOn.st.cfg.world;
-        const marks = cfg ? h('div.rd-marks', cfg.milestones.map(m => h('div.rd-mark' + (w.dmg >= m.pct * w.hp ? '.on' : ''), h('b', Math.round(m.pct * 100) + '%'), ...rewardIcons(m.reward), ))) : null;
+        const marks = cfg ? h('div.rd-marks.rd-wmarks', cfg.milestones.map(m => h('div.rd-mark' + (w.dmg >= m.pct * w.hp ? '.on' : ''), h('b', Math.round(m.pct * 100) + '%'), ...rewardIcons(m.reward), ))) : null;
         win.appendChild(h('div.rd-main',
             h('div.inset.rd-left', h('div.title-t.rd-title', `${ENEMIES[w.kind].title} ${ENEMIES[w.kind].name}`),
                 bar(w.dmg, w.hp, dead ? '.done' : ''),
@@ -197,8 +209,7 @@
         win.appendChild(h('div.rd-main.rd-fit',
             h('div.inset.rd-left', h('div.rd-grade', L('난이도 {0}', RAID_ON.diffs[d].name)), h('div.title-t.rd-title', L('협동 디펜스')),
                 img('i_coop', '.rd-bigico'), h('div', L('친구와 둘이서 실시간으로 한 성문을 지켜요')),
-                h('div.tip', L('목숨은 함께, 금화·영웅·탑은 각자')),
-                h('div.tip', L('이기면 난이도마다 주 1번 보상 카드')),
+                weeklyBox(),
                 wins.filter(x => !seen.has(x.diff) && seen.add(x.diff)).map(x => h('div.row', h('span', RAID_ON.diffs[x.diff].name), claimBtn('coop', x.id, x.diff, L('협동 디펜스 보상'))))),
             finderBox('coop', d, mk, quick, joinCode)));
     }
@@ -222,7 +233,7 @@
             if (r.error) { list.appendChild(h('div.tip', RaidOn.errText(r.error))); return; }
             count.textContent = ` (${r.length})`;
             const rows = r.slice().sort((a, b) => (b.diff === sel) - (a.diff === sel) || b.friend - a.friend || b.at - a.at);
-            if (!rows.length) { list.appendChild(h('div.tip', L('지금 기다리는 방이 없어요. 방을 만들거나 빠른 매칭을 눌러 보세요'))); return; }
+            if (!rows.length) { list.appendChild(h('div.rd-emptylist', h('div', L('지금 기다리는 방이 없어요')), h('div.tip', L('방을 만들거나 빠른 매칭을 눌러 보세요')))); return; }
             for (const x of rows) {
                 const go = h('button.btn.small.gold', L('참가'));
                 go.onclick = busy(go, async () => {
@@ -239,7 +250,7 @@
         again.onclick = busy(again, load);
         load();
         return h('div.inset.rd-finder',
-            h('div.rd-fhead', h('span.rd-flabel', kind === 'coop' ? L('협동 방 목록') : L('파티 목록'), count), h('div.rd-acts', codeBtn, mk, again, quick)), list);
+            h('div.rd-fhead', h('span.rd-flabel', kind === 'coop' ? L('협동 방 목록') : L('파티 목록'), count), h('div.rd-acts', codeBtn, mk, quick, again)), list);
     }
     // waiting room (협동 디펜스: 2 seats, 파티 레이드: 4): shows who is here, the host starts
     function lobby(room, quick) {
@@ -338,8 +349,7 @@
             h('div.rd-tabs', [['party', L('파티 레이드')], ['world', L('월드 보스')], ['coop', L('협동 디펜스')]].map(([id, nm]) =>
                 h('button.btn.small' + (S.rtab === id ? '.gold' : '.ghost'), { onclick: () => { click(); S.rtab = id; refresh(); } }, nm))),
             h('div.sp'),
-            h('div.chip', img('i_medal', '.icon'), fmt(medals())),
-            h('button.btn.small', { onclick: () => { click(); shopModal(); } }, L('훈장 상점')));
+            h('button.btn.small.rd-medalbtn', { title: L('훈장 상점'), onclick: () => { click(); shopModal(); } }, img('i_medal', '.icon'), ` ${fmt(medals())} `, L('상점')));
         win.appendChild(head);
         const st = RaidOn.st;
         if (!st && RaidOn.fail) {

@@ -93,7 +93,7 @@
                 return;
             }
             if (!(Online.enabled && Online.status === 'login')) {   // offline build or no internet: play on this device
-                wrap.appendChild(h('button.btn.gold', { style: { fontSize: '26px', padding: '14px 60px' }, onclick: () => { click(); Sfx.init(); consentThen(go); } }, L('시작하기')));
+                wrap.appendChild(h('button.btn.gold', { style: { fontSize: '24px', padding: '14px 60px' }, onclick: () => { click(); Sfx.init(); consentThen(go); } }, L('시작하기')));
                 return;
             }
             const err = h('div.tip', { style: { color: '#ffd0b0', textShadow: '0 1px 3px #000', minHeight: '18px' } });
@@ -188,7 +188,7 @@
         Game.backdrop = { map: bgs[S.tab][0], theme: ch.theme, dim: bgs[S.tab][1] };
         const p = Save.p;
         const top = h('div.topbar',
-            h('div.title-t', { style: { fontSize: '26px', marginRight: '10px' } }, L('냥이 수비대')),
+            h('div.title-t', { style: { fontSize: '24px', marginRight: '10px' } }, L('냥이 수비대')),
             ...currencyBar(),
             h('div.sp'),
             h('div.chip.curchip', { onclick: () => { click(); UI.currencyInfo('ticket'); } }, img('i_ticket', '.icon'), fmtShort(p.tickets || 0)),
@@ -246,11 +246,9 @@
     }
 
     // settings ---------------------------------------------------
-    function tabSettings() {
+    // 설정 popup: sound, effects, language, coupon and the tutorial replay (kept off the settings page so it stays roomy)
+    function settingsModal() {
         const p = Save.p;
-        const win = h('div.panel.win.settings');
-        win.appendChild(h('h2', L('설정')));
-        const colL = h('div.set-col'), colR = h('div.set-col.inset', { style: { padding: '12px' } });
         // inv: the save keeps an "off" flag (musicOff, muted, ...), the switch shows "on" while the feature works
         const tog = (label, key, after, inv) => {
             const shown = () => inv ? !p.set[key] : !!p.set[key];
@@ -258,57 +256,76 @@
             t.addEventListener('click', () => { p.set[key] = !p.set[key]; t.classList.toggle('on', shown()); if (after) after(); Save.save(); click(); });
             return t;
         };
-        colL.appendChild(tog(L('배경음악'), 'musicOff', () => { Music.setEnabled(!p.set.musicOff); }, true));
-        colL.appendChild(tog(L('효과음'), 'muted', () => { Sfx.muted = p.set.muted; }, true));
-        colL.appendChild(tog(L('화면 흔들림'), 'noShake', null, true));
-        colL.appendChild(tog(L('진동'), 'noVibrate', null, true));
-        colL.appendChild(tog(L('필살기 컷신'), 'noCutin', null, true));
-        if (Game.touch && !/NyangiApp/.test(navigator.userAgent)) colL.appendChild(h('button.btn.ghost', { onclick: () => { click(); Game.fullscreen(); } }, L('전체 화면')));
         // language: device language by default, saved per device (js/i18n.js); changing it reloads the game
         const sel = document.createElement('select');
         sel.className = 'lang-sel';
         for (const [code, name] of Object.entries(LANGS)) { const o = document.createElement('option'); o.value = code; o.textContent = name; if (code === LANG) o.selected = true; sel.appendChild(o); }
         sel.addEventListener('change', () => { click(); setLang(sel.value); });
-        colL.prepend(h('label.lang-row', h('span', L('언어')), sel));   // first: it was pushed below the panel on phones
-        // account: who am I, which logins open this progress elsewhere, link buttons right here (not only in the popup)
-        const acct = h('div.inset', { style: { padding: '8px 10px', marginBottom: '8px' } });
-        const drawAcct = () => {
-            const err = h('div.tip', { style: { color: '#a8401a' } });
-            acct.replaceChildren(...[
-                h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } },
-                    h('button.btn.small.gold', { onclick: () => { click(); UI.profileModal(); } }, L('프로필 · 계정')),
-                    UI.accountLine()),
-                Online.on && !Online.isLinked() ? h('div.tip', L('게스트 계정이에요. 연동하면 다른 기기와 웹에서도 이어서 할 수 있어요.')) : null,
-                UI.linkButtons(err, drawAcct),
-                Online.on && Online.isLinked() ? UI.logoutButton() : null,
-                Online.sb && !Online.isLinked() ? h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => { click(); UI.switchModal(); } }, L('다른 계정으로 로그인')) : null,
-                err].filter(Boolean));   // replaceChildren prints null as text: drop the hidden parts
-        };
-        drawAcct(); acct.refresh = drawAcct; setAcct = acct;
-        colR.appendChild(acct);
-        colR.appendChild(h('div.set-help',
-            h('button.btn.small.gold', { onclick: () => { click(); howToModal(); } }, L('게임 방법')),
-            h('button.btn.small', { onclick: () => { click(); UI.openMail(); } }, L('쿠폰 입력')),
-            h('button.btn.small', { onclick: () => { click(); openSite(); } }, L('홈페이지')),
-            h('button.btn.small', { onclick: () => { click(); confirmBox(L('처음 했을 때 나오던 안내와 설명을 다시 보여 줍니다.'), () => { p.seenTips = {}; Save.save(); toast(L('안내를 다시 볼 수 있습니다. 지도에서 시작하세요')); }); } }, L('튜토리얼 다시 보기')),
-            h('button.btn.small.touch-help', { onclick: () => { click(); touchHelpModal(); } }, L('조작 방법'))));
+        const d = modal([h('div.title-t', L('설정')),
+            h('div.set-pop',
+                h('label.lang-row', h('span', L('언어')), sel),
+                tog(L('배경음악'), 'musicOff', () => { Music.setEnabled(!p.set.musicOff); }, true),
+                tog(L('효과음'), 'muted', () => { Sfx.muted = p.set.muted; }, true),
+                tog(L('화면 흔들림'), 'noShake', null, true),
+                tog(L('진동'), 'noVibrate', null, true),
+                tog(L('필살기 컷신'), 'noCutin', null, true),
+                Game.touch && !/NyangiApp/.test(navigator.userAgent) ? h('button.btn.ghost', { onclick: () => { click(); Game.fullscreen(); } }, L('전체 화면')) : null),
+            h('div.row',
+                h('button.btn.small', { onclick: () => { click(); d.remove(); UI.openMail(); } }, L('쿠폰 입력')),
+h('button.btn.small', { onclick: () => { click(); confirmBox(L('처음 했을 때 나오던 안내와 설명을 다시 보여 줍니다.'), () => { p.seenTips = {}; Save.save(); toast(L('안내를 다시 볼 수 있습니다. 지도에서 시작하세요')); }); } }, L('튜토리얼 다시 보기')),
+            ),
+            h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
+    }
+
+    // 약관 · 정책 · 문의: deliberately two taps away (프로필 · 계정 popup), so it is read when it is needed, not poked at in passing
+    function legalModal() {
         const pol = (file, name) => h('button.btn.small', { onclick: () => { click(); UI.policyModal(file, name); } }, name);
         const polRow = h('div.policy-row',
             h('button.btn.small', { onclick: () => { click(); UI.probModal(); } }, L('확률 정보')),
             pol('terms.html', L('이용약관')), pol('privacy.html', L('개인정보처리방침')), pol('operation.html', L('운영정책')),
             pol('refund.html', L('결제·환불 안내')), pol('opensource.html', L('오픈소스 라이선스')),
             h('button.btn.small', { onclick: () => { click(); supportMail(); } }, L('고객 문의')));
-        colR.appendChild(polRow);
         // ad consent can be changed later where the law requires it (Google UMP decides; app only)
         if (window.BonghwaBridge && BonghwaBridge.adPrivacyRequired) BonghwaBridge.adPrivacyRequired().then(req => {
             if (req) polRow.appendChild(h('button.btn.small', { onclick: () => { click(); BonghwaBridge.adPrivacyOptions(); } }, L('광고 개인정보 설정')));
         });
-        colR.appendChild(h('div.tip.legal-line', L('전체이용가'), ` · v${GAME_VERSION} · ${L('운영: 네코랩(nekolab)')} · ${SUPPORT_MAIL}`));
-        colR.appendChild(h('div.tip.kbd-help', { style: { lineHeight: 1.8 } },
+        const d = modal([h('div.title-t', L('약관 · 정보')), polRow,
+            h('div.tip', L('전체이용가'), ` · v${GAME_VERSION} · ${L('운영: 네코랩(nekolab)')} · ${SUPPORT_MAIL}`),
+            h('div.tip', L('냥이 성문 수비대 v{0} · 글꼴 Jua, Black Han Sans, Lilita One (SIL OFL 1.1) · 그림·음악 Google Flow / Flow Music', GAME_VERSION)),
+            h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true });
+    }
+
+    function tabSettings() {
+        const p = Save.p;
+        const win = h('div.panel.win.settings');
+        win.appendChild(h('h2', L('설정')));
+        const colL = h('div.set-col.inset', { style: { padding: '14px' } }), colR = h('div.set-col');
+        // account: who am I, which logins open this progress elsewhere, link buttons right here (not only in the popup)
+        const acct = h('div.set-acct');
+        const drawAcct = () => {
+            const err = h('div.tip', { style: { color: '#a8401a' } });
+            acct.replaceChildren(...[
+                h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' } },
+                    h('button.btn.gold', { onclick: () => { click(); UI.profileModal(); } }, L('프로필 · 계정')),
+                    UI.accountLine()),
+                Online.on && !Online.isLinked() ? h('div.tip', L('게스트 계정이에요. 연동하면 다른 기기와 웹에서도 이어서 할 수 있어요.')) : null,
+                UI.linkButtons(err, drawAcct),
+                Online.on && Online.isLinked() ? UI.logoutButton() : null,
+                Online.sb && !Online.isLinked() ? h('button.btn.small.ghost', { onclick: () => { click(); UI.switchModal(); } }, L('다른 계정으로 로그인')) : null,
+                err].filter(Boolean));   // replaceChildren prints null as text: drop the hidden parts
+        };
+        drawAcct(); acct.refresh = drawAcct; setAcct = acct;
+        colL.appendChild(acct);
+        colR.appendChild(h('div.set-grid',
+            h('button.btn.gold', { onclick: () => { click(); settingsModal(); } }, L('설정')),
+            h('button.btn', { onclick: () => { click(); howToModal(); } }, L('게임 방법')),
+            h('button.btn.touch-help', { onclick: () => { click(); touchHelpModal(); } }, L('조작 방법')),
+            h('button.btn', { onclick: () => { click(); openSite(); } }, L('홈페이지'))));
+        colR.appendChild(h('div.tip.kbd-help', { style: { lineHeight: 1.4 } },
             L('조작: 땅 클릭 = 영웅 이동 · 1~4 = 영웅 스킬 · Q = 유성 냥펀치 · W = 증원'), h('br'),
             L('Space = 다음 웨이브 · Tab = 영웅 AUTO · F = 배속 · Esc = 취소/일시정지 · 우클릭 = 취소')));
-        colR.appendChild(h('button.btn.red', { onclick: () => { click(); confirmBox(L('모든 진행 상황을 지우고 처음부터 시작합니다.\n되돌릴 수 없습니다.'), () => { Save.reset(); showTitle(); }); } }, L('데이터 초기화')));
-        colR.appendChild(h('div.tip', L('냥이 성문 수비대 v{0} · 글꼴 Jua, Black Han Sans, Lilita One (SIL OFL 1.1) · 그림·음악 Google Flow / Flow Music', GAME_VERSION)));
+        colR.appendChild(h('button.btn.red.small', { onclick: () => { click(); confirmBox(L('모든 진행 상황을 지우고 처음부터 시작합니다.\n되돌릴 수 없습니다.'), () => { Save.reset(); showTitle(); }); } }, L('데이터 초기화')));
+        colR.appendChild(h('div.tip.legal-line', L('전체이용가'), ` · v${GAME_VERSION} · ${L('운영: 네코랩(nekolab)')}`));
         win.appendChild(h('div.set-wrap', colL, colR));
         root().appendChild(win);
     }
@@ -400,11 +417,12 @@
         }
         win.appendChild(sec(L('냥이 스킨'), skins));
         win.appendChild(h('div.row.shop-skinsum', h('div.tip', L('더 많은 스킨은 스킨 소환에서 모을 수 있습니다')),
+            h('button.btn.small', { onclick: () => { click(); showHub('hero'); UI.skinBook(Save.p.hero); } }, L('스킨 보러가기')),
             h('button.btn.small', { onclick: () => { click(); S.summonBanner = 'skin'; showHub('summon'); } }, L('스킨 소환'))));
         win.classList.add('shopwin');
         root().appendChild(win);
     }
 
     UI.ensureAccount = () => { if (Online.enabled && Online.status === 'login') Online.startGuest(); };
-    Object.assign(UI, { howToModal, touchHelpModal, researchAffordable, showTitle, showHub, tabSettings, maybeLogin, loginModal, tabShop, buyProduct });
+    Object.assign(UI, { legalModal, howToModal, touchHelpModal, researchAffordable, showTitle, showHub, tabSettings, maybeLogin, loginModal, tabShop, buyProduct });
 })();

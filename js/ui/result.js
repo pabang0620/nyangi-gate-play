@@ -33,14 +33,14 @@
         } else if (R.endless) {
             content.push(h('div.ribbon', h('span', L('{0} 웨이브', R.wave))));
             content.push(h('div', R.newBest ? h('span.gold-t', L('최고 기록 갱신!')) : L('최고 기록 {0} 웨이브', p.endlessBest)));
-            if (R.league) content.push(h('div', { style: { fontSize: '18px' } }, L('시즌 리그 '), h('span.gold-t', L('{0}위', R.league.after)), R.league.after < R.league.before ? ` (▲${R.league.before - R.league.after})` : ''));
+            if (R.league) content.push(h('div', { style: { fontSize: '16px' } }, L('시즌 리그 '), h('span.gold-t', L('{0}위', R.league.after)), R.league.after < R.league.before ? ` (▲${R.league.before - R.league.after})` : ''));
             if (R.weekly && R.weekly.length) {
                 for (const w of R.weekly) for (const g of w.got) if (g.icon) cells.push(rewardCell(g.icon, g.icon === 'silver' ? fmt(g.n) : g.n));
                 content.push(h('div.gold-t', L('이번 주 구간 보상: {0}', R.weekly.map(w => L('{0}웨이브', w.wave)).join(', '))));
             }
         } else if (R.raidOn) {
             content.push(h('div.ribbon', h('span', R.raidOn.mode === 'party' ? L('파티 레이드') : L('월드 보스'))));
-            content.push(h('div', { style: { fontSize: '22px' } }, L('피해량 '), h('span.gold-t.res-num', fmt(R.raidOn.dmg)), L(' · {0}점', fmt(R.raidOn.pts))));
+            content.push(h('div', { style: { fontSize: '20px' } }, L('피해량 '), h('span.gold-t.res-num', fmt(R.raidOn.dmg)), L(' · {0}점', fmt(R.raidOn.pts))));
             content.push(h('div.rd-result', L('기록을 보내는 중…')));
         } else if (R.praid) {
             content.push(h('div.ribbon' + (R.win ? '' : '.lose'), h('span', R.win ? L('레이드 승리!') : L('레이드 실패'))));
@@ -54,7 +54,7 @@
             content.push(...UI.towerResult(R));
         } else if (R.raid) {
             content.push(h('div.ribbon', h('span', L('토벌 종료'))));
-            content.push(h('div', { style: { fontSize: '22px' } }, L('피해량 '), h('span.gold-t', fmt(R.raid.dmg)), L(' · 이번 주 최고 {0} · {1}단계', fmt(R.raid.best), R.raid.tier)));
+            content.push(h('div', { style: { fontSize: '20px' } }, L('피해량 '), h('span.gold-t', fmt(R.raid.dmg)), L(' · 이번 주 최고 {0} · {1}단계', fmt(R.raid.best), R.raid.tier)));
         } else {
             content.push(h('div.ribbon' + (R.win ? '' : '.lose'), h('span', R.win ? L('승리!') : L('패배...'))));
             if (R.win) content.push(h('div.bigstars', [0, 1, 2].map(i => { const s = img(i < R.stars ? 'i_star' : 'i_star_off'); s.style.animationDelay = (0.3 + i * 0.25) + 's'; return s; })));
@@ -63,10 +63,10 @@
             if (!R.win && R.leaks && R.leaks.length) content.push(h('div.leaks', h('b', L('성문을 넘은 적')),
                 R.leaks.slice(0, 3).map(([k, n]) => h('div.leak', Art.domCanvas(Art.enemy(k, 0), 1), h('div', h('span.gn', `${ENEMIES[k].name} ×${n}`), UI.foeTip(k))))));
             if (!R.win && R.leaks && R.leaks.some(([k]) => ENEMIES[k] && (ENEMIES[k].boss || ENEMIES[k].elite))) content.push(h('div.tip', { style: { color: '#a8401a' } }, L('보스·정예가 성문을 넘으면 바로 패배! 5초 안에 잡으세요')));
-            if (R.cond) content.push(h('div', { style: { fontSize: '17px', color: R.cond.ok ? '#3a7a2a' : '#a8401a' } }, L('3성 조건 · {0}: {1}', R.cond.name, R.cond.ok ? L('달성') : L('실패'))));
+            if (R.cond) content.push(h('div', { style: { fontSize: '16px', color: R.cond.ok ? '#3a7a2a' : '#a8401a' } }, L('3성 조건 · {0}: {1}', R.cond.name, R.cond.ok ? L('달성') : L('실패'))));
         }
         for (const g of (R.got || [])) g.item ? gear.push(itemCell(g.item, { noNew: true, onclick: () => { click(); UI.itemInfo(g.item); } })) : cells.push(rewardCell(g.icon, g.icon === 'silver' ? fmt(g.n) : g.n));
-        content.push(h('div', { style: { fontSize: '16px', color: '#5a3a1c' } }, L('처치 {0} · 잃은 목숨 {1}', R.kills, R.lost) + (R.levelUp ? L(' · 영웅 레벨 업! Lv.{0}', R.heroLv) : '')));
+        content.push(h('div', { style: { fontSize: '15px', color: '#5a3a1c' } }, L('처치 {0} · 잃은 목숨 {1}', R.kills, R.lost) + (R.levelUp ? L(' · 영웅 레벨 업! Lv.{0}', R.heroLv) : '')));
         if (R.xpShare) content.push(h('div.tip', L('다른 영웅도 경험치 +{0}', fmt(R.xpShare))));
         // silver and xp always come first, gear on its own row under them
         if (cells.length) content.push(h('div.row.res-row', cells));

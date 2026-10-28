@@ -84,15 +84,15 @@
         const win = h('div.panel.win.summonwin');
         win.classList.add('glass');
         win.style.gap = '2px'; win.style.paddingTop = '8px'; win.style.paddingBottom = '8px';
-        win.appendChild(h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '14px' } }, h('div.title-t', { style: { fontSize: '34px' } }, L('무한의 성벽')),
+        win.appendChild(h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '14px' } }, h('div.title-t', { style: { fontSize: '32px' } }, L('무한의 성벽')),
             h('div', { style: { color: '#f3e3c3', textShadow: 'var(--stroke-s)' } }, rule.id === 'boss' ? L('5웨이브마다 보스') : L('10웨이브마다 보스')),
             h('div.rulecard', h('b', L('이번 주 규칙: {0}', rule.name)), h('span', ` · ${rule.desc}`))));
-        const go = un ? h('button.btn.gold', { style: { fontSize: '24px', padding: '10px 40px', marginLeft: '12px' }, onclick: () => { click(); Game.startBattle({ endless: true }); } }, L('도전하기'))
+        const go = un ? h('button.btn.gold', { style: { fontSize: '22px', padding: '10px 40px', marginLeft: '12px' }, onclick: () => { click(); Game.startBattle({ endless: true }); } }, L('도전하기'))
             : h('div', { style: { color: '#ff9090' } }, L('1장 보스 "{0}"을(를) 물리치면 열립니다', ENEMIES.ironfang.name));
-        win.appendChild(h('div.row', { style: { display: 'flex', gap: '14px', alignItems: 'center' } }, h('div', { style: { fontSize: '24px' } }, L('최고 기록 '), h('span.gold-t', L('{0} 웨이브', p.endlessBest))),
+        win.appendChild(h('div.row', { style: { display: 'flex', gap: '14px', alignItems: 'center' } }, h('div', { style: { fontSize: '22px' } }, L('최고 기록 '), h('span.gold-t', L('{0} 웨이브', p.endlessBest))),
             h('div', { style: { textAlign: 'center' } }, rewardCell('silver', ENDLESS.silverPerWave), h('div.tip', L('웨이브마다'))), h('div', { style: { textAlign: 'center' } }, rewardCell('gem', ENDLESS.gemsPer10), h('div.tip', L('10웨이브 기록마다'))), go));
         const wk = Rewards.endlessWeek(p);
-        win.appendChild(h('div', { style: { fontSize: '22px', marginTop: '4px' } }, L('이번 주 구간 보상 '), h('span.gold-t', L('최고 {0} 웨이브', wk.best)), h('span.tip', L(' · 매주 월 05:00 초기화'))));
+        win.appendChild(h('div', { style: { fontSize: '20px', marginTop: '4px' } }, L('이번 주 구간 보상 '), h('span.gold-t', L('최고 {0} 웨이브', wk.best)), h('span.tip', L(' · 매주 월 05:00 초기화'))));
         win.appendChild(h('div.row', { style: { display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' } }, ENDLESS.weekly.map(m => {
             const done = wk.claimed.includes(m.wave);
             const r = m.reward;
@@ -166,7 +166,7 @@
         win.appendChild(h('div.tabhead', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' } },
             h('h2', { style: { margin: 0 } }, L('요일 도전')), h('div.chip', L('오늘 남은 도전 {0}/{1}', left, DUNGEON.entries)),
             h('div.tip', L('월·목 은화 광산 · 화·금 강화석 채굴장 · 수·토 보석 동굴 · 일요일은 모두 열림. 별 3개로 깬 단계는 소탕할 수 있습니다.'))));
-        if (!Meta.dungeonUnlocked(p)) { win.appendChild(h('div', { style: { color: '#ff9090', margin: '30px', fontSize: '20px' } }, L('1장 보스를 물리치면 열립니다'))); root().appendChild(win); return; }
+        if (!Meta.dungeonUnlocked(p)) { win.appendChild(h('div', { style: { color: '#ff9090', margin: '30px', fontSize: '18px' } }, L('1장 보스를 물리치면 열립니다'))); root().appendChild(win); return; }
         // 한 번에 소탕: 오늘 열린 종류 중 별 3개로 깬 가장 높은 단계를 남은 횟수만큼
         const sweepPick = () => { let best = null; for (const k of today) DUNGEON.tiers.forEach((T, t) => { if (Meta.dungeonBest(p, k, t) >= 3 && (!best || t > best.t)) best = { k, t }; }); return best; };
         const sp = sweepPick();
@@ -184,8 +184,7 @@
             const col = h('div.inset.dg-col' + (open ? (today.length === 1 ? '.wide' : '') : '.closed'), h('h3', K.name), h('div.tip', K.desc));
             if (!open) {                                                     // closed today: just say when it opens
                 const days = Object.keys(DUNGEON.byDay).filter(d => DUNGEON.byDay[d].includes(kind)).map(d => [L('일##요일'), L('월##요일'), L('화##요일'), L('수##요일'), L('목##요일'), L('금##요일'), L('토##요일')][d]).join('·');
-                col.appendChild(h('div.muted', { style: { margin: '10px 0' } }, L('오늘은 닫혀 있습니다')));
-                col.appendChild(h('div.tip', L('열리는 날: {0}', days)));
+                col.appendChild(h('div.lock-over', img('i_lock', '.lock-big'), h('b', L('오늘은 닫혀 있습니다')), h('div.tip', L('열리는 날: {0}', days))));   // a big padlock over the dimmed column
                 cols.appendChild(col);
                 continue;
             }
@@ -196,6 +195,7 @@
                 if (!tOpen && t > 0 && !Meta.tierOpen(p, t - 1)) return;          // show only the next locked tier as a teaser
                 const rw = DUNGEON.reward(kind, t, 3);
                 const row = h('div.dg-row' + (tOpen ? '' : '.lock'),
+                    tOpen ? null : h('div.lock-over.sm', img('i_lock', '.lock-big'), h('b', L('{0} 클리어 후 열립니다', stageLabel(T.need)))),
                     h('div.dg-nm', h('b', T.name), h('div', starsStr(best))),
                     h('div.dg-rw', ...rewardIcons(rw)),
                     h('div.dg-btns',
@@ -222,14 +222,14 @@
         win.appendChild(h('div.tabhead', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' } },
             h('h2', { style: { margin: 0 } }, L('보스 토벌전')), h('div.chip', L('이번 주 남은 도전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries)),
             h('div.tip', L('피해량만큼 단계 보상. 보스는 매주 바뀌어요.'))));
-        if (!Meta.raidUnlocked(p)) { win.appendChild(h('div', { style: { color: '#ff9090', margin: '30px', fontSize: '20px' } }, L('2장 보스를 물리치면 열립니다'))); root().appendChild(win); return; }
+        if (!Meta.raidUnlocked(p)) { win.appendChild(h('div', { style: { color: '#ff9090', margin: '30px', fontSize: '18px' } }, L('2장 보스를 물리치면 열립니다'))); root().appendChild(win); return; }
         const kind = Meta.raidBoss(p), si = Meta.raidStage(p, kind), ref = Meta.raidRef(kind, si), tierNow = Meta.raidTierOf(kind, p.raid.best, si);
         const left = h('div.inset.raidleft',
-            h('div.title-t', { style: { fontSize: '24px' } }, `${ENEMIES[kind].title} ${ENEMIES[kind].name}`),
+            h('div.title-t', { style: { fontSize: '22px' } }, `${ENEMIES[kind].title} ${ENEMIES[kind].name}`),
             (c => { c.style.maxHeight = '118px'; c.style.maxWidth = '220px'; return c; })(Art.domCanvas(Art.enemy(kind, 0), 3.2)),
             h('div.tip', L('보스 강도: {0} 기준', stageLabel(si))),
             h('div', L('최고 피해 '), h('span.gold-t', fmt(p.raid.best)), ` · `, h('span.gold-t', `${tierNow} / ${RAID.tiers.length}`), (LANG === 'ko' ? '' : ' ') + L('단계')),
-            h('button.btn.gold' + (p.raid.runs < RAID.tries ? '' : '.off'), { style: { fontSize: '22px', minWidth: '200px' }, onclick: () => {
+            h('button.btn.gold' + (p.raid.runs < RAID.tries ? '' : '.off'), { style: { fontSize: '20px', minWidth: '200px' }, onclick: () => {
                 if (p.raid.runs >= RAID.tries) { toast(L('이번 주 도전 횟수를 다 썼습니다')); return; }
                 click(); Game.startBattle({ raid: true });
             } }, L('토벌 시작')));
@@ -260,7 +260,7 @@
         win.appendChild(h('div.tabhead', { style: { display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' } },
             h('h2', { style: { margin: 0 } }, L('주간 공방전')), h('div.chip', L('오늘 남은 도전 {0}/{1}', left, CUP.attempts)),
             h('div.tip', L('모든 냥이가 같은 지도·같은 웨이브·같은 제한으로 겨룹니다. 매주 월요일 05:00에 바뀌고, 이번 주 최고 점수로 순위가 정해집니다.'))));
-        if (!Meta.cupUnlocked(p)) { win.appendChild(h('div', { style: { color: '#ff9090', margin: '30px', fontSize: '20px' } }, L('{0} 클리어 후 열립니다', stageLabel(CUP.unlockStage)))); root().appendChild(win); return; }
+        if (!Meta.cupUnlocked(p)) { win.appendChild(h('div', { style: { color: '#ff9090', margin: '30px', fontSize: '18px' } }, L('{0} 클리어 후 열립니다', stageLabel(CUP.unlockStage)))); root().appendChild(win); return; }
         const rw = (Online.cfg && Online.cfg.weekly && Online.cfg.weekly.cup)
             ? Online.cfg.weekly.cup.map(x => [x.top >= 1 ? L('참가') : L('상위 {0}%', Math.round(x.top * 100)), x.reward]) : CUP.rewards;
         const left2 = h('div.inset.cupleft',
@@ -268,7 +268,7 @@
             h('div.cup-meta', h('span', L('지도: {0} · 최대 {1}웨이브', CHAPTERS.find(x => x.theme === c.theme) ? CHAPTERS.find(x => x.theme === c.theme).name : c.theme, CUP.maxWaves)),
                 UI.helpBtn(L('점수 계산'), L('점수 = 버틴 웨이브 × 1000 + 처치 × 5 + 남은 목숨 × 100 (+30웨이브 완주 5000)'), '.mob-q')),
             h('div', L('이번 주 내 최고 '), h('span.gold-t', L('{0}점', fmt(st.best))), st.bestWave ? L(' ({0}웨이브)', st.bestWave) : '', h('span.tip.norevive', ' · ' + L('이어하기 없음 · 공정한 기록'))),
-            h('button.btn.gold' + (left ? '' : '.off'), { style: { fontSize: '22px' }, onclick: () => {
+            h('button.btn.gold' + (left ? '' : '.off'), { style: { fontSize: '20px' }, onclick: () => {
                 if (!left) { toast(L('오늘 도전 횟수를 다 썼습니다')); return; }
                 click(); Game.startBattle({ cup: true });
             } }, L('도전하기')),

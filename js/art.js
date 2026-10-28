@@ -23,7 +23,7 @@ const Art = (() => {
             im.onload = () => {
                 const c = canvas(im.width, im.height);
                 c.getContext('2d').drawImage(im, 0, 0);
-                const k = /^(bg_|path_|title_bg|app_icon)/.test(name) ? 1 : 4;   // sprites are stored at 2x and drawn at scale 2
+                const k = /^(bg_|path_|title_bg|app_icon)/.test(name) ? 1 : (/^i_/.test(name) && im.width >= 200 ? 8 : 4);   // sprites are stored at 2x and drawn at scale 2
                 loaded[name] = { img: c, white: whiteOf(c), w: im.width / k, h: im.height / k, hi: true };
                 res();
             };
@@ -48,13 +48,18 @@ const Art = (() => {
     function hero(cls) { return sprite('h_' + cls, 18, 22); }
     function soldier(kind) { return sprite('s_' + kind, 14, 17); }
     function tower(type, lv, spec) { return sprite('t_' + type + (spec || lv), 34, 40); }
-    function icon(key) { return sprite('i_' + key, 16, 16); }
+    // the plain weapon picture follows the hero too (sword / staff / bow); until the new pictures exist the sword stands in
+    function icon(key) {
+        if (key === 'weapon_sword') return sprite('i_weapon', 16, 16);
+        if (key === 'weapon') { const c = typeof Save !== 'undefined' && Save.p && Save.p.hero; const k = c === 'mage' ? 'weapon_staff' : c === 'ranger' ? 'weapon_bow' : 'weapon'; return gen('i_' + k) || sprite('i_weapon', 16, 16); }
+        return sprite('i_' + key, 16, 16);
+    }
     function decoSprite(kind) { return sprite('d_' + kind, 16, 20); }
     // gear picture: 영웅·전설·신화 have their own images (img/it_{slot}_{r}_{n}.png) when they exist, else the slot icon.
     // The image is shown at the slot icon's size whatever its pixel size.
     const itemSprites = {};
     function itemIcon(it) {
-        const name = 'it_' + it.slot + '_' + it.r + '_' + itemArt(it), g = it.r >= 2 && gen(name);
+        const name = 'it_' + it.slot + '_' + it.r + '_' + itemForm(it), g = it.r >= 2 && gen(name);
         if (!g) return icon(it.slot);
         if (!itemSprites[name]) { const base = icon(it.slot); itemSprites[name] = { img: g.img, white: g.white, w: base.w, h: base.h, hi: true }; }
         return itemSprites[name];

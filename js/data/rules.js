@@ -89,13 +89,17 @@ const SELL_RATIO = 0.6;
 
 // ---------------------------------------------------------------- heroes
 const HEROES = {
-    knight: { name: L('기사'), desc: L('앞에서 막는 탱커 · 스킬로 적을 기절시켜요'), hp: 470, atk: 32, rate: 0.9, range: 60, spd: 100, block: true, air: true, dmgType: 'phys' },
-    mage:   { name: L('마법사'), desc: L('범위 마법 · 치유의 서리로 아군 회복 · 물리 방어 적에 강함'), hp: 270, atk: 30, rate: 1.1, range: 165, spd: 88, block: false, air: true, dmgType: 'magic' },
-    ranger: { name: L('궁수'), desc: L('긴 사거리 · 기절·빙결된 적에게 큰 피해 · 마법 저항 적에 강함'), hp: 310, atk: 17, rate: 0.6, range: 195, spd: 105, block: false, air: true, dmgType: 'phys' },
+    knight: { name: L('기사'), desc: L('앞에서 막는 탱커 · 스킬로 적 기절'), hp: 470, atk: 32, rate: 0.9, range: 60, spd: 100, block: true, air: true, dmgType: 'phys' },
+    mage:   { name: L('마법사'), desc: L('범위 마법 · 아군 회복 · 물리 방어 적에 강함'), hp: 270, atk: 30, rate: 1.1, range: 165, spd: 88, block: false, air: true, dmgType: 'magic' },
+    ranger: { name: L('궁수'), desc: L('긴 사거리 · 기절·빙결 대상에게 피해 +100%'), hp: 310, atk: 17, rate: 0.6, range: 195, spd: 105, block: false, air: true, dmgType: 'phys' },
 };
 // 영웅 시너지: 기사·마법사가 기절·빙결시킨 적은 영웅 공격에 약해지고 궁수는 그 적에게 폭딜, 마법사는 아군을 회복
 // (협동·냥이 총출동처럼 영웅이 둘 이상일 때 서로 맞물린다)
 const SYNERGY = { exposed: 1.3, burst: 2.0, allyHeal: 0.03, allyStunEvery: 3, allyStun: 0.8 };
+// the hero tab states these in words (SYNERGY_TEXT): keep the numbers in step with exposed (+30%) and burst (+100%)
+// who to pick, in words that follow the numbers above (hp 470 / 270 / 310, range 60 / 165 / 195, only the knight blocks): [role, strengths, weakness]
+const HERO_GUIDE = { knight: [L('탱커'), L('체력이 높고 길을 막아 줘요'), L('사거리가 짧아요')], mage: [L('마법 딜러'), L('범위 마법과 아군 회복'), L('체력이 낮고 길을 못 막아요')], ranger: [L('원거리 딜러'), L('가장 긴 사거리와 빠른 공격'), L('체력이 낮고 길을 못 막아요')] };
+const SYNERGY_TEXT = { knight: L('기절시킨 적: 영웅 피해 +30%'), mage: L('빙결시킨 적: 영웅 피해 +30% · 아군 회복'), ranger: L('기절·빙결된 적: 피해 +100%') };
 const HERO_GROWTH = 1.07;
 const HERO_MAX_LV = 60;
 const HERO_RESPAWN = 12;

@@ -70,7 +70,7 @@
                 onclick: () => { if (!un) { toast(L('이전 스테이지를 먼저 클리어하세요')); return; } click(); stageInfo(idx, S.hard); },
             },
                 h('div.nm', st.name),
-                st.boss ? Art.domCanvas(Art.enemy(st.boss, 0), 1.4) : h('span', { style: { fontFamily: 'BlackHan', fontSize: '22px' } }, stageLabel(idx)),
+                st.boss ? Art.domCanvas(Art.enemy(st.boss, 0), 1.4) : h('span', { style: { fontFamily: 'BlackHan', fontSize: '20px' } }, stageLabel(idx)),
                 h('div.stars', starsStr(stars(idx))));
             layer.appendChild(node);
         }
@@ -168,17 +168,17 @@
             h('div.title-t', { style: hard ? { color: '#ff7a5c' } : {} }, `${hard ? L('[영웅] ') : ''}${stageLabel(idx)} ${st.name}`),
             h('div.row', { style: { alignItems: 'center' } }, starsStr(have), h('span', { style: { marginLeft: '8px' } }, L('웨이브 {0}', st.waves) + (st.boss ? L(' · 보스 {0}', ENEMIES[st.boss].name) : ''))),
             h('div.inset', { style: { padding: '8px', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' } },
-                kinds.concat(st.boss ? [st.boss] : []).map(k => h('div.si-enemy', { style: { textAlign: 'center', fontSize: '13px', width: '78px' }, onclick: () => { click(); UI.enemyInfo(k); } },
+                kinds.concat(st.boss ? [st.boss] : []).map(k => h('div.si-enemy', { style: { textAlign: 'center', fontSize: '12px', width: '78px' }, onclick: () => { click(); UI.enemyInfo(k); } },
                     fitC(Art.domCanvas(Art.enemy(k, 0), 2.5), 70, 58), h('div', ENEMIES[k].name),
                     ENEMIES[k].tag ? h('div', { style: { color: '#a8401a' } }, ENEMIES[k].tag.replace(/·/g, '·​')) : null))),
             h('div.tip.si-hint', L('적을 누르면 특징과 상대법을 볼 수 있습니다')),
-            hard ? h('div', { style: { fontSize: '16px', color: '#a8401a', fontWeight: 'bold' } }, L('3성 조건: {0} (+ 잃은 목숨 2 이하)', hardCond(idx).name)) : null,
-            h('div', { style: { fontSize: '15px', color: '#6a4a2a' } }, first ? L('첫 클리어 보상 (별 3개 기준)') : L('보상 (별 3개 기준)')),
+            hard ? h('div', { style: { fontSize: '15px', color: '#a8401a', fontWeight: 'bold' } }, L('3성 조건: {0} (+ 잃은 목숨 2 이하)', hardCond(idx).name)) : null,
+            h('div', { style: { fontSize: '14px', color: '#6a4a2a' } }, first ? L('첫 클리어 보상 (별 3개 기준)') : L('보상 (별 3개 기준)')),
             h('div.row', rewardCell('silver', fmt(rw.silver)), rewardCell('i_xp', rw.xp), rewardCell('gem', (3 - have) * (hard ? HARD.gemsPerStar : 15) || '-')));
         const right = h('div.si-right',
-            h('div', { style: { fontFamily: 'BlackHan', fontSize: '17px', color: '#5a2a0a' } }, L('출전 영웅')),
+            h('div', { style: { fontFamily: 'BlackHan', fontSize: '16px', color: '#5a2a0a' } }, L('출전 영웅')),
             heroPick,
-            h('button.btn' + (hard ? '.red' : '.gold'), { style: { fontSize: '24px', minHeight: '64px', width: '100%' }, onclick: () => { click(); d.remove(); startStage(idx, hard); } }, L('전투 시작')),
+            h('button.btn' + (hard ? '.red' : '.gold'), { style: { fontSize: '22px', minHeight: '64px', width: '100%' }, onclick: () => { click(); d.remove(); startStage(idx, hard); } }, L('전투 시작')),
             have >= 3 ? sweepRow(idx, hard, () => { d.remove(); stageInfo(idx, hard); }) : null,
             h('button.btn.ghost', { style: { width: '100%' }, onclick: () => { click(); d.remove(); } }, L('닫기')));
         const d = modal([h('div.si', left, right)

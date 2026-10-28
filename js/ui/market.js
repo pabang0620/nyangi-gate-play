@@ -21,7 +21,7 @@
     }
     function statLines(it) {
         const m = itemMain(it);
-        return h('div.tip', { style: { textAlign: 'left', lineHeight: 1.5 } },
+        return h('div.tip', { style: { textAlign: 'left', lineHeight: 1.4 } },
             h('div', fmtOpt(m.name, m.v, m.pct)),
             ...it.subs.map(sb => h('div', fmtOpt(SUB_OPTS[sb.k].name, sb.v, SUB_OPTS[sb.k].pct))));
     }
@@ -108,7 +108,7 @@
             const rg = Market.range(it.r);
             if (!rg) { toast(L('잠시 후 다시 해 주세요')); return; }
             const input = h('input.nick', { type: 'number', min: rg.min, max: rg.max, value: rg.min, inputMode: 'numeric' });
-            const info = h('div.tip', { style: { lineHeight: 1.6 } });
+            const info = h('div.tip', { style: { lineHeight: 1.4 } });
             const upd = () => {
                 const v = Math.round(Number(input.value) || 0), ok = v >= rg.min && v <= rg.max;
                 info.textContent = ok ? L('보증금 {0} (팔리면 돌려받음, 취소나 기간 만료 시 사라짐) · 수수료 {1} · 팔리면 {2} 받음', fmt(Market.deposit(v)), fmt(Market.fee(v)), fmt(v - Market.fee(v) + Market.deposit(v)))
@@ -164,7 +164,7 @@
     function help() {
         const c = Market.cfg || {};
         const d = modal([h('h2', L('거래 규칙')),
-            h('div', { style: { textAlign: 'left', lineHeight: 1.7 } },
+            h('div', { style: { textAlign: 'left', lineHeight: 1.4 } },
                 h('div', L('우편으로 받은 장비(레이드 보상 카드 등)만 "거래 가능"이에요. 강화하지 않고 장착하지 않은 것만 팔 수 있어요')),
                 h('div', L('값은 거래 금화로 치러요. 거래 금화는 레이드 보상과 판매 대금으로 모이고 계정에 보관돼요')),
                 h('div', L('올릴 때 보증금 {0}%를 내고, 팔리면 돌려받아요. 취소하거나 {1}시간이 지나면 보증금은 사라지고 장비는 우편으로 돌아와요', Math.round((c.deposit || 0.02) * 100), c.hours || 48)),

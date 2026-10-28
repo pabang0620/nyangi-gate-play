@@ -32,15 +32,15 @@
         hud.autoHero = tog(L('영웅 자동'), 'autoHero');
         hud.autoWave = tog(L('자동 웨이브'), 'autoWave');
         const top = h('div.hud-top',
-            h('div.hud-box', ico('heart'), hud.lives),
+            B.raidLive ? null : h('div.hud-box', ico('heart'), hud.lives),   // 파티 레이드: the boss reaching the gate ends it, lives are not used
             h('div.hud-box', ico('gold'), hud.gold),
             h('div.hud-box.wv', ico('skull'), hud.wave),
-            B.coop ? (hud.mate = h('div.hud-box.mate', '')) : null,
             B.coop && UI.coopSignalBtn ? UI.coopSignalBtn() : null,
             h('div.sp'),
             hud.autoHero, B.coop ? null : hud.autoWave, hud.speed,
             h('div.iconbtn', { onclick: () => { click(); pause(true); } }, img('i_pause')));
         root().appendChild(top);
+        if (B.coop) root().appendChild(hud.mate = h('div.hud-mates'));   // the other players' gold: its own row under the top bar
         if (B.cond) root().appendChild(hud.cond = h('div.hud-cond.top', { title: L('영웅 난이도 3성 조건') }));
         // hero panel
         const cls = B.hero.cls;
@@ -84,7 +84,7 @@
                 if (Math.abs(parseFloat(o.left) - parseFloat(s.left)) < 100 && Math.abs(parseFloat(o.top) - parseFloat(s.top)) < 130) s.left = parseFloat(o.left) + 110 + 'px';
             }
         });
-        hud.tip = h('div.paper.guide', { style: { position: 'absolute', left: '50%', bottom: '22px', transform: 'translateX(-50%)', padding: '8px 16px', fontSize: '16px', display: 'none', pointerEvents: 'none' } });
+        hud.tip = h('div.paper.guide', { style: { position: 'absolute', left: '50%', bottom: '22px', transform: 'translateX(-50%)', padding: '8px 16px', fontSize: '15px', display: 'none', pointerEvents: 'none' } });
         root().appendChild(hud.tip);
         S.hud = hud; S.coach = null; S.foeQ = []; S.speed3Asked = false;
         S.lastHud = {};
@@ -118,10 +118,17 @@
         const set = (k, v, el) => { if (S.lastHud[k] !== v) { S.lastHud[k] = v; el.textContent = v; } };
         set('lives', `${B.lives}`, hud.lives);
         set('gold', fmt(B.gold), hud.gold);
-        set('wave', B.raidLive ? L('성문까지 {0}% · 보스 체력 {1}%', B.bossRef && B.raidLive.gateLose ? Math.max(0, Math.ceil((1 - B.bossRef.d / B.bossRef.path.len) * 100)) : 100, B.bossRef ? Math.ceil(Math.max(0, B.bossRef.hp) / B.bossRef.maxHp * 100) : 100) : B.raid ? L('남은 {0}초 · 피해 {1}', Math.ceil(B.timeLeft), fmt(Math.round(B.raidDamage))) : B.endless ? L('웨이브 {0}', Math.max(0, B.waveIdx + 1)) : L('웨이브 {0} / {1}', Math.max(0, B.waveIdx + 1), B.totalWaves), hud.wave);
+        set('wave', B.raidLive ? L('성문 {0}% · 보스 {1}%', B.bossRef && B.raidLive.gateLose ? Math.max(0, Math.ceil((1 - B.bossRef.d / B.bossRef.path.len) * 100)) : 100, B.bossRef ? Math.ceil(Math.max(0, B.bossRef.hp) / B.bossRef.maxHp * 100) : 100) : B.raid ? L('남은 {0}초 · 피해 {1}', Math.ceil(B.timeLeft), fmt(Math.round(B.raidDamage))) : B.endless ? L('웨이브 {0}', Math.max(0, B.waveIdx + 1)) : L('웨이브 {0} / {1}', Math.max(0, B.waveIdx + 1), B.totalWaves), hud.wave);
         if (Game.speed === 3 && !Rewards.speed3Unlocked(Save.p)) { Game.speed = 2; Save.p.set.speed = 2; toast(L('3배속 시간이 끝났습니다')); }
         set('speed', (B.coop ? Coop.speed : Game.speed) + L('배'), hud.speedLbl);
-        if (hud.mate) set('mate', B.acts.map((a, k) => k === B.actor ? null : L('{0} · 금화 {1}', Coop.nameOf(k), fmt(B.goldOf(k))) + (Coop.goneOf(k) ? L(' (자동)') : '')).filter(Boolean).join('   '), hud.mate);
+        if (hud.mate) {
+            const mates = B.acts.map((a, k) => k === B.actor ? null : { name: Coop.nameOf(k), gold: fmt(B.goldOf(k)), auto: !!Coop.goneOf(k) }).filter(Boolean);
+            const key = mates.map(m => `${m.name}|${m.gold}|${m.auto}`).join('/');
+            if (S.lastHud.mate !== key) {
+                S.lastHud.mate = key;
+                hud.mate.replaceChildren(...mates.map(m => h('div.hud-box.mate-chip', h('span.mn', m.name), h('span.mg', ico('gold'), m.gold), m.auto ? h('span.ma', L(' (자동)').trim()) : null)));
+            }
+        }
         if (hud.cond) { set('cond', L('3성: {0} {1}', B.cond.name, B.condBroken ? '✗' : '✓'), hud.cond); hud.cond.classList.toggle('broken', B.condBroken); }
         const hero = B.hero;
         hud.hpBar.style.width = (hero.hp / hero.maxHp * 100) + '%';
@@ -196,7 +203,7 @@
         const left = Rewards.adLeft(p, 'speed3');
         const setSpeed3 = () => { Game.speed = 3; p.set.speed = 3; Save.save(); };
         const d = modal([h('h2', L('3배속')),
-            h('div', { style: { fontSize: '18px', margin: '6px 0 12px', textAlign: 'center', lineHeight: 1.5 } }, L('전투를 3배 빠르게 진행합니다.'), h('br'), L('광고를 보면 30분 동안 쓸 수 있어요')),
+            h('div', { style: { fontSize: '16px', margin: '6px 0 12px', textAlign: 'center', lineHeight: 1.4 } }, L('전투를 3배 빠르게 진행합니다.'), h('br'), L('광고를 보면 30분 동안 쓸 수 있어요')),
             h('div.row', { style: { gap: '10px' } },
                 h('button.btn.gold' + (left ? '' : '.off'), { onclick: async () => {
                     if (!left) { toast(L('오늘 광고 횟수를 다 썼습니다')); return; }
@@ -417,8 +424,8 @@
             const sb = add(0, 76, [img('i_sell', '.tico'), h('span.nm', L('판매'))], null, () => { confirmSell(B, slot); }, () => [h('b', L('판매')), h('div', L('금화 {0} 돌려받기 (투입액의 60%)', sellV))], '.sell');
             sb.querySelector('.p').lastChild.textContent = '+' + sellV;
             if (t.type === 'barracks') {
-                add(62, 50, img('i_rally', '.tico'), null, () => { cancelAim(); S.rally = slot; closePopup(true); showAimCancel(L('병사가 모일 길을 누르세요')); },
-                    () => [h('b', L('집결지 변경')), h('div', L('사거리 안의 길을 눌러 병사 위치를 정합니다.'))]);
+                add(62, 50, img('i_rally', '.tico'), null, () => { cancelAim(); S.rally = slot; closePopup(true); showAimCancel(L('병사가 서 있을 길을 누르세요')); },
+                    () => [h('b', L('병사 위치 정하기')), h('div', L('병사가 서서 적을 막을 곳이에요. 탑 가까운 길을 눌러 정해요.'))]);
             }
         }
         root().appendChild(box);
@@ -448,18 +455,22 @@
         const c = cur && cur !== t ? B.towerStats(cur) : null;
         const d = TOWERS[t.type];
         // "old → new" with the new value highlighted when it changes
-        const v = (now, was, f = x => Math.round(x)) => (c && was !== undefined && f(was) !== f(now)) ? [f(was) + ' → ', h('span.up', f(now))] : [String(f(now))];
-        const rows = [];
+        const v = (now, was, f = x => Math.round(x)) => (c && was !== undefined && f(was) !== f(now)) ? [h('span.was', f(was)), h('span.up', f(now))] : [String(f(now))];   // old value above, the new one under it
+        // numbers as tiles (label above, value big) so they read at a glance; the small notes go under them
+        const tile = (label, val) => h('div.stt', h('span.sl', label), h('span.sv', ...val));
+        const tiles = [], notes = [];
         if (t.type === 'barracks') {
-            rows.push([L('병사 '), ...v(st.count, c && c.count), L('명 · 체력 '), ...v(st.hp, c && c.hp), L(' · 공격 '), ...v(st.atk, c && c.atk)]);
-            rows.push([L('방어 '), ...v(st.armor, c && c.armor, x => pct(x)), st.regen ? L(' · 재생') : '']);
+            tiles.push(tile(L('병사 ').trim(), v(st.count, c && c.count)), tile(L('체력'), v(st.hp, c && c.hp)), tile(L('공격'), v(st.atk, c && c.atk)), tile(L('방어 ').trim(), v(st.armor, c && c.armor, x => pct(x))));
+            if (st.regen) notes.push([L('재생').trim()]);
         } else {
             const dps = st.dmg / st.rate * (st.shots || 1), cdps = c ? c.dmg / c.rate * (c.shots || 1) : undefined;
-            rows.push([L('피해 '), ...v(st.dmg, c && c.dmg), st.shots ? ' x' + st.shots : '', st.chain ? L(' (연쇄 ') + st.chain + ')' : '', L(' · 초당 '), ...v(dps, cdps)]);
-            rows.push([L('사거리 '), ...v(st.range, c && c.range), st.splash ? L(' · 범위 ') + Math.round(st.splash) : '']);
-            rows.push([(d.dmgType === 'magic' ? L('마법 피해') : L('물리 피해')) + (d.air ? L(' · 공중 가능') : L(' · 지상만'))]);
+            tiles.push(tile(L('피해 ').trim(), [...v(st.dmg, c && c.dmg), st.shots ? ' x' + st.shots : '']), tile(L('초당'), v(dps, cdps)), tile(L('사거리 ').trim(), v(st.range, c && c.range)));
+            if (st.splash) tiles.push(tile(L('범위'), [String(Math.round(st.splash))]));
+            if (st.chain) notes.push([L('연쇄').trim() + ' ' + st.chain]);
+            notes.push([(d.dmgType === 'magic' ? L('마법 피해') : L('물리 피해')) + ' · ' + (d.air ? L('공중 가능') : L('지상만'))]);
         }
-        return h('div.st', rows.map(r => h('div', r)));
+        const rows = [];
+        return h('div.st', h('div.stg', tiles), ...notes.map(r => h('div.stn', r)));
     }
 
     function refreshPopup(B) {
@@ -536,7 +547,7 @@
         const p = Save.p; Rewards.ensure(p);
         const d = modal([
             h('div.ribbon.lose', h('span', L('성문이 뚫렸다!'))),
-            h('div', { style: { marginTop: '22px', fontSize: '18px' } }, L('목숨 5개로 이어서 싸울까요?')),
+            h('div', { style: { marginTop: '22px', fontSize: '16px' } }, L('목숨 5개로 이어서 싸울까요?')),
             h('div.tip', B.mode === 'tower' ? L('원정마다 한 번만 이어할 수 있어요') : L('이어하면 이번 판은 별 1개로 기록됩니다')),
             h('div.row',
                 h('button.btn.gold', { onclick: async () => { click(); if (await Ads.show('revive')) { Rewards.track('ad'); d.remove(); Game.revive(); } } }, img('i_ad', '.icon'), p.shop.premium ? L('이어하기 (가호)') : L('광고 보고 이어하기')),

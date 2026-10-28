@@ -170,7 +170,7 @@ const UI = {};
     }
 
     function confirmBox(msg, onYes) {
-        const d = modal([h('div', { style: { fontSize: '20px', lineHeight: '1.6', whiteSpace: 'pre-line' } }, msg),
+        const d = modal([h('div', { style: { fontSize: '18px', lineHeight: '1.4', whiteSpace: 'pre-line' } }, msg),
             h('div.row', h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('취소')),
                 h('button.btn.red', { onclick: () => { click(); d.remove(); onYes(); } }, L('확인')))]);
     }
@@ -186,8 +186,19 @@ const UI = {};
 
     // ============================================================ rewards · shop · ads
     // reward popup listing what was granted (icons, not text lines)
+    // the same currency or material listed twice (every achievement paid its own gems) is shown once with the total
+    function mergeGot(got) {
+        const out = [], at = new Map();
+        for (const g of got) {
+            const key = g.icon ? 'i:' + g.icon : g.mat ? 'm:' + g.mat : null;
+            if (key && at.has(key)) at.get(key).n += g.n;
+            else { const c = key ? { ...g } : g; if (key) at.set(key, c); out.push(c); }
+        }
+        return out;
+    }
     function showGot(title, got) {
         if (!got || !got.length) return;
+        got = mergeGot(got);
         const cell = g => {
             if (g.item) return itemCell(g.item, { noNew: true, onclick: () => itemInfo(g.item) });
             if (g.mat) return matCell(g.mat, g.n);
@@ -229,7 +240,7 @@ const UI = {};
             const d = modal([
                 h('div.title-t', L('결제 확인')),
                 h('div.testtag', L('테스트 결제 · 실제 금액이 청구되지 않습니다')),
-                h('div.row', { style: { alignItems: 'center' } }, pr.img ? img(pr.img, '.shopimg') : null, h('div', { style: { textAlign: 'left' } }, h('b', { style: { fontFamily: 'BlackHan', fontSize: '20px' } }, pr.name), h('div', won(pr.price)))),
+                h('div.row', { style: { alignItems: 'center' } }, pr.img ? img(pr.img, '.shopimg') : null, h('div', { style: { textAlign: 'left' } }, h('b', { style: { fontFamily: 'BlackHan', fontSize: '18px' } }, pr.name), h('div', won(pr.price)))),
                 h('div.row', h('button.btn.ghost', { onclick: () => { click(); d.remove(); res({ ok: false }); } }, L('취소')),
                     h('button.btn.gold', { onclick: () => { click(); d.remove(); res({ ok: true, receipt: 'test-' + Date.now() }); } }, L('결제 (테스트)')))]);
         });
@@ -238,7 +249,7 @@ const UI = {};
     function testAd(placement) {
         return new Promise(res => {
             let n = 3;
-            const cnt = h('div.num', { style: { fontSize: '48px' } }, n);
+            const cnt = h('div.num', { style: { fontSize: '46px' } }, n);
             const d = h('div.dim', { style: { zIndex: 60, flexDirection: 'column', gap: '14px', background: '#0d0905' } }, img('i_ad', '.shopimg'), h('div.title-t', L('광고 시청 중')), h('div.testtag', L('테스트 광고 · 앱에서는 실제 보상형 광고가 나옵니다')), cnt);
             root().appendChild(d);
             const iv = setInterval(() => { n--; cnt.textContent = n; if (n <= 0) { clearInterval(iv); d.remove(); res(true); } }, 1000);

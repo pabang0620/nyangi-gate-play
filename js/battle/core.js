@@ -245,6 +245,7 @@ class Battle {
 
         // waves
         if (this.raid) this.updateRaid(dt);
+        if (this.drip) this.payDrip();
         if (this.queue.length) {
             const due = this.queue.filter(q => q.t <= this.t);
             if (due.length) {
