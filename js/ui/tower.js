@@ -78,7 +78,7 @@
             f > Tower.state(p).best ? h('div.tip.gold-t', L('처음 오르는 층! 깨면 보상을 받아요')) : null,
             h('div.row', h('button.btn.ghost', { onclick: () => { click(); d.remove(); S.ctab = 'tower'; showHub('endless'); } }, L('나중에')),
                 h('button.btn.gold', { onclick: () => { click(); d.remove(); Game.startBattle({ tower: true }); } }, L('출발'))),
-        ]);
+        ], { noClose: true });
         d.querySelector('.modal').classList.add('tw-intro');
     }
     // 3 face-down cards flip one by one; tap one to take it
@@ -101,7 +101,7 @@
             return c;
         });
         const d = modal([h('div.title-t', L('축복을 하나 고르세요')), h('div.tw-cards', cards),
-            h('div.tip', L('고른 축복은 이번 원정이 끝날 때까지 계속 쌓여요'))]);
+            h('div.tip', L('고른 축복은 이번 원정이 끝날 때까지 계속 쌓여요'))], { noClose: true });
         d.querySelector('.modal').classList.add('tw-pickpop');
         const top = Math.max(...offer.map(id => Tower.blessById(id).t));
         Sfx.play(top >= 2 ? 'epic' : 'summon', top);

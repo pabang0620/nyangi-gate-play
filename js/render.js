@@ -430,7 +430,42 @@ const Render = (() => {
 
     // ultimate cut-in: dim -> diagonal band with speed lines -> hero art slides in and holds -> skill name stamp -> out
     const CUT_COL = { knight: ['#2e5fb8', '#8fc0ff'], mage: ['#7a3fc0', '#e0b0ff'], ranger: ['#2f7a3a', '#b8f080'] };
+    // 전설 / 신화 skin cut-in: the skin's own character large over a burst of light in the skin's colours, with the skin and skill names
+    function drawCutinSkin(c) {
+        const k = c.t / c.dur, ein = Math.min(1, c.t / 0.22), eout = k > 0.85 ? (k - 0.85) / 0.15 : 0, ease = t => 1 - Math.pow(1 - t, 3);
+        const myth = c.rarity >= 4, col = c.tint || (myth ? '#ff7a3a' : '#f2c14e'), col2 = myth ? '#ffe08a' : '#fff0b0';
+        x.save();
+        x.fillStyle = `rgba(8,4,16,${0.78 * ein * (1 - eout)})`; x.fillRect(0, 0, W, H);
+        // rotating rays + radial glow
+        const cx = W * 0.34, cy = H * 0.5, tnow = performance.now() / 1000;
+        x.save(); x.globalAlpha = ein * (1 - eout); x.translate(cx, cy); x.rotate(tnow * 0.35);
+        for (let i = 0; i < 14; i++) { x.rotate(TAU / 14); const g = x.createLinearGradient(0, 0, W, 0); g.addColorStop(0, col2); g.addColorStop(1, 'rgba(255,255,255,0)'); x.globalAlpha = 0.16 * ein * (1 - eout); x.fillStyle = g; x.beginPath(); x.moveTo(0, -18); x.lineTo(W, -80); x.lineTo(W, 80); x.lineTo(0, 18); x.fill(); }
+        x.restore();
+        const rg = x.createRadialGradient(cx, cy, 10, cx, cy, 380); rg.addColorStop(0, col2); rg.addColorStop(0.35, col); rg.addColorStop(1, 'rgba(0,0,0,0)');
+        x.globalAlpha = 0.6 * ein * (1 - eout); x.fillStyle = rg; x.fillRect(0, 0, W, H); x.globalAlpha = 1;
+        // the skin's character (same picture as the skin card), rising in with a pop
+        const art = Art.gen(c.skin ? 'ps_' + c.skin : 'p_' + c.cls);
+        if (art) {
+            const pop = ease(Math.min(1, c.t / 0.35)), sz = 560 * (0.85 + pop * 0.15), ar = art.img.height / art.img.width, ay = cy + 20 + (1 - pop) * 80 + eout * 120;
+            x.imageSmoothingEnabled = true; x.globalAlpha = Math.min(1, c.t / 0.2) * (1 - eout);
+            x.shadowColor = col2; x.shadowBlur = 40; x.drawImage(art.img, cx - sz / 2, ay - sz * ar / 2, sz, sz * ar); x.shadowBlur = 0; x.globalAlpha = 1;
+        }
+        // sparkles
+        for (let i = 0; i < 24; i++) { const a = (tnow * 0.6 + i / 24) % 1, px = cx + Math.cos(i * 2.4) * (120 + a * 300), py = cy + 40 - a * 260 + Math.sin(i * 5) * 40; x.globalAlpha = (1 - a) * 0.9 * ein * (1 - eout); x.fillStyle = col2; x.beginPath(); x.arc(px, py, 2 + (i % 3), 0, TAU); x.fill(); }
+        x.globalAlpha = 1;
+        // text: rarity ribbon, skin name, skill name
+        if (c.t > 0.3) {
+            const st = Math.min(1, (c.t - 0.3) / 0.25), sx = W * 0.7 + (1 - ease(st)) * 400 + eout * 500;
+            x.save(); x.translate(sx, cy); x.textAlign = 'center'; x.lineJoin = 'round';
+            x.font = '30px BlackHan'; x.lineWidth = 8; x.strokeStyle = '#1a0a02'; x.strokeText(myth ? L('신화 스킨') : L('전설 스킨'), 0, -92); x.fillStyle = myth ? '#ff9a5a' : '#ffd04a'; x.fillText(myth ? L('신화 스킨') : L('전설 스킨'), 0, -92);
+            x.font = '30px BlackHan'; x.lineWidth = 7; x.strokeText(c.skinName, 0, -52); x.fillStyle = '#e8d8ff'; x.fillText(c.skinName, 0, -52);
+            x.font = `${Math.round(64 * (view.textMul > 1 ? 1.05 : 1))}px BlackHan`; x.lineWidth = 14; x.strokeText(c.name, 0, 22); x.fillStyle = '#fff3d6'; x.fillText(c.name, 0, 22);
+            x.restore();
+        }
+        x.restore();
+    }
     function drawCutin(c) {
+        if (c.big) { drawCutinSkin(c); return; }
         const k = c.t / c.dur;
         const ein = Math.min(1, c.t / 0.18), eout = k > 0.82 ? (k - 0.82) / 0.18 : 0;
         const ease = t => 1 - Math.pow(1 - t, 3);
@@ -517,6 +552,24 @@ const Render = (() => {
         shadow(s.x, s.y, 9);
         const f = Math.floor(s.walk) % 2;
         const ss = Art.soldier(s.kind, f);
+        if (s.expire) {   // summoned helpers (증원): a flickering golden flame behind the body marks them as temporary, with a countdown before they vanish
+            const nw = performance.now() / 1000, flick = 0.75 + Math.sin(nw * 13 + s.hx) * 0.15 + Math.sin(nw * 7.3 + s.hy) * 0.1;
+            for (let i = 0; i < 3; i++) {
+                const k = (nw * 1.6 + i * 0.33 + s.hx * 0.01) % 1, fx = s.x + Math.sin(nw * 5 + i * 2 + s.hx) * 6 * (1 - k), fy = s.y - 4 - k * 30;
+                x.globalAlpha = (1 - k) * 0.8 * flick; x.fillStyle = i === 1 ? '#fff0a0' : '#ffc83a';
+                x.beginPath(); x.ellipse(fx, fy, 10 * (1 - k * 0.6), 16 * (1 - k * 0.4), 0, 0, TAU); x.fill();
+            }
+            const g = x.createRadialGradient(s.x, s.y - 14, 2, s.x, s.y - 14, 26); g.addColorStop(0, 'rgba(255,220,90,' + (0.75 * flick) + ')'); g.addColorStop(1, 'rgba(255,170,30,0)');
+            x.globalAlpha = 1; x.fillStyle = g; x.beginPath(); x.arc(s.x, s.y - 14, 26, 0, TAU); x.fill();
+            const left = s.expire - T;
+            if (s.label && left > 0 && left <= 3.99) {
+                const n = Math.floor(left), fr = left - n;   // 3, 2, 1, 0
+                x.save(); x.font = `${Math.round(24 * view.textMul)}px BlackHan`; x.textAlign = 'center'; x.lineWidth = 5; x.lineJoin = 'round'; x.strokeStyle = '#2a1206'; x.fillStyle = '#ffe27a';
+                const pop = 1 + (1 - fr) * 0.25; x.translate(s.x + 14, s.y - 56); x.scale(pop, pop); x.globalAlpha = 0.6 + fr * 0.4;
+                x.strokeText(String(n), 0, 0); x.fillText(String(n), 0, 0); x.restore();
+            }
+            x.globalAlpha = 1;
+        }
         // soft "bun" breathing: chubby cats squish a little while standing
         const br = 1 + Math.sin(performance.now() / 300 + s.hx) * 0.035;
         spr(ss, s.x, s.y - (ss.hi ? Math.abs(Math.sin(s.walk * Math.PI / 2)) * 2 : 0), 2, s.dir < 0, s.flash, 1, 2 - br, br);

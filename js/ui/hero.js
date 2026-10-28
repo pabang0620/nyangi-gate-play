@@ -248,7 +248,7 @@
         if (((p.mats && p.mats.stone) || 0) < enhanceStones(it.enh)) { toast(L('강화석이 {0}개 필요합니다 (요일 도전 강화석 채굴장)', enhanceStones(it.enh))); Sfx.play('click'); return; }
         const risky = it.enh >= ENHANCE.dropFrom;
         const hits = it.enh < 5 ? 1 : it.enh < ENHANCE.dropFrom ? 2 : 3, gap = it.enh < 5 ? 160 : it.enh < ENHANCE.dropFrom ? 260 : 420;
-        const d = modal([h('div.title-t', L('강화 중...')), h('div#anvil', { style: { transition: 'transform .08s' } }, itemCell(it, { noNew: true })), h('div#ehit', { style: { fontSize: '28px', height: '36px' } }, '')]);
+        const d = modal([h('div.title-t', L('강화 중...')), h('div#anvil', { style: { transition: 'transform .08s' } }, itemCell(it, { noNew: true })), h('div#ehit', { style: { fontSize: '28px', height: '36px' } }, '')], { noClose: true });
         const cellBox = d.querySelector('#anvil'), hit = d.querySelector('#ehit');
         let n = 0;
         const iv = setInterval(() => {
@@ -445,10 +445,8 @@
             // gear type: random, or pick weapon / armor / charm (same price, same grade rates)
             left.appendChild(h('div.sm-slots', [['any', L('전체 (무작위)')], ...SLOTS.map(k => [k, SLOT_NAME[k]])].map(([k, nm]) =>
                 h('div.btn.small' + (slot === k ? '.gold' : ''), { onclick: () => { if (slot === k) return; click(); S.summonSlot = k; showHub('summon'); } },
-                    k === 'any' ? null : Art.domCanvas(Art.icon(k === 'weapon' ? 'weapon_sword' : k), 1.6), nm))));
-            // the weapon is shown in all three forms (sword, staff, bow): the gear is not tied to one hero
-            const weaponTrio = () => h('div.sm-trio', ['weapon_sword', 'weapon_staff', 'weapon_bow'].map(k => Art.domCanvas(Art.icon(k), 1.7)));
-            left.appendChild(h('div.sm-rates', RARITY.map((r, i) => rate(i, slot === 'any' || slot === 'weapon' ? weaponTrio() : Art.domCanvas(Art.icon(slot), 3), SUMMON.table[i]))));
+                    k === 'any' ? null : Art.domCanvas(Art.icon(k), 1.6), nm))));
+            left.appendChild(h('div.sm-rates', RARITY.map((r, i) => rate(i, Art.domCanvas(Art.icon(slot === 'any' ? 'weapon' : slot), 3), SUMMON.table[i]))));
             left.appendChild(h('div.tip', L('{0}번째 소환까지 전설이 없으면 전설 확정 (현재 {1}/{2})', SUMMON.pity, p.pity, SUMMON.pity)));
             left.appendChild(h('div.tip', L('현재 소환 장비 레벨 {0} (최고 클리어 스테이지가 높을수록 올라갑니다)', Math.round(summonIlvl(p)))));
             right.appendChild(h('div.sm-pair',
@@ -567,7 +565,7 @@
         } }, L('모두 열기'));
         const d = modal([h('div.title-t', L('소환 결과')), cards,
             res.some(x => x.dup) ? h('div.tip', L('이미 가진 스킨은 보석으로 바뀌었습니다')) : null,
-            h('div.row', res.length > 1 ? allBtn : null, againBtn, okBtn)]);
+            h('div.row', res.length > 1 ? allBtn : null, againBtn, okBtn)], { noClose: true });
         if (res.length > 1) { const iv = setInterval(() => { if (!document.body.contains(d)) { clearInterval(iv); return; } allBtn.style.display = els.every(c => c.classList.contains('open')) ? 'none' : ''; }, 250); }
         if (calm) d.classList.add('calm');
         const els = res.map((x, i) => {

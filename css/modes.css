@@ -413,3 +413,59 @@
 #app.mobile .hero-left .portrait { width: 70px !important; height: 70px !important; }
 #app.mobile .hero-left .hl-info .bar.xp, #app.mobile .hero-left .hl-info .bar.xp + .tip { display: none; }
 #app.mobile .hl-notes > .tip:first-child { display: none; }
+
+/* fusing: the loading beat and the good-grade glow */
+.fz-body { display: flex; flex-direction: column; align-items: center; gap: 10px; min-width: 260px; }
+.fz-charge { position: relative; width: 200px; height: 110px; display: flex; align-items: center; justify-content: center; }
+.fz-charge.bulk { height: 60px; }
+.fz-orbit { display: flex; gap: 6px; animation: fz-spin 1.5s ease-in forwards; }
+.fz-orbit .cell { animation: fz-shake .18s infinite alternate; }
+.fz-glow { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: radial-gradient(#fff, rgba(255, 210, 90, 0) 70%); animation: fz-grow 1.5s ease-in forwards; pointer-events: none; }
+.fz-wait { font-family: 'BlackHan'; color: #8a3a12; animation: fz-blink .6s infinite alternate; }
+.fz-bar { width: 220px; height: 10px; border-radius: 6px; background: rgba(60, 36, 14, .25); overflow: hidden; }
+.fz-bar i { display: block; height: 100%; width: 0; background: linear-gradient(#ffd36a, #e08a1c); animation: fz-fill linear forwards; }
+@keyframes fz-fill { to { width: 100%; } }
+@keyframes fz-spin { 0% { transform: rotate(0) scale(1); } 70% { transform: rotate(240deg) scale(.7); } 100% { transform: rotate(360deg) scale(.3); } }
+@keyframes fz-grow { 0% { transform: scale(1); opacity: .2; } 100% { transform: scale(9); opacity: 1; } }
+@keyframes fz-shake { to { transform: translate(1px, -1px); } }
+@keyframes fz-blink { to { opacity: .45; } }
+.fz-win-hi .modal { animation: fz-glow-pop .9s ease-out; box-shadow: 0 0 28px 8px rgba(255, 214, 90, .75); }
+@keyframes fz-glow-pop { 0% { transform: scale(.9); } 40% { transform: scale(1.04); } 100% { transform: scale(1); } }
+
+/* result step after the loading beat: the pieces are gone, the result appears at once and pops */
+.fz-stage .fz-fly { display: none; }
+.fz-stage .fz-res { opacity: 1; transform: scale(1.5); transition: none; animation: fz-pop .6s cubic-bezier(.2, 1.6, .4, 1); }
+.fz-stage .fz-burst { animation: fz-burst .8s ease-out; }
+@keyframes fz-pop { 0% { opacity: 0; transform: scale(.2); } 100% { opacity: 1; transform: scale(1.5); } }
+.fz-bar { display: block; }
+.fz-body > .fz-bar, .fz-body > .fz-wait { flex: none; }
+
+.fz-stage .fz-res { width: 76px; height: 76px; display: flex; align-items: center; justify-content: center; flex: none; }
+.fz-stage .fz-res .cell { flex: none; }
+
+.fz-stage { margin: 0 auto 26px; }
+.fz-stage .fz-res { position: relative; }
+
+/* result step: picture, then the text, then the button, stacked with room for the scaled picture */
+.fz-body { gap: 14px; }
+.fz-stage { width: 100%; height: 100px; margin: 0; display: flex; align-items: center; justify-content: center; }
+.fz-stage .fz-res { transform-origin: center; }
+.fz-stage .fz-res .cell { width: 64px; height: 64px; }
+.fz-stage .fz-res { animation: fz-pop2 .6s cubic-bezier(.2, 1.6, .4, 1); transform: scale(1.3) !important; }
+@keyframes fz-pop2 { 0% { opacity: 0; transform: scale(.2); } 100% { opacity: 1; transform: scale(1.3); } }
+.fz-stage ~ div { margin-top: 6px; }
+
+.fz-body { min-width: 280px; }
+.fz-stage { flex: none !important; min-height: 100px; height: 100px; }
+.fz-body > .btn { flex: none; margin-top: 4px; }
+
+/* result picture: plain size (no scale transform, it drifted over the text); it fades in with a glow */
+.fz-stage .fz-res { transform: none !important; animation: fz-fade .6s ease-out !important; margin: 0 auto; }
+.fz-stage .fz-res .cell { width: 78px; height: 78px; }
+@keyframes fz-fade { 0% { opacity: 0; filter: brightness(3); } 100% { opacity: 1; filter: brightness(1); } }
+
+.fz-resc { animation: fz-fade .7s ease-out; }
+.fz-resc.win { box-shadow: 0 0 18px 6px rgba(255, 224, 130, .9); }
+.fz-resc.lose { filter: grayscale(.4); }
+
+.fz-body { width: 100%; }

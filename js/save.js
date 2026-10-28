@@ -119,9 +119,8 @@ function itemLv(it) { const p = Save.p; return Math.max(it.ilvl, p && p.stars ? 
 // picture variant for the high-grade item images (img/it_{slot}_{r}_{n}.png); older items get one from their id
 const ITEM_ARTS = 4;
 function itemArt(it) { return it.art !== undefined ? it.art : it.id % ITEM_ARTS; }
-// weapons are shown in the form of the hero who wears them (gear is shared): knight sword, mage staff, ranger bow. Other slots keep their own picture
-const WEAPON_FORM = { knight: 0, mage: 1, ranger: 2 };
-function itemForm(it) { return it.slot === 'weapon' ? WEAPON_FORM[(typeof Save !== 'undefined' && Save.p && Save.p.hero) || 'knight'] || 0 : itemArt(it); }
+// one picture per grade and slot (the gear is shared by the three heroes): the cat-claw / armor / charm of that grade, always art #3
+function itemForm(it) { return 3; }
 function itemMain(it) {
     const m = RARITY[it.r].mul * (1 + ENHANCE.perLv * it.enh), lv = itemLv(it);
     if (it.slot === 'weapon') return { k: 'atk', name: L('영웅 공격력'), v: Math.round((4 + lv * 1.2) * m) };

@@ -55,7 +55,7 @@
             all, ...rows,
             h('div.tip.consent-note', L('만 14세 미만은 보호자(법정대리인)의 동의를 받아 이용해 주세요. 유료 결제는 보호자의 동의가 필요합니다.')),
             ok,
-        ]);
+        ], { noClose: true });
         ok.addEventListener('click', () => {
             if (!on.every(Boolean)) { toast(L('필수 항목에 모두 동의해 주세요')); return; }
             click(); p.set.agreed = TERMS_VERSION; p.set.agreedAt = Date.now(); Save.save(); d.remove(); next();
@@ -127,7 +127,6 @@
             h('div.logo-wrap', img('logo_emblem'), h('div.logo', h('span.l1', L('냥이')), h('span.l2', L('성문 수비대')))),
             h('div.logo-sub', L('성문을 지켜라냥!')),
             titleStart(),
-            Game.touch && !/NyangiApp/.test(navigator.userAgent) ? h('button.btn.ghost', { onclick: () => { click(); Game.fullscreen(); } }, L('전체 화면으로 하기')) : null,   // the app is already full screen
             h('div.tip', { style: { marginTop: '18px', color: '#fff4dc', textShadow: '0 2px 4px #000' } }, L('탑을 세우고 냥이 영웅을 움직여, 성문이 뚫리기 전에 몬스터를 막아라냥!')),
             h('div.title-legal', L('전체이용가'), ' · v' + GAME_VERSION + ' · © 2026 nekolab'),
         );
@@ -268,8 +267,8 @@
                 tog(L('효과음'), 'muted', () => { Sfx.muted = p.set.muted; }, true),
                 tog(L('화면 흔들림'), 'noShake', null, true),
                 tog(L('진동'), 'noVibrate', null, true),
-                tog(L('필살기 컷신'), 'noCutin', null, true),
-                Game.touch && !/NyangiApp/.test(navigator.userAgent) ? h('button.btn.ghost', { onclick: () => { click(); Game.fullscreen(); } }, L('전체 화면')) : null),
+                tog(L('필살기 컷신'), 'noCutin', null, true)
+            ),
             h('div.row',
                 h('button.btn.small', { onclick: () => { click(); d.remove(); UI.openMail(); } }, L('쿠폰 입력')),
 h('button.btn.small', { onclick: () => { click(); confirmBox(L('처음 했을 때 나오던 안내와 설명을 다시 보여 줍니다.'), () => { p.seenTips = {}; Save.save(); toast(L('안내를 다시 볼 수 있습니다. 지도에서 시작하세요')); }); } }, L('튜토리얼 다시 보기')),

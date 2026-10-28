@@ -136,7 +136,7 @@
         }
         content.push(btns);
         if (stageWin) content.push(autoLine);
-        const d = modal(content);
+        const d = modal(content, { noClose: true });
         // the first clear of a chapter boss plays its outro, so no auto start then
         if (stageWin && can && R.chapterClear === undefined) {
             startAuto();

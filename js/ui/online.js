@@ -40,9 +40,9 @@
     // "name#tag [kakao mark]" for the account lines; the brand mark says how this account signs in (id: "아이디 x", guest: "게스트")
     function accountLine() {
         const pr = Online.on && Online.profile, ls = Online.on ? Online.logins() : [];
-        const marks = ls.map(k => k === 'id' ? h('span.acct-id', L('아이디 {0}', Online.loginId())) : h('span.acct-mark.' + k, { title: k === 'kakao' ? L('카카오') : 'Google', html: SIGNIN_ICON[k] }));
+        const marks = ls.map(k => k === 'id' ? h('span.acct-id', L('아이디 {0}', Online.loginId())) : h('span.acct-prov', h('span.acct-mark.' + k, { html: SIGNIN_ICON[k] }), h('span.acct-pn', k === 'kakao' ? L('카카오로 연동됨') : L('Google로 연동됨'))));   // which login this account uses, in words
         return h('span.acct-line', pr ? h('b', `${pr.name}#${pr.tag}`) : null, ...marks,
-            Online.on && !ls.length ? h('span.acct-id', L('게스트')) : null,
+            Online.on && !ls.length ? h('span.acct-id', L('게스트 (연동 안 됨)')) : null,
             !Online.on ? h('span.tip', onlineStatusText()) : null);
     }
     // what this account owns from the shop (월간 보급권 days left, 가호, 패스, 3배속). None of them renew by themselves
@@ -167,7 +167,7 @@
             h('div.prof-row', (() => { const a = img(heroFace(p.hero, p.shop && p.shop.skin[p.hero]), '.prof-pic'); a.style.background = avatarBg(); return a; })(),
                 h('div', { style: { flex: 1 } },
                     h('div.prof-name', input, pr ? h('span.tip', '#' + pr.tag) : null, saveBtn),
-                    h('div.tip', L('랭킹과 리그에서 다른 냥이에게 보이는 이름과 대표 영웅(현재 영웅·스킨)입니다.')),
+                    h('div.tip', L('랭킹에 보이는 이름이에요')),
                     pr ? h('div', { style: { marginTop: '6px' } }, L('리그 등급 '), tierBadge(pr.tier || 0)) : null)),
             err,
             h('div.inset', { style: { padding: '10px', marginTop: '8px', lineHeight: 1.4 } },
@@ -179,14 +179,13 @@
                 Online.on && linked ? logoutButton() : null,
                 Online.sb && !linked ? h('button.btn.small.ghost', { style: { marginTop: '6px' }, onclick: () => { click(); switchModal(); } }, L('다른 계정으로 로그인')) : null),
             perksBox(p),
-            Online.on ? h('button.btn.small.red', { style: { marginTop: '8px' }, onclick: () => {
+            h('div.row.prof-foot', Online.on ? h('button.btn.small.red', { onclick: () => {
                 click();
                 UI.confirmBox(L('계정과 모든 기록(프로필, 저장된 진행, 랭킹 기록)을 지우고\n이 기기의 진행도 처음부터 다시 시작합니다.\n되돌릴 수 없습니다. 결제 내역은 Google Play에 남습니다.'), async () => {
                     try { await UI.waitCat(Online.deleteAccount()); } catch (e) { toast(e.message); }
                 });
             } }, L('계정 및 데이터 삭제')) : null,
-            h('button.btn.small.ghost.quiet', { onclick: () => { click(); UI.legalModal(); } }, L('약관 · 정보')),
-            h('button.btn.ghost', { style: { marginTop: '8px' }, onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true, cls: 'prof-modal' });
+                h('button.btn.small.ghost.quiet', { onclick: () => { click(); UI.legalModal(); } }, L('약관 · 정보')))], { dismiss: true, cls: 'prof-modal' });
     }
 
     // guests: why and how to link (title line, settings, the one-time nudge)
@@ -311,7 +310,7 @@
                         confirmBox(L('서버에 저장된 진행이 모두 사라지고 이 기기의 진행으로 바뀝니다.') + '\n' + L('사라지는 진행: {0}', sum(remote)), () =>
                             confirmBox(L('정말 삭제하시겠습니까? 되돌릴 수 없어요.'), () => { d.remove(); cb(false); }));
                     } }, L('이 기기 유지')))),
-            h('div.tip', L('선택하지 않은 쪽의 진행은 덮어쓰여 사라집니다.'))]);
+            h('div.tip', L('선택하지 않은 쪽의 진행은 덮어쓰여 사라집니다.'))], { noClose: true });
     }
 
     // a ranking list from Online.board(): rank, tier, name#tag, value

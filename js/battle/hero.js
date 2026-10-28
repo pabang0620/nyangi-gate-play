@@ -39,7 +39,8 @@ Object.assign(Battle.prototype, {
         const A = h.atk;
         if (i === 3 && (!this.cfg.cutinOn || this.cfg.cutinOn())) {
             // anime-style cut-in: the world freezes while the hero's art sweeps across, then the skill lands
-            this.cutin = { cls: h.cls, skin: h.skin, name: s.name, t: 0, dur: 1.1 };
+            const sk = h.skin && typeof skinById === 'function' ? skinById(h.skin) : null, big = !!(sk && sk.r >= 3);   // 전설 and 신화 skins get their own, longer cut-in
+            this.cutin = { cls: h.cls, skin: h.skin, name: s.name, t: 0, dur: big ? 1.7 : 1.1, big, rarity: big ? sk.r : 0, skinName: big ? sk.name : '', tint: big ? (sk.tint || null) : null };
             this.on('cutin', this.cutin);
         }
         const crit = () => this.rand() < h.crit;
@@ -160,7 +161,7 @@ Object.assign(Battle.prototype, {
             const hp = 90 * (1 + 0.12 * Math.max(0, this.stageIdx)) * (this.endless ? Math.sqrt(this.hpMul) : 1);
             for (let k = 0; k < 2; k++) {
                 this.soldiers.push({ kind: 'militia', x: at.x + (k ? 14 : -14), y: at.y + 6, hx: at.x + (k ? 14 : -14), hy: at.y + 6,
-                    hp, maxHp: hp, atk: 6 * (1 + 0.1 * Math.max(0, this.stageIdx)), armor: 0.1, cd: 0, target: null, deadUntil: 0, expire: this.t + 20, tower: null, dir: 1, walk: 0, flash: 0 });
+                    hp, maxHp: hp, atk: 6 * (1 + 0.1 * Math.max(0, this.stageIdx)), armor: 0.1, cd: 0, target: null, deadUntil: 0, expire: this.t + 20, label: k === 0, tower: null, dir: 1, walk: 0, flash: 0 });
             }
             this.ringFx(at.x, at.y, 40, '#f2c14e');
             this.on('spell', id);

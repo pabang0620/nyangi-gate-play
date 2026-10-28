@@ -507,7 +507,7 @@
             const d = modal([h('div.title-t', L('협동 디펜스')), h('div.tip', L('친구와 함께하는 중이라 멈추지 않아요')),
                 h('div.row', { style: { flexDirection: 'column', display: 'flex', gap: '10px', width: '260px' } },
                     h('button.btn.gold', { onclick: () => { click(); pause(false); } }, L('계속하기')),
-                    h('button.btn.red', { onclick: () => { click(); UI.confirmBox(L('나가면 이번 판은 패배로 끝나요.\n정말 나갈까요?'), () => { pause(false); Coop.leave(); }); } }, L('나가기')))]);
+                    h('button.btn.red', { onclick: () => { click(); UI.confirmBox(L('나가면 이번 판은 패배로 끝나요.\n정말 나갈까요?'), () => { pause(false); Coop.leave(); }); } }, L('나가기')))], { noClose: true });
             d.id = 'pausebox';
             return;
         }
@@ -528,7 +528,7 @@
                     else if (B.mode === 'tower') sure(L('원정을 포기할까요?\n이번 층은 패배로 끝나고 원정이 끝나요.'), () => { B.state = 'lose'; Game.onBattleEnd(false); });
                     else if (B.mode === 'dungeon') sure(L('전투를 포기할까요?\n오늘 도전 횟수 1회가 사용됩니다.'), () => { B.state = 'lose'; Game.onBattleEnd(false); });
                     else sure(L('전투를 포기하고 나갈까요?\n이번 전투의 보상은 받을 수 없습니다.'), () => showHub('map'));
-                } }, endNow ? L('여기서 끝내기') : L('포기하고 나가기')))]);
+                } }, endNow ? L('여기서 끝내기') : L('포기하고 나가기')))], { noClose: true });
         d.id = 'pausebox';
     }
 
@@ -553,7 +553,7 @@
                 h('button.btn.gold', { onclick: async () => { click(); if (await Ads.show('revive')) { Rewards.track('ad'); d.remove(); Game.revive(); } } }, img('i_ad', '.icon'), p.shop.premium ? L('이어하기 (가호)') : L('광고 보고 이어하기')),
                 h('button.btn' + (p.gems < REVIVE_GEMS ? '.off' : ''), { onclick: () => { if (p.gems < REVIVE_GEMS) { toast(L('보석이 부족합니다')); return; } click(); p.gems -= REVIVE_GEMS; Save.save(); d.remove(); Game.revive(); } }, img('i_gem', '.icon'), L('{0}개로 이어하기', REVIVE_GEMS))),
             h('button.btn.ghost', { onclick: () => { click(); d.remove(); onGiveUp(); } }, L('포기하기')),
-        ]);
+        ], { noClose: true });
     }
 
     Object.assign(UI, { toggleAuto, foeSpawned, foeCard, showBattleHud, updateHud, cycleSpeed, speed3Offer, pressSkill, pressSpell, cancelAim, showAimCancel, slotAt, canvasDown, canvasMove, openPopup, placeInfo, statLines, refreshPopup, confirmSell, closePopup, pause, banner, showRevive });

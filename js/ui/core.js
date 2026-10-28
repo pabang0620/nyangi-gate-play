@@ -136,10 +136,20 @@ const UI = {};
 
 
     // ------------------------------------------------------------ modal helpers
+    // every popup closes with the X (top right) or a tap outside it; its 닫기 button is dropped for that. A popup that must be answered
+    // (opts.noClose: terms, save choice, a battle result, a pending revive ...) has neither. Closing runs the popup's own 닫기 handler when it had one.
     function modal(content, opts = {}) {
         const d = h('div.dim', h('div.paper.modal' + (opts.cls ? '.' + opts.cls : ''), content));
-        if (opts.dismiss) d.addEventListener('click', e => { if (e.target === d) d.remove(); });
         root().appendChild(d);
+        if (!opts.noClose) {
+            const box = d.firstChild;
+            const closeBtn = [...box.querySelectorAll('button')].find(x => x.textContent.trim() === L('닫기'));
+            const cancelBtn = [...box.querySelectorAll('button')].find(x => x.textContent.trim() === L('취소'));
+            const closeIt = () => { if (!d.isConnected) return; const via = closeBtn || cancelBtn; if (via) via.click(); if (d.isConnected) d.remove(); };
+            if (closeBtn) { const row = closeBtn.parentElement; closeBtn.remove(); if (row && row !== box && !row.children.length && !row.textContent.trim()) row.remove(); }
+            box.appendChild(h('button.modal-x', { 'aria-label': L('닫기'), onclick: () => { UI.click(); closeIt(); } }, '✕'));
+            d.addEventListener('click', e => { if (e.target === d) closeIt(); });
+        }
         // ribbon titles grow the band up to the popup width, then shrink to fit
         d.querySelectorAll('.ribbon > span').forEach(e => { fitText(e, () => e.clientWidth, 22); if (e.scrollWidth > e.clientWidth + 0.5) e.style.whiteSpace = 'normal'; });
         return d;

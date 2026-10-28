@@ -67,21 +67,42 @@
         draw();
     }
 
-    // what came out: the pieces fly together, then the result pops (success) or the same grade comes back (fail)
+    // fusing takes a moment like a summon: the pieces circle and glow (a loading bar for a bulk run), then the result opens;
+    // a 영웅 or better result gets the big reveal (clip, fanfare, buzz), a failure just drops the grade back
     function result(res, r, used) {
         const ok = res.filter(x => x.ok).length;
         const got = res.filter(x => x.ok).map(x => x.it);
         const single = res.length === 1 && used;
-        const stage = single ? h('div.fz-stage', h('div.fz-fly', used.map(it => UI.itemCell(it, { noNew: true }))),
-            h('div.fz-burst'), h('div.fz-res.' + (res[0].ok ? 'win' : 'lose'), UI.itemCell(res[0].it, { noNew: true, onclick: () => { click(); UI.itemInfo(res[0].it); } }))) : null;
-        const d = modal([h('div.title-t', L('합성 결과')),
-            stage,
-            h('div', single ? (ok ? L('성공! {0} 장비가 나왔어요', RARITY[r + 1].name) : L('실패 · {0} 장비 1개가 돌아왔어요', RARITY[r].name)) : L('{0}번 합성 · 성공 {1}번', res.length, ok)),
-            !single && got.length ? h('div.row', { style: { flexWrap: 'wrap', justifyContent: 'center' } }, got.map(it => UI.itemCell(it, { noNew: true, onclick: () => { click(); UI.itemInfo(it); } })))
-                : (!single ? h('div.tip', L('이번엔 {0} 장비가 나오지 않았어요', RARITY[r + 1].name)) : null),
-            h('button.btn.gold', { onclick: () => { click(); d.remove(); } }, L('확인'))], { dismiss: true });
-        if (single) setTimeout(() => { d.querySelector('.fz-stage').classList.add('go'); Sfx.play(ok ? 'coin' : 'click'); }, 80);
-        else if (ok) Sfx.play('coin');
+        const best = got.reduce((m, it) => Math.max(m, it.r), -1);
+        const WAIT = single ? 1500 : 1100;
+        const body = h('div.fz-body');
+        const charge = single
+            ? h('div.fz-charge', h('div.fz-orbit', used.map(it => UI.itemCell(it, { noNew: true }))), h('div.fz-glow'))
+            : h('div.fz-charge.bulk', h('div.tip', L('{0}번 합성하는 중…', res.length)));
+        body.append(charge, h('div.fz-wait', L('합성 중…')), h('div.fz-bar', h('i', { style: { animationDuration: WAIT + 'ms' } })));
+        const d = modal([h('div.title-t', L('합성')), body], { noClose: true });
+        Sfx.play('charge', Math.max(1, Math.min(4, r + 1)));
+        setTimeout(() => {
+            if (!d.isConnected) return;
+            body.innerHTML = '';
+            if (single) {
+                const cell = UI.itemCell(res[0].it, { noNew: true, onclick: () => { click(); UI.itemInfo(res[0].it); } });
+                cell.style.width = '80px'; cell.style.height = '80px';
+                cell.classList.add('fz-resc', res[0].ok ? 'win' : 'lose');
+                const stage = h('div', { style: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '96px', width: '100%', flex: 'none' } }, cell);
+                body.append(stage, h('div', ok ? L('성공! {0} 장비가 나왔어요', RARITY[r + 1].name) : L('실패 · {0} 장비 1개가 돌아왔어요', RARITY[r].name)));
+            } else {
+                body.append(h('div', L('{0}번 합성 · 성공 {1}번', res.length, ok)),
+                    got.length ? h('div.row', { style: { flexWrap: 'wrap', justifyContent: 'center' } }, got.map(it => UI.itemCell(it, { noNew: true, onclick: () => { click(); UI.itemInfo(it); } })))
+                        : h('div.tip', L('이번엔 {0} 장비가 나오지 않았어요', RARITY[r + 1].name)));
+            }
+            body.appendChild(h('button.btn.gold', { onclick: () => { click(); d.remove(); } }, L('확인')));
+            d.firstChild.appendChild(h('button.modal-x', { onclick: () => { click(); d.remove(); } }, '✕'));
+            d.addEventListener('click', e => { if (e.target === d) d.remove(); });
+            if (ok && best >= 2 && UI.bigReveal) UI.bigReveal(best, null);   // 영웅 or better: the same reveal the summon gives
+            else Sfx.play(ok ? 'coin' : 'click');
+            if (ok && best >= 2) d.classList.add('fz-win-hi');
+        }, WAIT);
     }
 
     Object.assign(UI, { fuseModal });
