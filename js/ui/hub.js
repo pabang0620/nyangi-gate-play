@@ -401,7 +401,6 @@
         win.appendChild(sec(L('냥이 스킨'), skins));
         win.appendChild(h('div.row.shop-skinsum', h('div.tip', L('더 많은 스킨은 스킨 소환에서 모을 수 있습니다')),
             h('button.btn.small', { onclick: () => { click(); S.summonBanner = 'skin'; showHub('summon'); } }, L('스킨 소환'))));
-        win.appendChild(h('div.tip', L('모든 스테이지는 결제 없이 깰 수 있습니다. 결제는 시간 단축과 꾸미기용입니다.')));
         win.classList.add('shopwin');
         root().appendChild(win);
     }
