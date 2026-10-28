@@ -1145,6 +1145,7 @@ I18N['de'] = {
     "참가": "Teilnahme",
     "코드로 참가": "Mit Code beitreten",
     "홈페이지": "Webseite",
+    "이번 주 보스": "Boss dieser Woche",
     "신화 스킨": "Mythischer Skin",
     "전설 스킨": "Legendärer Skin",
     "합성 중…": "Verschmelze…",

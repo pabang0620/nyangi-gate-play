@@ -234,3 +234,27 @@ body { line-height: 1.4; }
 .set-acct { flex-direction: row !important; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
 .set-acct > .tip { flex: 1 0 100%; }
 .set-acct .btn { width: auto; }
+
+/* 파티 레이드 / 협동 디펜스 right panel: boss (or mode) on top, four big buttons under it; the room list is a popup */
+.rd-room { align-items: center; justify-content: center; gap: 10px; text-align: center; }
+.rd-roomhead { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.rd-roomhead .rd-boss { max-height: 96px; max-width: 220px; }
+.rd-huge { width: 84px; height: 84px; }
+.rd-roombtns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; max-width: 420px; }
+.rd-roombtns .btn { min-height: 44px; font-size: 18px; }
+#app.mobile .rd-fit > .rd-right { flex: 1 1 auto; }
+.rd-find-pop { width: 560px; max-width: calc(100% - 24px); min-width: 0; }
+.rd-find-pop .rd-flist { max-height: 210px; width: 100%; }
+.rd-find-pop .rd-fhead { width: 100%; }
+
+.rd-roombtns { grid-template-columns: repeat(4, 1fr); max-width: none; }
+.rd-roombtns .btn { min-height: 40px; font-size: 16px; padding: 2px 6px; white-space: nowrap; }
+.rd-roomhead .rd-boss { max-height: 70px; }
+.rd-huge { width: 64px; height: 64px; }
+.rd-room { gap: 8px; }
+.rd-find-pop .rd-flabel { color: #5a3a1c; }
+.rd-find-pop .rd-refresh { margin-right: 36px; }
+.rd-find-pop .lg-row { color: #3a2410; }
+
+.rd-find-pop .rd-emptylist { color: #5a3a1c; }
+.rd-find-pop .rd-emptylist .tip { color: #8a6a3a; }

@@ -1145,6 +1145,7 @@ I18N['fr'] = {
     "참가": "Participation",
     "코드로 참가": "Rejoindre avec un code",
     "홈페이지": "Site web",
+    "이번 주 보스": "Boss de la semaine",
     "신화 스킨": "Skin mythique",
     "전설 스킨": "Skin légendaire",
     "합성 중…": "Fusion…",
