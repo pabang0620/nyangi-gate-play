@@ -255,7 +255,7 @@
         } }, L('코드로 참가'));
         const findBtn = h('button.btn', { onclick: () => { click(); findModal(kind, sel); } }, L('파티 찾기'));
         [mk, quick].forEach(b => { b.classList.remove('small'); });
-        return h('div.inset.rd-right.rd-room', h('div.rd-roomhead', ...head), h('div.rd-roombtns', mk, quick, findBtn, codeBtn));
+        return h('div.inset.rd-right.rd-room', h('div.rd-roombtns', mk, quick, findBtn, codeBtn), h('div.rd-roomhead', ...head));
     }
     // waiting room (협동 디펜스: 2 seats, 파티 레이드: 4): shows who is here, the host starts
     function lobby(room, quick) {

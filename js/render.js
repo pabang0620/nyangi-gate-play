@@ -139,6 +139,18 @@ const Render = (() => {
         }
 
         // build slots
+        const slotMark = (s, hov, pulse) => {   // a clear rounded square with a plus: this is where a tower goes
+            const w = 54, hh = 40, r = 9, px = s.x - w / 2, py = s.y + 2 - hh / 2;
+            x.save();
+            x.fillStyle = hov ? 'rgba(255,230,140,.38)' : 'rgba(255,240,190,.2)';
+            x.beginPath(); x.roundRect(px, py, w, hh, r); x.fill();
+            x.strokeStyle = hov ? '#ffe27a' : `rgba(255,236,170,${0.7 + pulse * 0.3})`; x.lineWidth = hov ? 4 : 3;
+            x.beginPath(); x.roundRect(px, py, w, hh, r); x.stroke();
+            x.strokeStyle = 'rgba(40,24,8,.55)'; x.lineWidth = 1.5; x.beginPath(); x.roundRect(px - 2, py - 2, w + 4, hh + 4, r + 2); x.stroke();
+            x.strokeStyle = hov ? '#fff4c0' : 'rgba(255,246,210,.95)'; x.lineWidth = 4; x.lineCap = 'round';
+            x.beginPath(); x.moveTo(s.x - 9, s.y + 2); x.lineTo(s.x + 9, s.y + 2); x.moveTo(s.x, s.y - 7); x.lineTo(s.x, s.y + 11); x.stroke();
+            x.restore();
+        };
         for (const s of B.slots) {
             if (s.tower) continue;
             const hov = view.hoverSlot === s || view.selSlot === s;
@@ -152,6 +164,7 @@ const Render = (() => {
                 x.filter = 'none';
                 x.strokeStyle = hov ? '#ffe08a' : `rgba(255,224,138,${0.25 + pulse * 0.35})`; x.lineWidth = 2;
                 x.beginPath(); x.ellipse(s.x, s.y + 8, 40, 17, 0, 0, TAU); x.stroke();
+                slotMark(s, hov, pulse);
                 continue;
             }
             // stone build pad: dark base, light rim, pulsing gold when hovered/selected
@@ -163,19 +176,21 @@ const Render = (() => {
             x.setLineDash([6, 4]); x.beginPath(); x.ellipse(s.x, s.y + 6, 32, 14, 0, 0, TAU); x.stroke(); x.setLineDash([]);
             x.fillStyle = '#5a3a20'; x.fillRect(s.x - 1, s.y - 18, 3, 22);
             x.fillStyle = hov ? '#ffd04a' : '#f2c14e'; x.beginPath(); x.moveTo(s.x + 2, s.y - 18); x.lineTo(s.x + 14, s.y - 14); x.lineTo(s.x + 2, s.y - 10); x.fill();
+            slotMark(s, hov, pulse);
         }
 
         // range preview
         const sel = view.selSlot || view.hoverSlot;
         if (sel && sel.tower) {
             const st = B.towerStats(sel.tower);
-            x.fillStyle = 'rgba(127,212,255,.08)'; x.strokeStyle = 'rgba(127,212,255,.6)'; x.lineWidth = 2;
+            x.fillStyle = 'rgba(110,200,255,.24)'; x.strokeStyle = 'rgba(190,235,255,.95)'; x.lineWidth = 4;
             x.beginPath(); x.ellipse(sel.x, sel.y, st.range, st.range * 0.92, 0, 0, TAU); x.fill(); x.stroke();
+            x.strokeStyle = 'rgba(20,60,110,.6)'; x.lineWidth = 1.5; x.beginPath(); x.ellipse(sel.x, sel.y, st.range + 3, st.range * 0.92 + 3, 0, 0, TAU); x.stroke();
             if (sel.tower.rally) { x.fillStyle = '#f2c14e'; x.fillRect(sel.tower.rally.x - 1, sel.tower.rally.y - 18, 2, 18); x.fillRect(sel.tower.rally.x + 1, sel.tower.rally.y - 18, 9, 6); }
         }
         if (view.preview) {
             const pv = view.preview;
-            x.fillStyle = 'rgba(255,224,138,.07)'; x.strokeStyle = 'rgba(255,224,138,.5)'; x.lineWidth = 2;
+            x.fillStyle = 'rgba(255,224,138,.22)'; x.strokeStyle = 'rgba(255,236,170,.95)'; x.lineWidth = 4;
             x.beginPath(); x.ellipse(pv.x, pv.y, pv.r, pv.r * 0.92, 0, 0, TAU); x.fill(); x.stroke();
         }
 
@@ -437,16 +452,16 @@ const Render = (() => {
         x.save();
         x.fillStyle = `rgba(8,4,16,${0.78 * ein * (1 - eout)})`; x.fillRect(0, 0, W, H);
         // rotating rays + radial glow
-        const cx = W * 0.34, cy = H * 0.5, tnow = performance.now() / 1000;
+        const cx = W * 0.4, cy = H * 0.5, tnow = performance.now() / 1000;
         x.save(); x.globalAlpha = ein * (1 - eout); x.translate(cx, cy); x.rotate(tnow * 0.35);
         for (let i = 0; i < 14; i++) { x.rotate(TAU / 14); const g = x.createLinearGradient(0, 0, W, 0); g.addColorStop(0, col2); g.addColorStop(1, 'rgba(255,255,255,0)'); x.globalAlpha = 0.16 * ein * (1 - eout); x.fillStyle = g; x.beginPath(); x.moveTo(0, -18); x.lineTo(W, -80); x.lineTo(W, 80); x.lineTo(0, 18); x.fill(); }
         x.restore();
-        const rg = x.createRadialGradient(cx, cy, 10, cx, cy, 380); rg.addColorStop(0, col2); rg.addColorStop(0.35, col); rg.addColorStop(1, 'rgba(0,0,0,0)');
+        const rg = x.createRadialGradient(cx, cy, 10, cx, cy, 200); rg.addColorStop(0, col2); rg.addColorStop(0.35, col); rg.addColorStop(1, 'rgba(0,0,0,0)');
         x.globalAlpha = 0.6 * ein * (1 - eout); x.fillStyle = rg; x.fillRect(0, 0, W, H); x.globalAlpha = 1;
         // the skin's character (same picture as the skin card), rising in with a pop
         const art = Art.gen(c.skin ? 'ps_' + c.skin : 'p_' + c.cls);
         if (art) {
-            const pop = ease(Math.min(1, c.t / 0.35)), sz = 560 * (0.85 + pop * 0.15), ar = art.img.height / art.img.width, ay = cy + 20 + (1 - pop) * 80 + eout * 120;
+            const pop = ease(Math.min(1, c.t / 0.35)), sz = 280 * (0.85 + pop * 0.15), ar = art.img.height / art.img.width, ay = cy + 20 + (1 - pop) * 80 + eout * 120;
             x.imageSmoothingEnabled = true; x.globalAlpha = Math.min(1, c.t / 0.2) * (1 - eout);
             x.shadowColor = col2; x.shadowBlur = 40; x.drawImage(art.img, cx - sz / 2, ay - sz * ar / 2, sz, sz * ar); x.shadowBlur = 0; x.globalAlpha = 1;
         }
@@ -455,11 +470,11 @@ const Render = (() => {
         x.globalAlpha = 1;
         // text: rarity ribbon, skin name, skill name
         if (c.t > 0.3) {
-            const st = Math.min(1, (c.t - 0.3) / 0.25), sx = W * 0.7 + (1 - ease(st)) * 400 + eout * 500;
+            const st = Math.min(1, (c.t - 0.3) / 0.25), sx = W * 0.68 + (1 - ease(st)) * 400 + eout * 500;
             x.save(); x.translate(sx, cy); x.textAlign = 'center'; x.lineJoin = 'round';
-            x.font = '30px BlackHan'; x.lineWidth = 8; x.strokeStyle = '#1a0a02'; x.strokeText(myth ? L('신화 스킨') : L('전설 스킨'), 0, -92); x.fillStyle = myth ? '#ff9a5a' : '#ffd04a'; x.fillText(myth ? L('신화 스킨') : L('전설 스킨'), 0, -92);
-            x.font = '30px BlackHan'; x.lineWidth = 7; x.strokeText(c.skinName, 0, -52); x.fillStyle = '#e8d8ff'; x.fillText(c.skinName, 0, -52);
-            x.font = `${Math.round(64 * (view.textMul > 1 ? 1.05 : 1))}px BlackHan`; x.lineWidth = 14; x.strokeText(c.name, 0, 22); x.fillStyle = '#fff3d6'; x.fillText(c.name, 0, 22);
+            x.font = '20px BlackHan'; x.lineWidth = 6; x.strokeStyle = '#1a0a02'; x.strokeText(myth ? L('신화 스킨') : L('전설 스킨'), 0, -92); x.fillStyle = myth ? '#ff9a5a' : '#ffd04a'; x.fillText(myth ? L('신화 스킨') : L('전설 스킨'), 0, -92);
+            x.font = '20px BlackHan'; x.lineWidth = 5; x.strokeText(c.skinName, 0, -52); x.fillStyle = '#e8d8ff'; x.fillText(c.skinName, 0, -52);
+            x.font = `${Math.round(40 * (view.textMul > 1 ? 1.05 : 1))}px BlackHan`; x.lineWidth = 9; x.strokeText(c.name, 0, 14); x.fillStyle = '#fff3d6'; x.fillText(c.name, 0, 14);
             x.restore();
         }
         x.restore();
@@ -552,15 +567,24 @@ const Render = (() => {
         shadow(s.x, s.y, 9);
         const f = Math.floor(s.walk) % 2;
         const ss = Art.soldier(s.kind, f);
-        if (s.expire) {   // summoned helpers (증원): a flickering golden flame behind the body marks them as temporary, with a countdown before they vanish
-            const nw = performance.now() / 1000, flick = 0.75 + Math.sin(nw * 13 + s.hx) * 0.15 + Math.sin(nw * 7.3 + s.hy) * 0.1;
-            for (let i = 0; i < 3; i++) {
-                const k = (nw * 1.6 + i * 0.33 + s.hx * 0.01) % 1, fx = s.x + Math.sin(nw * 5 + i * 2 + s.hx) * 6 * (1 - k), fy = s.y - 4 - k * 30;
-                x.globalAlpha = (1 - k) * 0.8 * flick; x.fillStyle = i === 1 ? '#fff0a0' : '#ffc83a';
-                x.beginPath(); x.ellipse(fx, fy, 10 * (1 - k * 0.6), 16 * (1 - k * 0.4), 0, 0, TAU); x.fill();
+        if (s.expire) {   // summoned helpers (증원): a super-saiyan style golden aura flares behind the body, so they read as temporary; countdown before they vanish
+            const nw = performance.now() / 1000, ph = s.hx * 0.07, cx = s.x, base = s.y + 4;
+            x.save();
+            // soft halo
+            const g = x.createRadialGradient(cx, base - 16, 2, cx, base - 16, 34); g.addColorStop(0, 'rgba(255,240,130,0.95)'); g.addColorStop(0.55, 'rgba(255,170,20,0.6)'); g.addColorStop(1, 'rgba(255,120,0,0)');
+            x.fillStyle = g; x.beginPath(); x.arc(cx, base - 16, 40, 0, TAU); x.fill();
+            // flame tongues licking up around the body
+            for (let i = 0; i < 6; i++) {
+                const side = (i / 5 - 0.5) * 2, flick = Math.sin(nw * (8 + i) + i * 1.9 + ph) * 0.5 + 0.5, hgt = 26 + flick * 18 - Math.abs(side) * 8, bx = cx + side * 15;
+                for (let layer = 0; layer < 2; layer++) {
+                    x.fillStyle = layer ? 'rgba(255,246,170,0.95)' : 'rgba(255,165,10,0.9)';
+                    const wd = layer ? 4 : 7, hh2 = layer ? hgt * 0.65 : hgt;
+                    x.beginPath(); x.moveTo(bx - wd, base - 6); x.quadraticCurveTo(bx - wd * 0.5, base - 6 - hh2 * 0.6, bx + side * 3, base - 6 - hh2); x.quadraticCurveTo(bx + wd * 0.5, base - 6 - hh2 * 0.5, bx + wd, base - 6); x.closePath(); x.fill();
+                }
             }
-            const g = x.createRadialGradient(s.x, s.y - 14, 2, s.x, s.y - 14, 26); g.addColorStop(0, 'rgba(255,220,90,' + (0.75 * flick) + ')'); g.addColorStop(1, 'rgba(255,170,30,0)');
-            x.globalAlpha = 1; x.fillStyle = g; x.beginPath(); x.arc(s.x, s.y - 14, 26, 0, TAU); x.fill();
+            // drifting sparks
+            for (let i = 0; i < 5; i++) { const k = (nw * 0.9 + i * 0.2 + ph) % 1; x.fillStyle = 'rgba(255,240,150,' + (1 - k) + ')'; x.fillRect(cx + Math.sin(i * 3.1 + nw * 2) * 14, base - 8 - k * 46, 2, 2); }
+            x.restore();
             const left = s.expire - T;
             if (s.label && left > 0 && left <= 3.99) {
                 const n = Math.floor(left), fr = left - n;   // 3, 2, 1, 0

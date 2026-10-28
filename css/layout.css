@@ -199,8 +199,8 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 .btn.kakao { border: 2px solid #c9b400; border-image: none; border-radius: 10px; background: #fee500; color: #191919; text-shadow: none; min-width: 200px; min-height: 46px; font-size: 16px; }
 .btn.google { border: 2px solid #c8c8c8; border-image: none; border-radius: 10px; background: #fff; color: #3c4043; text-shadow: none; min-width: 200px; min-height: 46px; font-size: 16px; }
 /* title sign-in column: same width, icon pinned left, label centred */
-.signin-list { display: flex; flex-direction: column; gap: 7px; width: min(300px, 86vw); }
-.btn.signin { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; height: 44px; min-height: 0; padding: 0 44px; border-image: none; border-radius: 10px; font-size: 16px; text-shadow: none; }
+.signin-list { display: flex; flex-direction: column; gap: 6px; width: min(300px, 86vw); }
+.btn.signin { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; height: 36px; min-height: 0; padding: 0 44px; border-image: none; border-radius: 10px; font-size: 16px; text-shadow: none; }
 .btn.signin.guest { border: 2px solid #8a6a44; background: rgba(38, 26, 16, 0.88); color: #fff4dc; }
 .signin-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; }
 .signin-txt { font-family: 'Jua', 'Noto Sans KR', 'Malgun Gothic', sans-serif; font-weight: 400; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
