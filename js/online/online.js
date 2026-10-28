@@ -81,7 +81,7 @@ const Online = {
         if (!this.on || !Save.p) return;
         clearTimeout(this.pushTimer);
         const p = Save.p;
-        p.owner = this.user.id; p.ownerAcct = this.isLinked();   // whose progress this is: another signed-in account on this device must not adopt it (see pullSave)
+        p.owner = this.user.id;   // whose progress this is: a different account on this device must not adopt it (see pullSave)
         const { error } = await this.sb.from('saves').upsert({ uid: this.user.id, data: p, rev: p.rev || 0, saved_ms: Math.round(p.savedMs || nowMs()), updated_at: new Date(nowMs()).toISOString() });
         // the server refuses saves over its size limit (saves.save_size): huge bags after 연속 소환. Say so once per session
         if (error && /save_size/.test(error.message || '') && !this.sizeWarned) { this.sizeWarned = true; toast(L('진행을 저장하지 못했습니다. 가방에 장비가 너무 많아요. 장비를 분해해 주세요')); }
@@ -93,9 +93,11 @@ const Online = {
         let switched = false, fresh = false;
         try { switched = localStorage.getItem('nyangi-switch') === '1'; localStorage.removeItem('nyangi-switch'); } catch (e) { }
         try { fresh = localStorage.getItem('nyangi-fresh') === '1'; localStorage.removeItem('nyangi-fresh'); } catch (e) { }
-        // this device still holds another account's progress (the session ended without a sign-out): a new account starts fresh instead of copying it
-        const foreign = !!(local.owner && local.ownerAcct && local.owner !== this.user.id);   // a guest's progress may still move to a new account
-        if (!data) { if (foreign) Save.reset(); await this.pushSave(true); return; }
+        // a brand-new account never takes over progress that is still on this device: it came from another account or a lost guest session.
+        // (the same account whose own first upload failed keeps it: owner matches)
+        const foreign = !!(local.owner && local.owner !== this.user.id);
+        const hasProgress = Object.values(local.stars || {}).some(v => v > 0) || (local.items || []).length > 2 || (local.gems || 0) !== 60;
+        if (!data) { if (local.owner !== this.user.id && hasProgress) Save.reset(); await this.pushSave(true); return; }
         // signed out earlier (this device's progress was cleared): the account's progress comes back without asking
         if (fresh) { Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); return; }
         // the cloud copy is from another device and newer: let the player choose
