@@ -128,11 +128,6 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 
 /* ===== layout pass: nothing overlaps frames ===== */
 /* windows clear the nav bar (its icons stick up ~30px) and scroll inside their frame */
-.win::-webkit-scrollbar { width: 8px; }
-.win::-webkit-scrollbar-track { margin: 10px 0; }
-.win::-webkit-scrollbar-thumb { background: #8a6a3a; border-radius: 4px; }
-.shop-row::-webkit-scrollbar, .ptrack::-webkit-scrollbar { height: 8px; }
-.shop-row::-webkit-scrollbar-thumb, .ptrack::-webkit-scrollbar-thumb { background: #8a6a3a; border-radius: 4px; }
 .hero-wrap, .tree, .rw { min-height: 260px; }
 
 /* shop: equal-height cards, price pinned to the bottom, tags not clipped */

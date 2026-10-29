@@ -81,7 +81,7 @@ function makeItem(slot, rarity, ilvl, rng = Math.random) {
     const subs = [];
     const pool = subKeys.slice();
     // mythic: one extra option and stronger rolls (2026-10-17, "신화가 압도적으로")
-    const nSubs = rarity >= 4 ? rarity + 1 : rarity, subMul = rarity >= 4 ? 2.0 : 1 + 0.15 * rarity;
+    const nSubs = RARITY[rarity].subs, subMul = RARITY[rarity].subMul;
     for (let i = 0; i < nSubs; i++) {
         const k = pool.splice(Math.floor(rng() * pool.length), 1)[0];
         const o = SUB_OPTS[k];
@@ -252,8 +252,10 @@ function doSummon(n, slot, pay, keepOpen) {
     let hit = false;
     for (let i = 0; i < pulls; i++) {
         let r = pickWeighted(SUMMON.table);
-        p.pity++;
+        p.pity++; p.pityEpic = (p.pityEpic || 0) + 1;
         if (p.pity >= SUMMON.pity && r < 3) r = 3;
+        else if (p.pityEpic >= SUMMON.pityEpic && r < 2) r = 2;
+        if (r >= 2) p.pityEpic = 0;
         if (r >= 3) { p.pity = 0; hit = true; }
         out.push(makeItem(SLOTS.includes(slot) ? slot : SLOTS[Math.floor(Math.random() * 3)], r, summonIlvl(p)));
     }

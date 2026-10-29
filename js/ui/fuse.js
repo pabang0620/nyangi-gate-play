@@ -60,10 +60,11 @@
         };
         one.textContent = L('1회 합성'); one.addEventListener('click', () => run(false));
         all.textContent = L('일괄 합성'); all.addEventListener('click', () => run(true));
-        const d = modal([h('div.title-t', L('장비 합성')), gRow, formula, info,
-            h('div.row', one, all, h('button.btn.ghost', { onclick: () => { click(); d.remove(); UI.S.selItem = null; UI.showHub('hero'); } }, L('닫기'))),
-            gridBox, legend, enhT,
-            h('div.tip', L('장착 중·거래 가능 장비는 넣지 않아요. 레벨이 낮은 것부터 들어가요'))], { dismiss: true, cls: 'fuse-pop' });
+        // two columns: the recipe and its buttons on the left, every candidate piece on the right (gaps leave room for each piece's grade bar)
+        const d = modal([h('div.title-t', L('장비 합성')),
+            h('div.fz-cols',
+                h('div.fz-left', gRow, formula, info, h('div.row', one, all), enhT),
+                h('div.fz-right', gridBox, legend, h('div.tip', L('장착 중·거래 가능 장비는 넣지 않아요. 레벨이 낮은 것부터 들어가요'))))], { dismiss: true, cls: 'fuse-pop' });
         draw();
     }
 
@@ -84,12 +85,14 @@
         Sfx.play('charge', Math.max(1, Math.min(4, r + 1)));
         setTimeout(() => {
             if (!d.isConnected) return;
+            const reveal = () => {
+            if (!d.isConnected) return;
             body.innerHTML = '';
             if (single) {
                 const cell = UI.itemCell(res[0].it, { noNew: true, onclick: () => { click(); UI.itemInfo(res[0].it); } });
                 cell.style.width = '80px'; cell.style.height = '80px';
                 cell.classList.add('fz-resc', res[0].ok ? 'win' : 'lose');
-                const stage = h('div', { style: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '96px', width: '100%', flex: 'none' } }, cell);
+                const stage = h('div.fz-resbox', cell);
                 body.append(stage, h('div', ok ? L('성공! {0} 장비가 나왔어요', RARITY[r + 1].name) : L('실패 · {0} 장비 1개가 돌아왔어요', RARITY[r].name)));
             } else {
                 body.append(h('div', L('{0}번 합성 · 성공 {1}번', res.length, ok)),
@@ -99,9 +102,13 @@
             body.appendChild(h('button.btn.gold', { onclick: () => { click(); d.remove(); } }, L('확인')));
             d.firstChild.appendChild(h('button.modal-x', { onclick: () => { click(); d.remove(); } }, '✕'));
             d.addEventListener('click', e => { if (e.target === d) d.remove(); });
-            if (ok && best >= 2 && UI.bigReveal) UI.bigReveal(best, null);   // 영웅 or better: the same reveal the summon gives
+            const cellEl = body.querySelector('.fz-resc');
+            if (ok && best >= 2 && UI.bigReveal) UI.bigReveal(best, cellEl || null);   // fanfare + the grade clip on the result piece
             else Sfx.play(ok ? 'coin' : 'click');
             if (ok && best >= 2) d.classList.add('fz-win-hi');
+            };
+            // 영웅 or better: the summon's full-popup grade clip plays first, then the result opens
+            if (ok && best >= 2 && UI.rarityBeam) UI.rarityBeam(d, best, reveal); else reveal();
         }, WAIT);
     }
 

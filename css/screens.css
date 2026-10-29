@@ -4,7 +4,7 @@
 .hero-left { width: 360px; display: flex; flex-direction: column; gap: 10px; padding: 12px; overflow-y: auto; min-height: 0; }
 .hero-right { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 12px; min-width: 0; }
 .grid { display: flex; flex-wrap: wrap; gap: 14px 10px; align-content: flex-start; overflow-y: auto; flex: 1; padding: 6px; }
-.grid::-webkit-scrollbar, .hero-left::-webkit-scrollbar { width: 8px; } .grid::-webkit-scrollbar-thumb, .hero-left::-webkit-scrollbar-thumb { background: #6b4a24; border-radius: 4px; }
+
 .statline { display: flex; justify-content: space-between; font-size: 15px; padding: 2px 0; border-bottom: 1px dashed rgba(217,195,154,.2); }
 .statline span:last-child { font-family: 'Lilita', 'BlackHan'; font-size: 16px; }
 .detail { padding: 12px; font-size: 14px; line-height: 1.4; min-height: 150px; }

@@ -475,6 +475,7 @@
                     k === 'any' ? null : Art.domCanvas(Art.icon(k), 1.6), nm))));
             left.appendChild(h('div.sm-rates', RARITY.map((r, i) => rate(i, Art.domCanvas(Art.itemIcon({ slot: slot === 'any' ? 'weapon' : slot, r: i }), 3), SUMMON.table[i]))));   // each grade shows its own picture
             left.appendChild(h('div.tip', L('{0}번째 소환까지 전설이 없으면 전설 확정 (현재 {1}/{2})', SUMMON.pity, p.pity, SUMMON.pity)));
+            left.appendChild(h('div.tip', L('{0}번째 소환까지 영웅이 없으면 영웅 확정 (현재 {1}/{2})', SUMMON.pityEpic, p.pityEpic || 0, SUMMON.pityEpic)));
             left.appendChild(h('div.tip', L('현재 소환 장비 레벨 {0} (최고 클리어 스테이지가 높을수록 올라갑니다)', Math.round(summonIlvl(p)))));
             right.appendChild(h('div.sm-pair',
                 big(L('1회 소환'), SUMMON.cost1, () => { if (p.gems < SUMMON.cost1) { click(); UI.gemGate(SUMMON.cost1, '', () => {}); return; } runSummon(1, slot); }),
@@ -769,5 +770,5 @@
         }
     }
 
-    Object.assign(UI, { tabHero, skinBook, itemDetail, enhanceAnim, enhanceResult, autoEnhanceModal, salvageModal, tabResearch, tabSummon, runSummon, runSkinSummon, bigReveal, skinBook, skinPreview });
+    Object.assign(UI, { rarityBeam: beam, tabHero, skinBook, itemDetail, enhanceAnim, enhanceResult, autoEnhanceModal, salvageModal, tabResearch, tabSummon, runSummon, runSkinSummon, bigReveal, skinBook, skinPreview });
 })();

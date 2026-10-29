@@ -2,11 +2,13 @@
 // Core rules: rarity/drops/summon, towers, heroes & skills, research, items & enhance, lives, endless, offline (docs/DESIGN.md part 3).
 
 const RARITY = [
-    { name: L('일반'), color: '#b8c0cc', mul: 1.00 },
-    { name: L('희귀'), color: '#5ec8ff', mul: 1.35 },
-    { name: L('영웅##등급'), color: '#b77bff', mul: 1.82 },
-    { name: L('전설'), color: '#ffc94a', mul: 2.45 },
-    { name: L('신화'), color: '#ff7a3d', mul: 5.00 },   // 2026-10-17: mythic is meant to be far above legend (was 3.40)
+    // mul: base stat multiplier, subs: number of extra options, subMul: extra option value multiplier
+    // (2026-10-29: summon rates 영웅 5% / 전설 1% / 신화 0.05%, so the top grades are stronger to make up for it)
+    { name: L('일반'), color: '#b8c0cc', mul: 1.00, subs: 0, subMul: 1.00 },
+    { name: L('희귀'), color: '#5ec8ff', mul: 1.35, subs: 1, subMul: 1.20 },
+    { name: L('영웅##등급'), color: '#b77bff', mul: 2.10, subs: 2, subMul: 1.45 },
+    { name: L('전설'), color: '#ffc94a', mul: 3.00, subs: 3, subMul: 1.90 },
+    { name: L('신화'), color: '#ff7a3d', mul: 8.00, subs: 5, subMul: 3.00 },
 ];
 // per-kill gear roll (haru DESIGN 6.2 table), percent
 const DROP = {
@@ -15,7 +17,7 @@ const DROP = {
     table: { normal: [65, 28, 6, 0.9, 0.1], elite: [40, 42, 15, 2.7, 0.3], boss: [0, 78, 17, 4.5, 0.5] },
 };
 // bonus10: a 10-pull actually draws 11 (the extra one is free) - shown as +1 on the button
-const SUMMON = { cost1: 30, cost10: 270, bonus10: 1, table: [55, 30, 12, 2.7, 0.3], pity: 30 };
+const SUMMON = { cost1: 30, cost10: 270, bonus10: 1, table: [61, 32.95, 5, 1, 0.05], pity: 100, pityEpic: 20 };
 // skin banner: grades 일반..전설 (RARITY 0..3), own pity; a skin you already own turns into gems (expected value
 // ~14.5 gems per 30-gem pull, so duplicates soften bad luck without making the banner a gem source)
 const SKIN_SUMMON = { cost1: 30, cost10: 270, bonus10: 1, table: [60, 30, 8, 1.98, 0.02], pity: 50, dupGems: [5, 15, 50, 150, 500] };   // 신화 0.02%: banner-only, two options
