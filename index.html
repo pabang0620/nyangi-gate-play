@@ -33,6 +33,16 @@
 </head>
 <body>
 <div id="boot"><img class="bt-logo" src="img/logo_emblem.png" alt=""><div class="bt-track"><div class="bt-fill"></div><img class="bt-cat" src="img/h_knight.png" alt=""></div><div class="bt-txt">0%</div></div>
+<script>
+// boot bar starts moving before any game script has arrived (main.js takes over and clears window.__bootPre)
+window.__bootT0 = performance.now();
+window.__bootPre = setInterval(function () {
+  var b = document.getElementById('boot'); if (!b) return;
+  var pc = 95 * (1 - Math.exp(-(performance.now() - window.__bootT0) / 7000));
+  b.querySelector('.bt-fill').style.width = pc + '%'; b.querySelector('.bt-cat').style.left = pc + '%';
+  b.querySelector('.bt-txt').textContent = '불러오는 중… ' + Math.round(pc) + '%';
+}, 120);
+</script>
 <div id="rotate"><div class="ph"></div><div>가로로 돌려서 플레이해 주세요</div></div>
 <div id="stage">
   <div id="app">

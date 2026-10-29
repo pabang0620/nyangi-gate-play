@@ -522,3 +522,15 @@
 
 .story-txt { font-size: 17px; }
 .story-txt b { font-size: 19px; }
+
+.story-eps { align-items: center; gap: 18px; }
+.story-nav { min-width: 64px; font-size: 24px !important; }
+.story-cur { font-family: 'BlackHan'; font-size: 24px; color: #8a3a12; min-width: 110px; text-align: center; }
+.story-cur i { font-style: normal; font-size: 16px; color: #8a6a40; margin-left: 4px; }
+
+.pity-g { margin: 6px 0; }
+.pity-g .pg-top { display: flex; justify-content: space-between; font-size: 15px; color: #5a3a1a; }
+.pity-g .pg-top b { font-family: BlackHan, sans-serif; color: #8a3a12; }
+.pity-g .pg-bar { height: 12px; margin-top: 3px; border-radius: 7px; background: #e9d6b0; border: 2px solid #8a5a2a; overflow: hidden; }
+.pity-g .pg-bar i { display: block; height: 100%; background: linear-gradient(#ffd25a, #f0951e); transition: width .3s; }
+#app.mobile .pity-g .pg-top { font-size: 18px; }

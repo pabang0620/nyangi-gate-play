@@ -329,20 +329,27 @@ const Game = {
     const VFX_BOOT = ['vfx/summon_epic.mp4', 'vfx/summon_legend.mp4', 'vfx/summon_mythic.mp4', 'vfx/enhance.mp4', 'vfx/victory.mp4', 'vfx/boss_warn.mp4'];
     const bootEl = document.getElementById('boot');
     const total = Art.count() + VFX_BOOT.length + 1;
-    let done = 0;
-    const bootStep = () => {
-        done++;
+    let done = 0, shown = 0, finished = false;
+    const bootT0 = window.__bootT0 || performance.now();
+    clearInterval(window.__bootPre);
+    // the bar never sits still: it shows the larger of the real count and a time curve that creeps toward 95%
+    // (slow networks finish few files at first), and jumps to 100% only when everything is in
+    const paintBoot = () => {
         if (!bootEl) return;
-        const pc = Math.min(100, Math.round(done / total * 100));
-        bootEl.querySelector('.bt-fill').style.width = pc + '%';
-        bootEl.querySelector('.bt-cat').style.left = pc + '%';
+        const real = done / total * 100, creep = 95 * (1 - Math.exp(-(performance.now() - bootT0) / 7000));
+        shown = finished ? 100 : Math.max(shown, Math.min(real, 99), creep);
+        const pc = Math.round(shown);
+        bootEl.querySelector('.bt-fill').style.width = shown + '%';
+        bootEl.querySelector('.bt-cat').style.left = shown + '%';
         bootEl.querySelector('.bt-txt').textContent = L('불러오는 중…') + ' ' + pc + '%';
     };
-    if (bootEl) bootEl.querySelector('.bt-txt').textContent = L('불러오는 중…') + ' 0%';
+    const bootStep = () => { done++; };
+    const bootTimer = setInterval(paintBoot, 120);
+    paintBoot();
     fontReady.then(bootStep);
     Promise.all([fontReady, Art.load(bootStep), UI.vfxWarm(VFX_BOOT, bootStep)]).finally(() => {
-        booted = true; UI.showTitle();
-        if (bootEl) { bootEl.classList.add('out'); setTimeout(() => bootEl.remove(), 600); }
+        booted = true; finished = true; paintBoot(); clearInterval(bootTimer); UI.showTitle();
+        if (bootEl) { setTimeout(() => bootEl.classList.add('out'), 250); setTimeout(() => bootEl.remove(), 900); }
     });
     // online (optional): guest sign-in, server clock, cloud save, reward inbox; store purchases owned but not yet granted
     Online.init().then(() => Rewards.restorePurchases()).catch(() => {});

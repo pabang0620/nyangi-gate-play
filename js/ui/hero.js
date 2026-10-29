@@ -138,8 +138,12 @@
         const draw = () => {
             const list = CAT_STORY[cur];
             tabs.replaceChildren(...Object.keys(CAT_STORY).map(k => h('button.btn.small' + (k === cur ? '.gold' : '.ghost'), { onclick: () => { click(); cur = k; ep = 0; draw(); } }, HERO_NAMES[k])));
-            // 1화..5화 buttons left to right, a locked episode is dimmed but still shows where it opens
-            eps.replaceChildren(...list.map((e, i) => h('button.btn.small' + (i === ep ? '.gold' : '.ghost') + (catStoryOpen(p, e) ? '' : '.story-lockbtn'), { onclick: () => { click(); ep = i; draw(); } }, L('{0}화', i + 1))));
+            // current episode as a label with < > buttons to page through (the label is not a button)
+            const go = d => { click(); ep = Math.max(0, Math.min(list.length - 1, ep + d)); draw(); };
+            eps.replaceChildren(
+                h('button.btn.small.story-nav' + (ep > 0 ? '.gold' : '.ghost'), { onclick: () => { if (ep > 0) go(-1); } }, '<'),
+                h('span.story-cur', L('{0}화', ep + 1), h('i', ` / ${list.length}`)),
+                h('button.btn.small.story-nav' + (ep < list.length - 1 ? '.gold' : '.ghost'), { onclick: () => { if (ep < list.length - 1) go(1); } }, '>'));
             const e = list[ep], open = catStoryOpen(p, e);
             if (open) storySeen()[cur + ep] = true;
             const pic = Art.gen('story_' + cur + '_' + (ep + 1));   // a grey illustration per episode (img/story_{cls}_{n}.png)
@@ -471,6 +475,7 @@
             skin ? h('button.btn.small', { onclick: () => { click(); showHub('hero'); skinBook(Save.p.hero); } }, L('스킨 보러가기')) : null,
             h('button.btn.small.ghost', { onclick: () => { click(); UI.probModal(); } }, L('확률 정보'))));
         const left = h('div.inset.sm-left'), right = h('div.sm-right');
+        const pityGauge = (label, cur, max) => { const pc = Math.min(100, Math.floor(cur / max * 100)); return h('div.pity-g', h('div.pg-top', h('span', label), h('b', pc + '%')), h('div.pg-bar', h('i', { style: { width: pc + '%' } }))); };
         const rate = (r, face, v) => h('div.sm-rate', h('div.cell.r' + r, face), h('div.rn', { style: { color: RARITY[r].color } }, RARITY[r].name), h('div.num', v + '%'));
         const big = (label, cost, fn, bonus) => h('button.btn.gold.sm-big', { onclick: fn }, label,
             bonus ? h('span.sm-bonus', '+' + bonus) : null, ico('gem', 26), h('span.num', cost));
@@ -480,8 +485,8 @@
                 h('div.btn.small' + (slot === k ? '.gold' : ''), { onclick: () => { if (slot === k) return; click(); S.summonSlot = k; showHub('summon'); } },
                     k === 'any' ? null : Art.domCanvas(Art.icon(k), 1.6), nm))));
             left.appendChild(h('div.sm-rates', RARITY.map((r, i) => rate(i, Art.domCanvas(Art.itemIcon({ slot: slot === 'any' ? 'weapon' : slot, r: i }), 3), SUMMON.table[i]))));   // each grade shows its own picture
-            left.appendChild(h('div.tip', L('{0}번째 소환까지 전설이 없으면 전설 확정 (현재 {1}/{2})', SUMMON.pity, p.pity, SUMMON.pity)));
-            left.appendChild(h('div.tip', L('{0}번째 소환까지 영웅이 없으면 영웅 확정 (현재 {1}/{2})', SUMMON.pityEpic, p.pityEpic || 0, SUMMON.pityEpic)));
+            left.appendChild(pityGauge(L('전설 확정 게이지'), p.pity, SUMMON.pity));
+            left.appendChild(pityGauge(L('영웅 확정 게이지'), p.pityEpic || 0, SUMMON.pityEpic));
             left.appendChild(h('div.tip', L('현재 소환 장비 레벨 {0} (최고 클리어 스테이지가 높을수록 올라갑니다)', Math.round(summonIlvl(p)))));
             right.appendChild(h('div.sm-pair',
                 big(L('1회 소환'), SUMMON.cost1, () => { if (p.gems < SUMMON.cost1) { click(); UI.gemGate(SUMMON.cost1, '', () => {}); return; } runSummon(1, slot); }),
@@ -504,10 +509,10 @@
             // one sample portrait per grade
             const sample = ['knight_red', 'mage_sunset', 'ranger_ninja', 'knight_santa', 'mage_kumiho'];
             left.appendChild(h('div.sm-rates', SKIN_SUMMON.table.map((v, r) => { const s = skinById(sample[r]); return rate(r, img(heroFace(s.cls, s.id), '.sm-pic'), v); })));
-            left.appendChild(h('div.tip', L('{0}번째 소환까지 전설이 없으면 전설 확정 (현재 {1}/{2})', SKIN_SUMMON.pity, p.skinPity, SKIN_SUMMON.pity)));
-            left.appendChild(h('div.tip.sm-dup', L('가진 스킨이 나오면 보석으로: {0}', SKIN_SUMMON.dupGems.map((g, r) => `${RARITY[r].name} ${g}`).join(' · '))));
+            left.appendChild(pityGauge(L('전설 확정 게이지'), p.skinPity, SKIN_SUMMON.pity));
+            left.appendChild(h('div.tip.sm-dup', L('중복 스킨 소환 시 보석으로 환급돼요')));
             const pool = [0, 1, 2, 3, 4].flatMap(skinPool);
-            left.appendChild(h('div.tip', L('모은 스킨 {0} / {1} · 영웅은 발자국, 전설은 잔상', pool.filter(id => p.shop.skins.includes(id)).length, pool.length)));
+            left.appendChild(h('div.tip', L('모은 스킨 {0} / {1}', pool.filter(id => p.shop.skins.includes(id)).length, pool.length)));
             right.appendChild(h('div.sm-pair',
                 big(L('1회 소환'), SKIN_SUMMON.cost1, () => { if (p.gems < SKIN_SUMMON.cost1) { click(); UI.gemGate(SKIN_SUMMON.cost1, '', () => {}); return; } runSkinSummon(1); }),
                 big(L('10회 소환'), SKIN_SUMMON.cost10, () => { click(); UI.gemGate(SKIN_SUMMON.cost10, L('보석 {0}개로 스킨 10+1회 소환할까요?', SKIN_SUMMON.cost10), () => runSkinSummon(10)); }, SKIN_SUMMON.bonus10)));
