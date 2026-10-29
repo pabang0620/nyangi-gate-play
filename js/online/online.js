@@ -98,8 +98,8 @@ const Online = {
         const foreign = !!(local.owner && local.owner !== this.user.id);
         const hasProgress = Object.values(local.stars || {}).some(v => v > 0) || (local.items || []).length > 2 || (local.gems || 0) !== 60;
         if (!data) { if (local.owner !== this.user.id && hasProgress) Save.reset(); await this.pushSave(true); return; }
-        // signed out earlier (this device's progress was cleared): the account's progress comes back without asking
-        if (fresh) { Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); return; }
+        // signed out earlier (this device's progress was cleared), or this device has nothing of its own yet: the account's progress comes back without asking
+        if (fresh || (!hasProgress && local.owner !== this.user.id)) { Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); return; }
         // the cloud copy is from another device and newer: let the player choose
         // (compared on progress, currencies and collections, so a newer gem purchase / summon on the other device is not overwritten silently)
         const sig = s => JSON.stringify([s.stars, s.hstars, s.gems, s.tickets, (s.items || []).length, s.shop && s.shop.skins, s.shop && s.shop.purchases && s.shop.purchases.length]);

@@ -138,7 +138,8 @@
             body.replaceChildren(...CAT_STORY[c].map((ep, i) => {
                 const open = catStoryOpen(p, ep);
                 if (open) storySeen()[c + i] = true;
-                return open ? h('div.story-ep', h('b', L('{0}화 · {1}', i + 1, ep.title)), ...ep.lines.map(t => h('p', t)))
+                const pic = Art.gen('story_' + c + '_' + (i + 1));   // a grey illustration per episode (img/story_{cls}_{n}.png)
+                return open ? h('div.story-ep', pic ? h('img.story-pic', { src: 'img/story_' + c + '_' + (i + 1) + '.png', alt: '' }) : null, h('b', L('{0}화 · {1}', i + 1, ep.title)), ...ep.lines.map(t => h('p', t)))
                     : h('div.story-ep.lock', h('b', L('{0}화', i + 1)), h('p.tip', L('{0} 클리어하면 열려요', stageLabel(ep.need))));
             }));
             body.scrollTop = 0; Save.save();
@@ -472,7 +473,7 @@
             left.appendChild(h('div.sm-slots', [['any', L('전체 (무작위)')], ...SLOTS.map(k => [k, SLOT_NAME[k]])].map(([k, nm]) =>
                 h('div.btn.small' + (slot === k ? '.gold' : ''), { onclick: () => { if (slot === k) return; click(); S.summonSlot = k; showHub('summon'); } },
                     k === 'any' ? null : Art.domCanvas(Art.icon(k), 1.6), nm))));
-            left.appendChild(h('div.sm-rates', RARITY.map((r, i) => rate(i, Art.domCanvas(Art.icon(slot === 'any' ? 'weapon' : slot), 3), SUMMON.table[i]))));
+            left.appendChild(h('div.sm-rates', RARITY.map((r, i) => rate(i, Art.domCanvas(Art.itemIcon({ slot: slot === 'any' ? 'weapon' : slot, r: i }), 3), SUMMON.table[i]))));   // each grade shows its own picture
             left.appendChild(h('div.tip', L('{0}번째 소환까지 전설이 없으면 전설 확정 (현재 {1}/{2})', SUMMON.pity, p.pity, SUMMON.pity)));
             left.appendChild(h('div.tip', L('현재 소환 장비 레벨 {0} (최고 클리어 스테이지가 높을수록 올라갑니다)', Math.round(summonIlvl(p)))));
             right.appendChild(h('div.sm-pair',

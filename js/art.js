@@ -48,9 +48,11 @@ const Art = (() => {
     function hero(cls) { return sprite('h_' + cls, 18, 22); }
     function soldier(kind) { return sprite('s_' + kind, 14, 17); }
     function tower(type, lv, spec) { return sprite('t_' + type + (spec || lv), 34, 40); }
-    // the plain weapon picture is the cat claw (i_weapon_claw); until it exists the rare claw stands in, then the old sword
+    const slotIcons = {};
+    // slot icons follow the gear set below
     function icon(key) {
-        if (key === 'weapon') return gen('i_weapon_claw') || gen('it_weapon_2_3') || sprite('i_weapon', 16, 16);
+        // slot icons (weapon / armor / charm) are the 일반 picture of the new gear set (img/it_{slot}_0_3.png)
+        if (key === 'weapon' || key === 'armor' || key === 'charm') { const g = gen('it_' + key + '_0_3'); if (g) { return slotIcons[key] || (slotIcons[key] = { img: g.img, white: g.white, w: 16, h: 16, hi: true }); } }
         return sprite('i_' + key, 16, 16);
     }
     function decoSprite(kind) { return sprite('d_' + kind, 16, 20); }
@@ -60,7 +62,7 @@ const Art = (() => {
     function itemIcon(it) {
         const name = 'it_' + it.slot + '_' + it.r + '_' + itemForm(it), g = gen(name);   // grades 일반 to 신화 each have their own picture per slot
         if (!g) return icon(it.slot);
-        if (!itemSprites[name]) { const base = sprite('i_' + it.slot, 16, 16); itemSprites[name] = { img: g.img, white: g.white, w: base.w, h: base.h, hi: true }; }
+        if (!itemSprites[name]) itemSprites[name] = { img: g.img, white: g.white, w: 16, h: 16, hi: true };
         return itemSprites[name];
     }
 

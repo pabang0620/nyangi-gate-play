@@ -481,3 +481,7 @@
 .story-ep { padding: 8px 12px; border-radius: 8px; background: rgba(90, 58, 28, .12); line-height: 1.6; }
 .story-ep p { margin: 4px 0 0; }
 .story-ep.lock { opacity: .6; }
+
+.story-pic { display: block; width: 100%; max-height: 180px; object-fit: cover; border-radius: 8px; margin-bottom: 6px; }
+.story-pop { width: 720px; }
+.story-body { max-height: 300px; }
