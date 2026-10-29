@@ -27,7 +27,7 @@
             h('div.hl-info',
                 h('div.hl-name', h('span', `${HERO_NAMES[cls]}  Lv.${hd.lv}`),
                     h('button.hl-pill.hl-role', { onclick: () => { click(); roleModal(cls); } }, HERO_GUIDE[cls][0]),
-                    h('button.hl-pill.hl-story', { onclick: () => { click(); storyModal(cls); } }, L('스토리'), storyNew(p) ? h('span.badge', 'NEW') : null)),
+                    h('button.hl-pill.hl-story', { onclick: () => { click(); storyModal(cls); } }, L('스토리'))),
                 h('div.bar.xp', { style: { marginTop: '6px' } }, h('i', { style: { width: (hd.lv >= HERO_MAX_LV ? 100 : hd.xp / heroXpNeed(hd.lv) * 100) + '%' } })),
                 h('div.tip', hd.lv >= HERO_MAX_LV ? L('최고 레벨') : L('경험치 {0} / {1}', hd.xp, heroXpNeed(hd.lv)))));
         left.appendChild(port);

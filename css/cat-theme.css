@@ -284,5 +284,8 @@ body { line-height: 1.4; }
 .hl-role { font-size: 15px !important; }
 
 .hl-pill { position: relative; font-family: 'BlackHan'; font-size: 15px; line-height: 1.2; padding: 4px 12px; border-radius: 14px; border: 2px solid #c08a3a; background: linear-gradient(#6b3e12, #4a2a0c); color: #fff0c8; cursor: pointer; text-shadow: none; white-space: nowrap; }
-.hl-pill.hl-story { align-self: flex-start; margin-top: 4px; background: linear-gradient(#3e5a8a, #2a3e64); border-color: #8fb0e0; }
+.hl-pill.hl-story { background: linear-gradient(#3e5a8a, #2a3e64); border-color: #8fb0e0; }
 .hl-pill .badge { position: absolute; top: -8px; right: -8px; }
+
+.hl-name { flex-wrap: nowrap; }
+.hl-name > span { flex: none; }
