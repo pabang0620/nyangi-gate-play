@@ -469,3 +469,15 @@
 .fz-resc.lose { filter: grayscale(.4); }
 
 .fz-body { width: 100%; }
+
+.hl-name { display: flex; align-items: center; gap: 8px; font-size: 19px; color: #f5c451; font-family: 'BlackHan'; text-shadow: var(--stroke-s); }
+.hl-role { min-height: 28px; font-size: 14px; padding: 0 10px; }
+.hl-story { position: relative; align-self: flex-start; margin-top: 4px; min-height: 28px; font-size: 14px; }
+.role-pop { display: grid; gap: 6px; text-align: left; max-width: 420px; line-height: 1.5; }
+.role-pop .pro { color: #2f7d1a; } .role-pop .con { color: #b0501a; }
+.role-pop .trait { margin-top: 4px; padding: 8px 10px; border-radius: 8px; background: rgba(242, 193, 78, .22); }
+.story-pop { width: 620px; max-width: calc(100% - 24px); }
+.story-body { max-height: 260px; overflow-y: auto; display: grid; gap: 10px; text-align: left; width: 100%; }
+.story-ep { padding: 8px 12px; border-radius: 8px; background: rgba(90, 58, 28, .12); line-height: 1.6; }
+.story-ep p { margin: 4px 0 0; }
+.story-ep.lock { opacity: .6; }

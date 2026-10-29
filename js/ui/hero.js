@@ -25,9 +25,9 @@
             h('div.portrait', { style: { width: '100px', height: '100px' }, title: L('배경색 바꾸기'), onclick: () => { click(); avatarBgModal(); } },
                 (() => { const a = img(heroFace(cls, Save.p.shop && Save.p.shop.skin[cls])); a.style.background = avatarBg(); return a; })(), h('span.av-edit', L('배경'))),
             h('div.hl-info',
-                h('div', { style: { fontSize: '20px', color: '#f5c451', fontFamily: 'BlackHan', textShadow: 'var(--stroke-s)' } }, `${HERO_NAMES[cls]} (${HEROES[cls].name})  Lv.${hd.lv}`),
-                h('div.tip', HEROES[cls].desc),
-                h('div.tip.hl-pc', h('span.pro', L('장점 ') + HERO_GUIDE[cls][1]), h('span.con', L('단점 ') + HERO_GUIDE[cls][2])),
+                h('div.hl-name', h('span', `${HERO_NAMES[cls]}  Lv.${hd.lv}`),
+                    h('button.hl-pill.hl-role', { onclick: () => { click(); roleModal(cls); } }, HERO_GUIDE[cls][0]),
+                    h('button.hl-pill.hl-story', { onclick: () => { click(); storyModal(cls); } }, L('스토리'), storyNew(p) ? h('span.badge', 'NEW') : null)),
                 h('div.bar.xp', { style: { marginTop: '6px' } }, h('i', { style: { width: (hd.lv >= HERO_MAX_LV ? 100 : hd.xp / heroXpNeed(hd.lv) * 100) + '%' } })),
                 h('div.tip', hd.lv >= HERO_MAX_LV ? L('최고 레벨') : L('경험치 {0} / {1}', hd.xp, heroXpNeed(hd.lv)))));
         left.appendChild(port);
@@ -121,6 +121,32 @@
 
     // a skin is shown big first (that is the only way to tell which one it is); equipping needs the button
     // how a skin looks in a fight: the hero sprite walking a road, with its trail (paw prints / afterimages) when it has one. Visual only.
+    // the role button next to the name: what the cat does in a fight, its strengths and weakness, and one cute line
+    function roleModal(cls) {
+        UI.infoModal(`${HERO_NAMES[cls]} · ${HERO_GUIDE[cls][0]}`, h('div.role-pop',
+            h('div', HEROES[cls].desc),
+            h('div.pro', L('장점 ') + HERO_GUIDE[cls][1]), h('div.con', L('단점 ') + HERO_GUIDE[cls][2]),
+            h('div.trait', CAT_TRAIT[cls])));
+    }
+    const storySeen = () => (Save.p.set.storySeen = Save.p.set.storySeen || {});
+    function storyNew(p) { for (const c in CAT_STORY) for (let i = 0; i < CAT_STORY[c].length; i++) if (catStoryOpen(p, CAT_STORY[c][i]) && !storySeen()[c + i]) return true; return false; }
+    // 스토리 모음: one tab per cat, the episodes it has opened (locked ones show only where they open)
+    function storyModal(cls) {
+        const p = Save.p, body = h('div.story-body'), tabs = h('div.row.story-tabs');
+        const draw = c => {
+            tabs.replaceChildren(...Object.keys(CAT_STORY).map(k => h('button.btn.small' + (k === c ? '.gold' : '.ghost'), { onclick: () => { click(); draw(k); } }, HERO_NAMES[k])));
+            body.replaceChildren(...CAT_STORY[c].map((ep, i) => {
+                const open = catStoryOpen(p, ep);
+                if (open) storySeen()[c + i] = true;
+                return open ? h('div.story-ep', h('b', L('{0}화 · {1}', i + 1, ep.title)), ...ep.lines.map(t => h('p', t)))
+                    : h('div.story-ep.lock', h('b', L('{0}화', i + 1)), h('p.tip', L('{0} 클리어하면 열려요', stageLabel(ep.need))));
+            }));
+            body.scrollTop = 0; Save.save();
+        };
+        draw(cls);
+        modal([h('div.title-t', L('스토리 모음')), tabs, body], { dismiss: true, cls: 'story-pop' });
+    }
+
     function skinGamePreview(cls, id) {
         const W2 = 320, H2 = 120, c = document.createElement('canvas'); c.width = W2; c.height = H2; c.className = 'skp-game';
         const x = c.getContext('2d'), sp = heroSprite(cls, id), cfg = id && typeof skinTrail === 'function' ? skinTrail(id) : null;

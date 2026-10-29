@@ -200,7 +200,7 @@ img.shopimg.round { border-radius: 50%; object-fit: cover; object-position: top;
 .btn.google { border: 2px solid #c8c8c8; border-image: none; border-radius: 10px; background: #fff; color: #3c4043; text-shadow: none; min-width: 200px; min-height: 46px; font-size: 16px; }
 /* title sign-in column: same width, icon pinned left, label centred */
 .signin-list { display: flex; flex-direction: column; gap: 6px; width: min(300px, 86vw); }
-.btn.signin { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; height: 36px; min-height: 0; padding: 0 44px; border-image: none; border-radius: 10px; font-size: 16px; text-shadow: none; }
+.btn.signin { position: relative; display: flex; align-items: center; justify-content: center; width: 100%; min-width: 0; height: 30px; min-height: 0; padding: 0 40px; border-image: none; border-radius: 10px; font-size: 16px; text-shadow: none; }
 .btn.signin.guest { border: 2px solid #8a6a44; background: rgba(38, 26, 16, 0.88); color: #fff4dc; }
 .signin-ico { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); display: flex; }
 .signin-txt { font-family: 'Jua', 'Noto Sans KR', 'Malgun Gothic', sans-serif; font-weight: 400; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -339,3 +339,13 @@ html:not(:lang(ja)):not(:lang(zh)) body { word-break: keep-all; overflow-wrap: a
 .title-screen:has(.signin-list) .logo-sub { margin-top: 14px; }
 #app.mobile .raidtiers.inset.inset { gap: 8px 12px; }   /* doubled class: fix-tabs.css loads later */
 #app.mobile .raidtiers.raidtiers .mrow { padding: 4px 8px; }
+
+.btn.signin.idl { border: 2px solid #8a6a44; background: rgba(250, 238, 210, .94); color: #3a2410; }
+.signin-ico svg { width: 18px; height: 18px; }
+.title-logins .btn { min-height: 26px; font-size: 13px; padding: 0 12px; }
+
+/* sign-in buttons: about half the old height on phones too (the title is zoomed 1.25 there) */
+#app.mobile .btn.signin { height: 32px; min-height: 0; font-size: 15px; border-radius: 8px; border-width: 2px; }
+#app.mobile .signin-list { gap: 5px; width: min(260px, 70vw); }
+#app.mobile .signin-ico svg { width: 15px; height: 15px; }
+#app.mobile .title-logins .btn { min-height: 30px; font-size: 13px; border-width: 8px; border-image-width: 8px; }

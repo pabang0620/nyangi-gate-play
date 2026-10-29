@@ -105,9 +105,9 @@
                 h('div.signin-list',
                     sign('guest', UI.SIGNIN_ICON.guest, L('게스트로 시작'), async () => { await UI.waitCat(Online.startGuest()); go(); }, true),
                     Online.kakaoOn() ? sign('kakao', UI.SIGNIN_ICON.kakao, L('카카오로 시작'), () => Online.loginKakao()) : null,
-                    Online.nativeGoogle ? sign('google', UI.SIGNIN_ICON.google, L('Google로 시작'), () => Online.loginGoogle()) : null),
+                    Online.nativeGoogle ? sign('google', UI.SIGNIN_ICON.google, L('Google로 시작'), () => Online.loginGoogle()) : null,
+                    sign('idl', UI.SIGNIN_ICON.guest, L('아이디로 로그인'), () => UI.idLoginModal())),
                 h('div.row.title-logins',
-                    h('button.btn.small.ghost', { onclick: () => run(() => UI.idLoginModal()) }, L('아이디로 로그인')),
                     h('button.btn.small.ghost', { onclick: () => run(() => UI.signUpModal(go), true) }, L('회원가입'))),
                 h('div.tip.title-guest-note', L('게스트는 앱을 지우면 진행이 사라져요')),
                 err);
@@ -174,7 +174,16 @@
     }
     if (typeof Friends !== 'undefined') Friends.onChange(() => { if (friendsBtn && friendsBtn.isConnected) friendsBtn.sync(); });
 
+    // a stage clear can open a cat's story episode: one quiet line pointing at 영웅 > 스토리 모음 (once per episode)
+    function storyHint() {
+        const p = Save.p; if (typeof CAT_STORY === 'undefined') return;
+        const hinted = p.set.storyHint = p.set.storyHint || {};
+        for (const c in CAT_STORY) CAT_STORY[c].forEach((ep, i) => {
+            if (catStoryOpen(p, ep) && !hinted[c + i] && !(p.set.storySeen || {})[c + i]) { hinted[c + i] = true; Save.save(); setTimeout(() => toast(L('{0}의 기억 하나를 찾았어요 · 영웅 > 스토리 모음', HERO_NAMES[c])), 900); }
+        });
+    }
     function showHub(tab) {
+        if (S.screen !== 'hub') storyHint();
         UI.ensureAccount();
         if (UI.raidLiveCheck) UI.raidLiveCheck();     // the app closed during a 파티 레이드 / 협동 디펜스: offer to go back (once)
         S.screen = 'hub';
