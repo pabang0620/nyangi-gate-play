@@ -506,3 +506,19 @@
 .fz-resbox { display: flex; align-items: center; justify-content: center; width: 100%; height: 100px; flex: none; }
 .fz-resbox .fz-resc { margin: 0 auto; flex: none; }
 .fz-body { align-items: center; text-align: center; }
+
+.hl-btns { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+
+.story-pop { width: 1040px; max-width: calc(100% - 24px); }
+.story-eps { gap: 8px; justify-content: center; margin: 4px 0 8px; }
+.story-eps .btn { min-width: 76px; }
+.story-eps .story-lockbtn { opacity: .55; }
+.story-body { display: block; max-height: none; overflow: visible; }
+.story-body .story-ep { display: flex; gap: 18px; align-items: stretch; padding: 12px; }
+.story-body .story-ep.lock { display: block; text-align: center; padding: 40px 12px; }
+.story-body .story-pic { flex: 0 0 52%; width: 52%; max-height: 420px; object-fit: contain; margin: 0; background: rgba(0, 0, 0, .12); }
+.story-txt { flex: 1; min-width: 0; max-height: 420px; overflow-y: auto; }
+.story-txt p { margin: 6px 0 0; }
+
+.story-txt { font-size: 17px; }
+.story-txt b { font-size: 19px; }

@@ -25,7 +25,8 @@
             h('div.portrait', { style: { width: '100px', height: '100px' }, title: L('배경색 바꾸기'), onclick: () => { click(); avatarBgModal(); } },
                 (() => { const a = img(heroFace(cls, Save.p.shop && Save.p.shop.skin[cls])); a.style.background = avatarBg(); return a; })(), h('span.av-edit', L('배경'))),
             h('div.hl-info',
-                h('div.hl-name', h('span', `${HERO_NAMES[cls]}  Lv.${hd.lv}`),
+                h('div.hl-name', h('span', `${HERO_NAMES[cls]}  Lv.${hd.lv}`)),
+                h('div.hl-btns',
                     h('button.hl-pill.hl-role', { onclick: () => { click(); roleModal(cls); } }, HERO_GUIDE[cls][0]),
                     h('button.hl-pill.hl-story', { onclick: () => { click(); storyModal(cls); } }, L('스토리'))),
                 h('div.bar.xp', { style: { marginTop: '6px' } }, h('i', { style: { width: (hd.lv >= HERO_MAX_LV ? 100 : hd.xp / heroXpNeed(hd.lv) * 100) + '%' } })),
@@ -132,20 +133,25 @@
     function storyNew(p) { for (const c in CAT_STORY) for (let i = 0; i < CAT_STORY[c].length; i++) if (catStoryOpen(p, CAT_STORY[c][i]) && !storySeen()[c + i]) return true; return false; }
     // 스토리 모음: one tab per cat, the episodes it has opened (locked ones show only where they open)
     function storyModal(cls) {
-        const p = Save.p, body = h('div.story-body'), tabs = h('div.row.story-tabs');
-        const draw = c => {
-            tabs.replaceChildren(...Object.keys(CAT_STORY).map(k => h('button.btn.small' + (k === c ? '.gold' : '.ghost'), { onclick: () => { click(); draw(k); } }, HERO_NAMES[k])));
-            body.replaceChildren(...CAT_STORY[c].map((ep, i) => {
-                const open = catStoryOpen(p, ep);
-                if (open) storySeen()[c + i] = true;
-                const pic = Art.gen('story_' + c + '_' + (i + 1));   // a grey illustration per episode (img/story_{cls}_{n}.png)
-                return open ? h('div.story-ep', pic ? h('img.story-pic', { src: 'img/story_' + c + '_' + (i + 1) + '.png', alt: '' }) : null, h('b', L('{0}화 · {1}', i + 1, ep.title)), ...ep.lines.map(t => h('p', t)))
-                    : h('div.story-ep.lock', h('b', L('{0}화', i + 1)), h('p.tip', L('{0} 클리어하면 열려요', stageLabel(ep.need))));
-            }));
-            body.scrollTop = 0; Save.save();
+        const p = Save.p, body = h('div.story-body'), tabs = h('div.row.story-tabs'), eps = h('div.row.story-eps');
+        let cur = cls, ep = 0;
+        const draw = () => {
+            const list = CAT_STORY[cur];
+            tabs.replaceChildren(...Object.keys(CAT_STORY).map(k => h('button.btn.small' + (k === cur ? '.gold' : '.ghost'), { onclick: () => { click(); cur = k; ep = 0; draw(); } }, HERO_NAMES[k])));
+            // 1화..5화 buttons left to right, a locked episode is dimmed but still shows where it opens
+            eps.replaceChildren(...list.map((e, i) => h('button.btn.small' + (i === ep ? '.gold' : '.ghost') + (catStoryOpen(p, e) ? '' : '.story-lockbtn'), { onclick: () => { click(); ep = i; draw(); } }, L('{0}화', i + 1))));
+            const e = list[ep], open = catStoryOpen(p, e);
+            if (open) storySeen()[cur + ep] = true;
+            const pic = Art.gen('story_' + cur + '_' + (ep + 1));   // a grey illustration per episode (img/story_{cls}_{n}.png)
+            body.replaceChildren(open
+                ? h('div.story-ep', pic ? h('img.story-pic', { src: 'img/story_' + cur + '_' + (ep + 1) + '.png', alt: '' }) : null,
+                    h('div.story-txt', h('b', L('{0}화 · {1}', ep + 1, e.title)), ...e.lines.map(t => h('p', t))))
+                : h('div.story-ep.lock', h('b', L('{0}화', ep + 1)), h('p.tip', L('{0} 클리어하면 열려요', stageLabel(e.need)))));
+            const txt = body.querySelector('.story-txt'); if (txt) txt.scrollTop = 0;
+            Save.save();
         };
-        draw(cls);
-        modal([h('div.title-t', L('스토리 모음')), tabs, body], { dismiss: true, cls: 'story-pop' });
+        draw();
+        modal([h('div.title-t', L('스토리 모음')), tabs, eps, body], { dismiss: true, cls: 'story-pop' });
     }
 
     function skinGamePreview(cls, id) {

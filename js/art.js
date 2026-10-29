@@ -16,21 +16,26 @@ const Art = (() => {
     }
 
     const loaded = {};
-    function load() {
+    // onStep(): called once per image, loaded or failed (the boot bar counts them)
+    function load(onStep) {
         const list = (typeof window !== 'undefined' && window.IMG_LIST) || [];
+        const step = () => { if (onStep) onStep(); };
         return Promise.all(list.map(name => new Promise(res => {
             const im = new Image();
             im.onload = () => {
                 const c = canvas(im.width, im.height);
                 c.getContext('2d').drawImage(im, 0, 0);
                 const k = /^(bg_|path_|title_bg|app_icon)/.test(name) ? 1 : (/^i_/.test(name) && im.width >= 200 ? 8 : 4);   // sprites are stored at 2x and drawn at scale 2
-                loaded[name] = { img: c, white: whiteOf(c), w: im.width / k, h: im.height / k, hi: true };
-                res();
+                // the white hit-flash copy is built on first use (half the boot work and memory for art that never flashes)
+                let white = null;
+                loaded[name] = { img: c, get white() { return white || (white = whiteOf(c)); }, w: im.width / k, h: im.height / k, hi: true };
+                step(); res();
             };
-            im.onerror = () => res();
+            im.onerror = () => { step(); res(); };
             im.src = 'img/' + name + '.png';
         })));
     }
+    const count = () => ((typeof window !== 'undefined' && window.IMG_LIST) || []).length;
     function gen(name) { return loaded[name] || null; }
 
     const placeholders = {};
@@ -157,5 +162,5 @@ const Art = (() => {
         return best;
     }
 
-    return { load, gen, enemy, hero, soldier, tower, icon, itemIcon, iconURL, domCanvas, domImg, background, nearPath, decoSprite };
+    return { load, count, gen, enemy, hero, soldier, tower, icon, itemIcon, iconURL, domCanvas, domImg, background, nearPath, decoSprite };
 })();

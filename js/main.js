@@ -324,9 +324,26 @@ const Game = {
     // until the art is in, drawBackdrop paints placeholder ground + path that reads as a game map;
     // the canvas stays empty (dark #app background) until the title screen is ready
     let booted = false;
-    Promise.all([fontReady, Art.load()]).finally(() => { booted = true; UI.showTitle(); });
-    // the big reveal clips go into memory once the title is up, so they start on the first frame later
-    setTimeout(() => UI.vfxWarm(['vfx/summon_epic.mp4', 'vfx/summon_legend.mp4', 'vfx/summon_mythic.mp4', 'vfx/enhance.mp4', 'vfx/victory.mp4', 'vfx/boss_warn.mp4']), 2500);
+    // boot bar (#boot in index.html): every image and the big reveal clips count as one step, the cat runs along the bar.
+    // Everything heavy is loaded here, behind the bar, so the first screens and clips start without a hitch
+    const VFX_BOOT = ['vfx/summon_epic.mp4', 'vfx/summon_legend.mp4', 'vfx/summon_mythic.mp4', 'vfx/enhance.mp4', 'vfx/victory.mp4', 'vfx/boss_warn.mp4'];
+    const bootEl = document.getElementById('boot');
+    const total = Art.count() + VFX_BOOT.length + 1;
+    let done = 0;
+    const bootStep = () => {
+        done++;
+        if (!bootEl) return;
+        const pc = Math.min(100, Math.round(done / total * 100));
+        bootEl.querySelector('.bt-fill').style.width = pc + '%';
+        bootEl.querySelector('.bt-cat').style.left = pc + '%';
+        bootEl.querySelector('.bt-txt').textContent = L('불러오는 중…') + ' ' + pc + '%';
+    };
+    if (bootEl) bootEl.querySelector('.bt-txt').textContent = L('불러오는 중…') + ' 0%';
+    fontReady.then(bootStep);
+    Promise.all([fontReady, Art.load(bootStep), UI.vfxWarm(VFX_BOOT, bootStep)]).finally(() => {
+        booted = true; UI.showTitle();
+        if (bootEl) { bootEl.classList.add('out'); setTimeout(() => bootEl.remove(), 600); }
+    });
     // online (optional): guest sign-in, server clock, cloud save, reward inbox; store purchases owned but not yet granted
     Online.init().then(() => Rewards.restorePurchases()).catch(() => {});
     Rewards.loadPrices();

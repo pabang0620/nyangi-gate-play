@@ -20,8 +20,19 @@
 <link rel="stylesheet" href="css/fx-skins.css">
 <link rel="stylesheet" href="css/fx-summon.css">
 <link rel="stylesheet" href="css/cat-theme.css">
+<style>
+#boot { position: fixed; inset: 0; z-index: 9999; background: radial-gradient(circle at 50% 40%, #2a3358, #121a33 70%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; transition: opacity .5s; color: #fff0c8; font-family: 'BlackHan', 'Jua', sans-serif; }
+#boot.out { opacity: 0; pointer-events: none; }
+#boot .bt-logo { width: min(26vh, 200px); height: auto; filter: drop-shadow(0 6px 0 rgba(0,0,0,.4)); }
+#boot .bt-track { position: relative; width: min(62vw, 520px); height: 20px; border-radius: 12px; background: #2a1a0a; border: 3px solid #c08a3a; box-shadow: inset 0 2px 0 rgba(0,0,0,.5); margin-top: 26px; }
+#boot .bt-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; border-radius: 8px; background: linear-gradient(#ffd36a, #e8962a); transition: width .25s; }
+#boot .bt-cat { position: absolute; left: 0; bottom: 14px; width: 54px; height: auto; margin-left: -27px; transition: left .25s; animation: bt-hop .38s ease-in-out infinite; }
+#boot .bt-txt { font-size: 18px; letter-spacing: 1px; text-shadow: 0 2px 0 rgba(0,0,0,.6); }
+@keyframes bt-hop { 0%, 100% { transform: translateY(0) rotate(-4deg); } 50% { transform: translateY(-12px) rotate(4deg); } }
+</style>
 </head>
 <body>
+<div id="boot"><img class="bt-logo" src="img/logo_emblem.png" alt=""><div class="bt-track"><div class="bt-fill"></div><img class="bt-cat" src="img/h_knight.png" alt=""></div><div class="bt-txt">0%</div></div>
 <div id="rotate"><div class="ph"></div><div>가로로 돌려서 플레이해 주세요</div></div>
 <div id="stage">
   <div id="app">

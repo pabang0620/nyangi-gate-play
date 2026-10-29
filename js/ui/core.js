@@ -301,12 +301,13 @@ const UI = {};
     // opt: { loop, opacity, z, back } - back = behind the parent's other children (ambient layers)
     // clips are fetched once into memory (blob URLs) so a reveal starts at once instead of streaming from disk
     const VFX_BLOB = {}, VFX_POSTER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-    function vfxWarm(list) {
-        list.forEach(src => {
-            if (VFX_BLOB[src]) return;
+    // onStep(): once per clip when it is in memory; returns a promise for all of them
+    function vfxWarm(list, onStep) {
+        return Promise.all(list.map(src => {
+            if (VFX_BLOB[src]) { if (onStep) onStep(); return null; }
             VFX_BLOB[src] = 'pending';
-            fetch(src).then(r => r.ok ? r.blob() : null).then(b => { VFX_BLOB[src] = b ? URL.createObjectURL(b) : null; }).catch(() => { VFX_BLOB[src] = null; });
-        });
+            return fetch(src).then(r => r.ok ? r.blob() : null).then(b => { VFX_BLOB[src] = b ? URL.createObjectURL(b) : null; }).catch(() => { VFX_BLOB[src] = null; }).then(() => { if (onStep) onStep(); });
+        }));
     }
     function vfx(src, parent, opt = {}) {
         parent = parent || root();
