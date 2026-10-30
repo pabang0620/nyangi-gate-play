@@ -30,6 +30,7 @@
                 const P = r.payload || {}, done = !!r.claimed_at;
                 const btn = done ? h('div.mail-done', L('받음'))
                     : h('button.btn.small.gold', { onclick: async () => {
+                        if (btn.classList.contains('off')) return;   // still waiting for the first tap
                         click(); btn.classList.add('off');
                         const got = await UI.waitCat(Online.claimMail(r.id));
                         // redraw first: the list window opens last and would cover the reward window
@@ -45,8 +46,9 @@
                 list,
                 h('div.tip', L('받은 우편은 7일 뒤 목록에서 사라져요')),
                 h('div.row',
-                    on ? h('button.btn.gold' + (left ? '' : '.off'), { onclick: async () => {
-                        if (!left) return; click();
+                    on ? h('button.btn.gold' + (left ? '' : '.off'), { onclick: async e => {
+                        const b = e.currentTarget;
+                        if (!left || b.disabled) return; click(); b.disabled = true;
                         const got = await UI.waitCat(Online.claimRewards(true));
                         draw();
                         if (got && got.length) showGot(Online.lastGotTitle, got); else toast(L('받지 못했어요. 잠시 후 다시 해 주세요'));

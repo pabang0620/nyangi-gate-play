@@ -308,9 +308,11 @@ const Game = {
         if (!Save.p.set.musicOff) Music.setEnabled(!document.hidden);
     });
     window.addEventListener('beforeunload', () => Save.save());
+    window.addEventListener('online', () => Online.retry().then(() => { if (Online.on) Rewards.restorePurchases(); }).catch(() => {}));
     // back from the background without a restart (Android keeps the WebView alive): idle supply, server clock, inbox, purchases
     Game.onResume = () => {
         if (Online.on) { Online.syncClock().catch(() => {}); Online.refreshMail().catch(() => {}); }
+        else Online.retry().catch(() => {});   // started offline: connect now
         Rewards.restorePurchases().catch(() => {});
         if (UI.resumeSupply) UI.resumeSupply();
     };
@@ -376,6 +378,7 @@ const Game = {
     requestAnimationFrame(frame);
     // periodic save for offline supply timing
     setInterval(() => Save.save(), 30000);
+    setInterval(() => { if (!document.hidden) Online.retry().catch(() => {}); }, 60000);   // a start that failed: try again (not in a battle)
     // installable / offline on phones (service workers need http(s))
     if ('serviceWorker' in navigator && location.protocol.startsWith('http') && !/NyangiApp/.test(navigator.userAgent)) navigator.serviceWorker.register('sw.js').catch(() => { });
     // Android back button (MainActivity.back): close the top popup, pause a battle, leave a hub sub screen; false = let the app go to the background

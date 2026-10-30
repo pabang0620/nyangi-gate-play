@@ -18,11 +18,12 @@ const Online = {
         const back = typeof location !== 'undefined' ? new URLSearchParams(location.hash.slice(1) + '&' + location.search.slice(1)) : new URLSearchParams();
         const authErr = back.get('error_code') || back.get('error');
         try {
-            this.sb = supabase.createClient(ONLINE_CONFIG.url, ONLINE_CONFIG.anonKey, { db: { schema: ONLINE_CONFIG.schema || 'public' }, auth: { persistSession: true, storageKey: 'nyangi-auth', autoRefreshToken: true } });
+            this.sb = this.sb || supabase.createClient(ONLINE_CONFIG.url, ONLINE_CONFIG.anonKey, { db: { schema: ONLINE_CONFIG.schema || 'public' }, auth: { persistSession: true, storageKey: 'nyangi-auth', autoRefreshToken: true } });
             const { data: { session } } = await this.sb.auth.getSession();
             if (!session) {
                 // first visit: the title screen asks how to start (guest / Google / Kakao / id). It needs the login switches
-                this.cfg = (await this.sb.rpc('online_config')).data;
+                const c = await this.sb.rpc('online_config'); if (c.error) throw c.error;
+                this.cfg = c.data;
                 if (authErr) setTimeout(() => toast(L('로그인하지 못했어요. 다시 시도해 주세요')), 600);
                 this.status = 'login'; this.emit(); return;
             }
@@ -31,6 +32,13 @@ const Online = {
             console.warn('online init failed', e);
             this.status = 'error'; this.emit();
         }
+    },
+    // started without a connection (or it failed on the way): try again when the app comes back or the network returns
+    async retry() {
+        if (!this.enabled || this.status !== 'error' || this.retrying) return;
+        if (typeof UI !== 'undefined' && UI.S && UI.S.screen === 'battle') return;   // pullSave may ask or reload: not in a battle
+        this.retrying = true;
+        try { await this.init(); } finally { this.retrying = false; }
     },
     // a guest account (title 게스트로 시작, or the game started before choosing)
     async startGuest() {
@@ -57,12 +65,31 @@ const Online = {
             ? L('이미 다른 진행에 연결된 계정이에요. 설정의 다른 계정으로 로그인에서 그 계정으로 들어갈 수 있어요')
             : L('로그인하지 못했어요. 다시 시도해 주세요')), 600);
         await this.syncClock();
-        this.cfg = (await this.sb.rpc('online_config')).data;
-        this.profile = (await this.sb.from('profiles').select('*').eq('uid', this.user.id).maybeSingle()).data;
+        // a failed read is not "no profile": the game would ask for a new nickname. Fail the start instead (retry() later)
+        const c = await this.sb.rpc('online_config'); if (c.error) throw c.error;
+        this.cfg = c.data;
+        const pr = await this.sb.from('profiles').select('*').eq('uid', this.user.id).maybeSingle(); if (pr.error) throw pr.error;
+        this.profile = pr.data;
         this.status = 'online'; this.emit();
         await this.pullSave();
         await this.refreshMail();
-        if (typeof window !== 'undefined') document.addEventListener('visibilitychange', () => { if (document.hidden) this.pushSave(true); });
+        if (typeof window !== 'undefined' && !this.hideHooked) { this.hideHooked = true; document.addEventListener('visibilitychange', () => { if (document.hidden) this.pushSave(true); }); }
+    },
+    // this device's id in the save: the server backs up the cloud copy when another device's save replaces it (20261037)
+    deviceId() {
+        try {
+            let d = localStorage.getItem('nyangi-device');
+            if (!d) { d = Math.random().toString(36).slice(2, 10) + Date.now().toString(36); localStorage.setItem('nyangi-device', d); }
+            return d;
+        } catch (e) { return null; }
+    },
+    // progress about to be dropped from this device (the other copy was chosen, or it belongs to another account):
+    // kept on the server for support (restored only by the operator, docs/OPERATIONS.md) and in one local slot
+    async backupLocal(p, reason) {
+        if (!p) return;
+        try { localStorage.setItem('nyangi-backup', JSON.stringify({ at: nowMs(), reason, data: p })); } catch (e) { }
+        if (!this.sb || !this.user) return;
+        try { const { error } = await this.sb.rpc('save_backup', { p_data: p, p_reason: reason }); if (error) console.warn('save_backup', error.message); } catch (e) { }
     },
 
     // ---------------------------------------------------------------- server clock
@@ -82,12 +109,15 @@ const Online = {
         clearTimeout(this.pushTimer);
         const p = Save.p;
         p.owner = this.user.id;   // whose progress this is: a different account on this device must not adopt it (see pullSave)
+        p.device = this.deviceId();
         const { error } = await this.sb.from('saves').upsert({ uid: this.user.id, data: p, rev: p.rev || 0, saved_ms: Math.round(p.savedMs || nowMs()), updated_at: new Date(nowMs()).toISOString() });
         // the server refuses saves over its size limit (saves.save_size): huge bags after 연속 소환. Say so once per session
         if (error && /save_size/.test(error.message || '') && !this.sizeWarned) { this.sizeWarned = true; toast(L('진행을 저장하지 못했습니다. 가방에 장비가 너무 많아요. 장비를 분해해 주세요')); }
     },
     async pullSave() {
-        const { data } = await this.sb.from('saves').select('data, rev, saved_ms').eq('uid', this.user.id).maybeSingle();
+        // a failed read is not "no cloud save": treating it so would push this device's copy over the account's progress
+        const { data, error } = await this.sb.from('saves').select('data, rev, saved_ms').eq('uid', this.user.id).maybeSingle();
+        if (error) throw error;
         const local = Save.p;
         // just signed in to another account: this device's progress belongs to the previous one, so always ask when they differ
         let switched = false, fresh = false;
@@ -97,16 +127,21 @@ const Online = {
         // (the same account whose own first upload failed keeps it: owner matches)
         const foreign = !!(local.owner && local.owner !== this.user.id);
         const hasProgress = Object.values(local.stars || {}).some(v => v > 0) || (local.items || []).length > 2 || (local.gems || 0) !== 60;
-        if (!data) { if (local.owner !== this.user.id && hasProgress) Save.reset(); await this.pushSave(true); return; }
+        if (!data) { if (local.owner !== this.user.id && hasProgress) { await this.backupLocal(local, 'foreign'); Save.reset(); } await this.pushSave(true); return; }
         // signed out earlier (this device's progress was cleared), or this device has nothing of its own yet: the account's progress comes back without asking
         if (fresh || (!hasProgress && local.owner !== this.user.id)) { Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); return; }
         // the cloud copy is from another device and newer: let the player choose
         // (compared on progress, currencies and collections, so a newer gem purchase / summon on the other device is not overwritten silently)
         const sig = s => JSON.stringify([s.stars, s.hstars, s.gems, s.tickets, (s.items || []).length, s.shop && s.shop.skins, s.shop && s.shop.purchases && s.shop.purchases.length]);
         if ((switched || foreign || Number(data.saved_ms) > (local.savedMs || 0) + 5000) && sig(data.data) !== sig(local)) {
-            if (typeof UI !== 'undefined' && UI.cloudChoice) UI.cloudChoice(data.data, local, keepCloud => {
-                if (keepCloud) { Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); }
-                else this.pushSave(true);
+            if (typeof UI !== 'undefined' && UI.cloudChoice) UI.cloudChoice(data.data, local, async keepCloud => {
+                if (keepCloud) { await this.backupLocal(local, 'chose_cloud'); Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); }
+                // the server skips saves older than its copy (20261025): stamp now so the choice takes effect at once.
+                // The replaced cloud copy is backed up by the server (another device's save, 20261037)
+                else {
+                    if (data.data.device && data.data.device === local.device) await this.backupLocal(data.data, 'chose_device');   // same device id: the server would not see a device change
+                    Save.save(); await this.pushSave(true);
+                }
             });
         } else await this.pushSave(true);
     },
@@ -172,8 +207,11 @@ const Online = {
         return P.title || L('우편');
     },
     // grant one claimed row (also the league achievements the offline AI league counts in Meta.claimLeague)
+    // Save.p.mailGot: ids already granted on this save, so a row is never granted twice (claimMail and the recovery in refreshMail)
     applyMail(r) {
-        const P = r.payload || {};
+        const P = r.payload || {}, done = Save.p.mailGot = Save.p.mailGot || [];
+        if (done.includes(r.id)) return [];
+        done.push(r.id);
         const got = P.reward ? Rewards.grant(Save.p, P.reward) : [];
         if (r.kind === 'league') {
             if (this.profile) this.profile.tier = P.newTier;
@@ -188,8 +226,25 @@ const Online = {
         const { data, error } = await this.sb.rpc('list_mail');
         if (error) { this.mailOk = false; await this.claimRewards(); return []; }   // server without the mailbox yet: old auto-claim
         this.mailOk = true; this.mail = data || [];
+        this.recoverMail();
         this.emit();
         return this.mail;
+    },
+    // a claim the server took but whose answer never reached this device (connection lost): grant it now.
+    // First run with this version: everything already claimed counts as granted. Only recent claims, so another device's
+    // claims from long ago are not granted again here
+    recoverMail() {
+        const p = Save.p; if (!p) return;
+        const claimed = this.mail.filter(m => m.claimed_at);
+        if (!p.mailGot) { p.mailGot = claimed.map(m => m.id); Save.save(); return; }
+        const lost = claimed.filter(m => !p.mailGot.includes(m.id) && nowMs() - Date.parse(m.claimed_at) < 30 * 60000);
+        const got = [], lines = [];
+        for (const r of lost) { got.push(...this.applyMail(r)); lines.push(this.mailTitle(r)); }
+        const ids = new Set(this.mail.map(m => m.id));
+        p.mailGot = p.mailGot.filter(id => ids.has(id));   // rows older than the mailbox window can't come back
+        if (!lost.length) return;
+        Save.save(); this.pushSave(true);
+        if (typeof UI !== 'undefined' && got.length) UI.showGot(lines.slice(0, 3).join(' · '), got);
     },
     async claimMail(id) {
         if (!this.on) return null;

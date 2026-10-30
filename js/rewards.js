@@ -353,8 +353,9 @@ const Rewards = {
     adLeft(p, placement) { return Math.max(0, (AD_LIMITS[placement] || 99) - (p.daily.ads[placement] || 0)); },
     async watchAd(placement) {
         const p = Save.p; this.ensure(p);
-        if (this.adLeft(p, placement) <= 0) return false;
-        const ok = await Ads.show(placement);
+        if (this.adLeft(p, placement) <= 0 || this.adBusy) return false;   // a second tap while an ad is open
+        this.adBusy = true;
+        let ok; try { ok = await Ads.show(placement); } finally { this.adBusy = false; }
         if (ok) { p.daily.ads[placement] = (p.daily.ads[placement] || 0) + 1; this.track('ad'); Save.save(); }
         else toast(L('광고를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요'));   // not loaded yet / no fill / closed early: say so instead of a dead button
         return ok;
@@ -369,19 +370,29 @@ const Rewards = {
             if (!Online.on) { toast(L('인터넷에 연결해야 구매할 수 있어요')); return null; }
             if (!Online.isLinked()) { UI.linkModal('buy'); return null; }
         }
-        const res = await Payments.purchase(productId, pr);
-        if (!res || !res.ok) return null;
-        return this.applyPurchase(productId, res.token || res.receipt || 'test-' + nowMs());
+        if (this.buying) return null;   // a second tap while the store sheet is open would start another purchase
+        this.buying = true;
+        try {
+            const res = await Payments.purchase(productId, pr);
+            if (!res || !res.ok) return null;
+            return await this.applyPurchase(productId, res.token || res.receipt || 'test-' + nowMs());
+        } finally { this.buying = false; }
     },
     // store purchase -> server check (online) -> grant once per purchase token -> store finishes the transaction
     async applyPurchase(productId, token) {
         const p = Save.p, pr = PRODUCTS[productId], native = Payments.native();
         if (!pr) return null;
         if (p.shop.purchases.some(x => x.token === token)) { if (native) window.BonghwaBridge.finishPurchase(token, !pr.once); return []; }   // already granted on this save: just acknowledge the store (a missed acknowledge gets auto-refunded by Play)
+        // the same token checked twice at once (the purchase, and the restore that runs when the store sheet closes):
+        // the server says ok to both for the same buyer, so only one check may run
+        const busy = this.verifying = this.verifying || new Set();
+        if (busy.has(token)) return null;
         if (native && Online.enabled) {
             if (!Online.on) { toast(L('인터넷에 연결되면 지급돼요 (구매는 안전하게 보관돼요)')); return null; }   // not finished: restored later
-            const v = await UI.waitCat(Online.verifyPurchase(productId, token));
+            busy.add(token);
+            let v; try { v = await UI.waitCat(Online.verifyPurchase(productId, token)); } finally { busy.delete(token); }
             if (!v.ok) { toast(L('구매를 확인하지 못했습니다: ') + (v.reason || '')); return null; }
+            if (p.shop.purchases.some(x => x.token === token)) return [];   // granted meanwhile
         }
         const finish = () => { if (native) window.BonghwaBridge.finishPurchase(token, !pr.once); };
         p.shop.purchases.push({ id: productId, t: nowMs(), token });

@@ -11,6 +11,16 @@ const RaidOn = {
         if (error) { console.warn(fn, error.message); return { error: /function .* does not exist|schema cache/.test(error.message || '') ? 'no_server' : 'net' }; }
         return data || { error: 'net' };
     },
+    // results of a finished run: sent again when the connection failed (the server takes each one once: pending run / win is null)
+    async report(fn, args) {
+        let r;
+        for (let i = 0; i < 4; i++) {
+            if (i) await new Promise(res => setTimeout(res, 2000 * i));
+            r = await this.call(fn, args);
+            if (r.error !== 'net' && r.error !== 'offline') return r;
+        }
+        return r;
+    },
     async state() { const r = await this.call('raid_state'); if (!r.error) this.st = r; return r; },
     party(diff) { return this.st && (this.st.parties || []).find(p => p.diff === diff) || null; },
     claimed(mode, diff) { return !!(this.st && (this.st.claims || []).some(c => c.mode === mode && (mode === 'world' || c.diff === diff))); },
@@ -29,9 +39,9 @@ const RaidOn = {
     partyQuick(diff) { return this.call('party_quick', { p_diff: diff }); },
     partyLeave(id) { return this.call('party_leave', { p_id: id }); },
     partyBegin(id) { return this.call('party_begin', { p_id: id }); },
-    partySubmit(id, pts) { return this.call('party_submit', { p_id: id, p_pts: pts }); },
+    partySubmit(id, pts) { return this.report('party_submit', { p_id: id, p_pts: pts }); },
     worldBegin() { return this.call('world_begin'); },
-    worldSubmit(pts) { return this.call('world_submit', { p_pts: pts }); },
+    worldSubmit(pts) { return this.report('world_submit', { p_pts: pts }); },
     coopCreate(diff) { return this.call('coop_create', { p_diff: diff }); },
     coopJoin(code) { return this.call('coop_join', { p_code: code }); },
     coopQuick(diff) { return this.call('coop_quick', { p_diff: diff }); },
@@ -43,11 +53,11 @@ const RaidOn = {
     praidQuick(diff) { return this.call('praid_quick', { p_diff: diff }); },
     praidRoom(id) { return this.call('praid_room', { p_id: id }); },
     praidSet(id, action) { return this.call('praid_set', { p_id: id, p_action: action }); },
-    praidFinish(id, win) { return this.call('praid_finish', { p_id: id, p_win: !!win }); },
+    praidFinish(id, win) { return this.report('praid_finish', { p_id: id, p_win: !!win }); },
     praidTries() { return (this.st && this.st.praid && this.st.praid.tries) || 0; },
     // 파티 찾기: open parties / waiting co-op rooms of opened difficulties, friends first (20261021000000_party_plus.sql)
     openList(kind) { return this.call('raid_open_list', { p_kind: kind }); },
-    coopFinish(id, win, waves) { return this.call('coop_finish', { p_id: id, p_win: !!win, p_waves: waves | 0 }); },
+    coopFinish(id, win, waves) { return this.report('coop_finish', { p_id: id, p_win: !!win, p_waves: waves | 0 }); },
     // pick one of four cards; the reward (card + medals) arrives as mail and is claimed right away
     async flip(mode, ref, pick) {
         const r = await this.call('raid_flip', { p_mode: mode, p_ref: ref || 0, p_pick: pick });
