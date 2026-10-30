@@ -129,6 +129,9 @@ const STAGE_HP_RAMP = [1, 1, 1, 1, 1.15, 1.2, 1.25, 1.3, 1.3, 1.3, 1.3, 1.3];
 // 4장부터: 각 장 첫 스테이지는 직전 보스 근처에서 시작해 장 안에서 CH_HP_STEP씩 오른다 (헤드리스 밸런스 봇으로 보정)
 const CH_HP = { 3: 4.3, 4: 5.3, 5: 7.0, 6: 8.4, 7: 9.4, 8: 11.0, 9: 17.5 };
 const CH_HP_STEP = 0.28;
+// 후반 벽 (2026-10-29): from 3-5 on stage health rises on top of the table, so late chapters are decided by gear.
+// Headless bot (tools/balance.js --enh N): +10 gear (the average end-game gear) clears, +6 does not; +15 is comfortable.
+function stageWall(idx) { return idx < 24 ? 1 : idx < 36 ? 1 + 0.3 * (idx - 23) / 12 : idx < 45 ? 1.3 : 1.2; }
 function stageHpMul(idx) {
     if (idx < 12) return (1 + 0.21 * idx) * (STAGE_HP_RAMP[idx] || 1);
     const ch = STAGES[idx].ch;

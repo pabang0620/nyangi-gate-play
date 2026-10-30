@@ -18,9 +18,9 @@
         const p = Save.p, cls = p.hero, hs = heroStats(p, cls), hd = p.heroes[cls];
         const win = h('div.panel.win');
         const left = h('div.inset.hero-left');
-        left.appendChild(h('div.tip.classpick-l', L('출전 영웅 고르기')));
-        left.appendChild(h('div.classpick', Object.keys(HEROES).map(c =>
-            h('button.btn.small.cp' + (c === cls ? '.gold' : '.ghost'), { onclick: () => { click(); p.hero = c; Save.save(); showHub('hero'); } }, h('span', HEROES[c].name), h('span.cp-r', HERO_GUIDE[c][0])))));
+        // the hero pick sits above the dark panel as its tabs (inside it, it read like part of the hero's info)
+        const pick = h('div.classpick', Object.keys(HEROES).map(c =>
+            h('button.btn.small.cp' + (c === cls ? '.gold' : '.ghost'), { onclick: () => { click(); p.hero = c; Save.save(); showHub('hero'); } }, h('span', HEROES[c].name), h('span.cp-r', HERO_GUIDE[c][0]))));
         const port = h('div', { style: { display: 'flex', gap: '12px', alignItems: 'center' } },
             h('div.portrait', { style: { width: '100px', height: '100px' }, title: L('배경색 바꾸기'), onclick: () => { click(); avatarBgModal(); } },
                 (() => { const a = img(heroFace(cls, Save.p.shop && Save.p.shop.skin[cls])); a.style.background = avatarBg(); return a; })(), h('span.av-edit', L('배경'))),
@@ -35,16 +35,10 @@
         // shared-gear and synergy notes under the portrait row, full width (they crowded the narrow column beside it)
         left.appendChild(h('div.hl-notes',
                 h('div.tip', { style: { fontSize: '12px' } }, L('장비는 세 영웅이 같이 써요')),
-                h('div.tip.hl-syn', { style: { fontSize: '13px' } }, L('시너지 · {0}', SYNERGY_TEXT[cls]))));
+                h('div.tip.hl-syn', { style: { fontSize: '13px' } }, SYNERGY_TEXT[cls])));
         Rewards.ensure(p);
-        // skins: the collection button, then default + owned ones (best grade first) in a scrolling row
-        const owned = SKINS[cls].filter(s => p.shop.skins.includes(s.id)).sort((a, b2) => b2.r - a.r).map(s => s.id);
-        left.appendChild(h('div.skinpick', h('div.sk.more', { onclick: () => { click(); skinBook(cls); } }, h('b', '+'), h('span', L('스킨 {0}/{1}', owned.length, SKINS[cls].length))), [null, ...owned].map(id => {
-            const s = id && skinById(id), on = (p.shop.skin[cls] || null) === id;
-            const c = h('div.sk' + (on ? '.on' : '') + (s ? '.r' + s.r : ''), img(heroFace(cls, id)), h('span', s ? s.name.split(' ')[0] : L('기본')));
-            c.addEventListener('click', () => { click(); skinPreview(cls, id); });
-            return c;
-        })));
+        // skins: one button at the end of the equipped row (below) opens the skin book, where the default skin is picked too
+        const owned = SKINS[cls].filter(s => p.shop.skins.includes(s.id));
         // the worn skin's option and trail
         const eq = p.shop.skin[cls] && skinById(p.shop.skin[cls]), eqT = eq && skinTier(eq);
         if (eq) left.appendChild(h('div.tip.skopt', h('span', { style: { color: RARITY[eq.r].color } }, eq.name), ' · ', skinOpt(eq).text,
@@ -61,20 +55,26 @@
         })));
         left.insertBefore(h('div.skillrow', { onclick: () => { click(); skillPop(); } }, h('span.sr-l', L('스킬')),
             SKILLS[cls].map((sk, i) => h('div.skill' + (i === 3 ? '.ult' : '') + (hd.lv < SKILL_UNLOCK[i] ? '.lock' : ''), Art.domCanvas(Art.icon(sk.id), 1.6))),
-            h('span.sr-more', L('설명 ▸'))), left.children[2]);
+            h('span.sr-help', '?')), left.firstChild);
         const right = h('div.inset.hero-right');
+        const wornSkin = p.shop.skin[cls] || null;
         right.appendChild(h('div.equiprow', h('div.eqlabel', L('장착')),
-            SLOTS.map(s => { const it = itemById(p.equip[s]); return it ? itemCell(it, { onclick: () => { S.selItem = it.id; showHub('hero'); }, sel: S.selItem === it.id }) : h('div.cell', { style: { opacity: .5 } }, Art.domCanvas(Art.icon(s), 3)); })));
-        right.appendChild(h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
-            h('div', { style: { fontSize: '18px', color: '#f5c451', fontFamily: 'BlackHan' } }, L('가방 {0}/{1}', p.items.length, BAG_MAX)), h('div', { style: { flex: 1 } }),
+            SLOTS.map(s => { const it = itemById(p.equip[s]); return it ? itemCell(it, { onclick: () => { S.selItem = it.id; showHub('hero'); }, sel: S.selItem === it.id }) : h('div.cell', { style: { opacity: .5 } }, Art.domCanvas(Art.icon(s), 3)); }),
+            h('div.eq-skin' + (wornSkin ? '.r' + skinById(wornSkin).r : ''), { onclick: () => { click(); skinBook(cls); } },
+                img(heroFace(cls, wornSkin)), h('span', L('스킨 {0}/{1}', owned.length, SKINS[cls].length)))));
+        // the bag gets its own grey box so it does not read as part of the equipped row
+        const bag = h('div.bagbox');
+        right.appendChild(bag);
+        bag.appendChild(h('div', { style: { display: 'flex', gap: '8px', alignItems: 'center' } },
+            h('div.baglabel', h('span.eqlabel', L('가방')), h('span.bagnum', `${p.items.length}/${BAG_MAX}`)), h('div', { style: { flex: 1 } }),
             h('button.btn.small.gold', { onclick: () => { click(); bestGearPreview(cls); } }, L('최적 장착')),
             h('button.btn.small', { onclick: () => { click(); UI.fuseModal(); } }, L('합성')),
             h('button.btn.small', { onclick: () => { click(); salvageModal(); } }, L('일괄 분해'))));
         const items = p.items.slice().sort((a, b2) => (isEquipped(b2) - isEquipped(a)) || (b2.r - a.r) || (b2.ilvl - a.ilvl) || (b2.enh - a.enh));
-        right.appendChild(h('div.grid', items.map(it => itemCell(it, { sel: S.selItem === it.id, onclick: () => { click(); it.isNew = false; S.selItem = it.id; Save.save(); showHub('hero'); } }))));
+        bag.appendChild(h('div.grid', items.map(it => itemCell(it, { sel: S.selItem === it.id, onclick: () => { click(); it.isNew = false; S.selItem = it.id; Save.save(); showHub('hero'); } }))));
         // NEW shows this one time: the bag has now been seen
         if (p.items.some(i => i.isNew)) { p.items.forEach(i => { i.isNew = false; }); Save.save(); }
-        win.appendChild(h('div.hero-wrap', left, right));
+        win.appendChild(h('div.hero-wrap', h('div.hero-lcol', pick, left), right));
         root().appendChild(win);
         // item details open as a popup over the screen (a fixed panel under the bag hid most of the bag on phones)
         const sel = itemById(S.selItem);
@@ -130,7 +130,22 @@
             h('div.trait', CAT_TRAIT[cls])));
     }
     const storySeen = () => (Save.p.set.storySeen = Save.p.set.storySeen || {});
-    function storyNew(p) { for (const c in CAT_STORY) for (let i = 0; i < CAT_STORY[c].length; i++) if (catStoryOpen(p, CAT_STORY[c][i]) && !storySeen()[c + i]) return true; return false; }
+    const storyKey = (c, ep) => c + ':' + ep.need;   // keyed by the stage that opens it, so adding an episode never shifts the read marks
+    function storyNew(p) { for (const c in CAT_STORY) for (let i = 0; i < CAT_STORY[c].length; i++) if (catStoryOpen(p, CAT_STORY[c][i]) && !storySeen()[storyKey(c, CAT_STORY[c][i])]) return true; return false; }
+    // scrolls the story text up slowly and stops at the end; a touch or wheel pauses it so the player can scroll by hand
+    // the text rolls up and stops at the end; a tap shows the whole text at once (it can still be scrolled by hand)
+    function creditRoll(el) {
+        let hold = 0, last = 0, pos = 0, all = false;
+        const showAll = () => { if (all) return; all = true; el.classList.add('all'); el.scrollTop = 0; };
+        ['pointerdown', 'wheel'].forEach(ev => el.addEventListener(ev, showAll, { passive: true }));
+        const step = t => {
+            if (!el.isConnected || all) return;
+            const dt = last ? Math.min(0.05, (t - last) / 1000) : 0; last = t;
+            if (t > hold) { pos += dt * 26; el.scrollTop = pos; }
+            if (el.scrollTop + el.clientHeight < el.scrollHeight - 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(t => { last = t; hold = t + 900; requestAnimationFrame(step); });
+    }
     // 스토리 모음: one tab per cat, the episodes it has opened (locked ones show only where they open)
     function storyModal(cls) {
         const p = Save.p, body = h('div.story-body'), tabs = h('div.row.story-tabs'), eps = h('div.row.story-eps');
@@ -145,17 +160,18 @@
                 h('span.story-cur', L('{0}화', ep + 1), h('i', ` / ${list.length}`)),
                 h('button.btn.small.story-nav' + (ep < list.length - 1 ? '.gold' : '.ghost'), { onclick: () => { if (ep < list.length - 1) go(1); } }, '>'));
             const e = list[ep], open = catStoryOpen(p, e);
-            if (open) storySeen()[cur + ep] = true;
+            if (open) storySeen()[storyKey(cur, e)] = true;
             const pic = Art.gen('story_' + cur + '_' + (ep + 1));   // a grey illustration per episode (img/story_{cls}_{n}.png)
+            // a big picture with the text rolling up over it like film credits
             body.replaceChildren(open
-                ? h('div.story-ep', pic ? h('img.story-pic', { src: 'img/story_' + cur + '_' + (ep + 1) + '.png', alt: '' }) : null,
-                    h('div.story-txt', h('b', L('{0}화 · {1}', ep + 1, e.title)), ...e.lines.map(t => h('p', t))))
+                ? h('div.story-ep.story-cine' + (pic ? '' : '.nopic'), pic ? h('img.story-pic', { src: 'img/story_' + cur + '_' + (ep + 1) + '.png', alt: '' }) : null,
+                    h('div.story-roll', h('div.story-txt', h('b', L('{0}화 · {1}', ep + 1, e.title)), ...e.lines.map(t => h('p', t)))))
                 : h('div.story-ep.lock', h('b', L('{0}화', ep + 1)), h('p.tip', L('{0} 클리어하면 열려요', stageLabel(e.need)))));
-            const txt = body.querySelector('.story-txt'); if (txt) txt.scrollTop = 0;
+            const roll = body.querySelector('.story-roll'); if (roll) creditRoll(roll);
             Save.save();
         };
         draw();
-        modal([h('div.title-t', L('스토리 모음')), tabs, eps, body], { dismiss: true, cls: 'story-pop' });
+        modal([h('div.title-t', L('스토리 모음')), h('div.story-head', tabs), h('div.story-stage', body, eps)], { dismiss: true, cls: 'story-pop' });   // < > and the episode number sit on the picture's edges
     }
 
     function skinGamePreview(cls, id) {
@@ -230,9 +246,11 @@
                 h('div.skc-s', on ? L('착용 중') : own ? L('착용') : s.pass ? L('성장 패스') : s.gacha ? L('스킨 소환') : L('상점 · 소환')));
         };
         const n = SKINS[cls].filter(s => p.shop.skins.includes(s.id)).length;
+        const base = h('div.skc' + (p.shop.skin[cls] ? '' : '.on'), { onclick: () => { click(); skinPreview(cls, null, () => { d.remove(); showHub('hero'); }); } },
+            img(heroFace(cls, null)), h('div.skc-n', L('기본')), h('div.skc-s', p.shop.skin[cls] ? L('착용') : L('착용 중')));
         const d = modal([h('div.title-t', L('{0}의 스킨', HERO_NAMES[cls])),
             h('div.tip', L('보유 {0} / {1} · 스킨 능력치는 입은 스킨 하나만 적용됩니다', n, list.length)),
-            h('div.skbook', list.map(card)),
+            h('div.skbook', base, list.map(card)),
             h('div.row', h('button.btn.gold', { onclick: () => { click(); d.remove(); S.summonBanner = 'skin'; showHub('summon'); } }, L('스킨 소환')),
                 h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기')))], { dismiss: true });
         d.querySelector('.modal').classList.add('skbook-pop');
@@ -257,12 +275,13 @@
             h('div', { style: { flex: 1 } },
                 h('div', { style: { fontSize: '17px', color: RARITY[it.r].color } }, `${itemName(it)}${it.enh ? ' +' + it.enh : ''}`),
                 h('div.muted', L('{0} {1} · 아이템 레벨 {2}', RARITY[it.r].name, SLOT_NAME[it.slot], itemLv(it))),
+                h('div', { style: { fontSize: '14px', color: canWear(it) ? '#9fd65a' : '#ff7a5c' } }, L('{0}단계 · 착용 Lv.{1}', itemTier(it) + 1, itemReq(it)), canWear(it) ? null : ' \u00B7 ' + L('영웅 Lv.{0}부터 착용할 수 있어요', itemReq(it))),
                 it.mid ? h('div', { style: { color: '#7fe0d0', fontSize: '12px' } }, it.enh ? L('거래 가능 장비 (강화하지 않은 상태로만 팔 수 있어요)') : L('거래 가능 장비 · 거래소에서 팔 수 있어요')) : null,
                 h('div', { style: { color: '#f5c451' } }, fmtOpt(main.name, main.v, main.pct), cmp),
                 it.subs.map(sb => h('div', fmtOpt(SUB_OPTS[sb.k].name, sb.v, SUB_OPTS[sb.k].pct))),
             ),
             h('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px', minWidth: '170px' } },
-                isEquipped(it) ? h('button.btn.small.off', L('장착 중')) : h('button.btn.small.gold', { onclick: () => { click(); p.equip[it.slot] = it.id; it.isNew = false; Save.save(); showHub('hero'); } }, L('장착')),
+                isEquipped(it) ? h('button.btn.small.off', L('장착 중')) : h('button.btn.small' + (canWear(it) ? '.gold' : '.off'), { onclick: () => { if (!canWear(it)) { toast(L('영웅 Lv.{0}부터 착용할 수 있어요', itemReq(it))); return; } click(); p.equip[it.slot] = it.id; it.isNew = false; Save.save(); showHub('hero'); } }, L('장착')),
                 it.enh >= ENHANCE.max ? h('button.btn.small.off', L('최대 강화')) :
                     h('button.btn.small' + (p.silver < cost || ((p.mats && p.mats.stone) || 0) < enhanceStones(it.enh) ? '.off' : ''), { onclick: e => enhanceAnim(it, e.currentTarget) }, L('강화 {0} · ', pct(rate)), ico('silver', 16), fmt(cost),
                         enhanceStones(it.enh) ? h('span', ' · ', img('i_stone', '.icon'), enhanceStones(it.enh)) : null),
@@ -351,6 +370,36 @@
             h('button.btn', { onclick: () => { click(); d.remove(); } }, L('확인'))]);
     }
 
+    // 자동 강화 live: one try at a time (item, level and a short log update after each), 중지 ends it early
+    function autoEnhanceLive(it, target, silverCap, stoneCap, useGuard, useShield, finish) {
+        const run = autoEnhanceRun(it);
+        const lvl = h('div.num', { style: { fontSize: '42px' } }, '+' + it.enh);
+        const cellBox = h('div.enh-stamp', itemCell(it, { noNew: true }), lvl);
+        const log = h('div.enh-log', { style: { minHeight: '84px', fontSize: '17px', textAlign: 'center', lineHeight: 1.5 } });
+        const stat = h('div.muted');
+        let stopped = false, timer = null;
+        const stop = h('button.btn.ghost', { onclick: () => { click(); stopped = true; } }, L('중지'));
+        const d = modal([h('div.title-t', L('자동 강화 중')), cellBox, h('div.enh-step.up', h('span', '+' + run.start), h('b', ' \u25B6 '), h('span', '+' + target)), log, stat, stop], { noClose: true });
+        const end = () => { clearTimeout(timer); Save.save(); d.remove(); showHub('hero'); finish(run); };
+        const tick = () => {
+            if (stopped) { run.why = run.why || 'stop'; end(); return; }
+            const was = it.enh, r = autoEnhanceStep(it, run, target, silverCap, stoneCap, useGuard, useShield, false);
+            if (!r) { end(); return; }
+            if (r.destroyed) { clearTimeout(timer); d.remove(); S.selItem = null; showHub('hero'); Sfx.play('enhanceFail'); Game.buzz([80, 40, 160]); enhanceDestroyed(it, was); return; }
+            const msg = r.destroyed ? L('+{0} 파괴!', was) : r.ok ? L('+{0} 성공 \u25B6 +{1}', was, it.enh) : r.dropped ? L('+{0} 실패 \u25B6 +{1}', was, it.enh) : r.guarded ? L('+{0} 실패 (방지권으로 유지)', was) : L('+{0} 실패', was);
+            lvl.textContent = '+' + it.enh;
+            const line = h('div', { style: { color: r.ok ? '#2a8a2a' : '#a03a2a', fontWeight: 'bold' } }, msg);
+            log.insertBefore(line, log.firstChild); while (log.children.length > 4) log.lastChild.remove();
+            cellBox.classList.remove('fail'); void cellBox.offsetWidth; if (!r.ok) cellBox.classList.add('fail');
+            const flash = h('div.burst', { style: { background: r.ok ? 'radial-gradient(circle, rgba(255,224,138,.9), transparent 70%)' : 'radial-gradient(circle, rgba(120,120,140,.7), transparent 70%)' } });
+            root().appendChild(flash); setTimeout(() => flash.remove(), 600);
+            Sfx.play(r.ok ? 'enhanceOk' : 'enhanceFail');
+            stat.textContent = L('{0}번 시도', run.tries) + ' · ' + fmt(run.silver);
+            timer = setTimeout(tick, run.tries < 12 ? 550 : 220);
+        };
+        timer = setTimeout(tick, 350);
+    }
+
     // 자동 강화: target level + silver / stone caps, then one summary
     function autoEnhanceModal(it) {
         const p = Save.p, A = p.set.autoEnh = p.set.autoEnh || {};
@@ -378,17 +427,18 @@
                 h('button.btn.gold', { onclick: () => {
                     click(); d.remove();
                     Object.assign(A, { target, silver: SILVER[si], stones: STONE[ti] }); Save.save();
-                    const run = autoEnhance(it, target, SILVER[si], STONE[ti], !!p.set.useGuard, !!p.set.useShield);
+                    autoEnhanceLive(it, target, SILVER[si], STONE[ti], !!p.set.useGuard, !!p.set.useShield, run => {
                     showHub('hero');
-                    if (!run.tries) { toast(run.why === 'stoneCap' || run.why === 'short' && enhanceStones(it.enh) > ((p.mats && p.mats.stone) || 0) ? L('강화석이 부족해요') : L('은화가 부족해요')); return; }
+                    if (!run.tries) { toast(run.why === 'risk' ? L('파괴방지권이 필요해요') : run.why === 'stoneCap' || run.why === 'short' && enhanceStones(it.enh) > ((p.mats && p.mats.stone) || 0) ? L('강화석이 부족해요') : L('은화가 부족해요')); return; }
                     Sfx.play(it.enh > run.start ? 'enhanceOk' : 'enhanceFail');
-                    const why = { done: L('목표 달성!'), silverCap: L('은화 한도에서 멈춤'), stoneCap: L('강화석 한도에서 멈춤'), short: L('재화가 부족해 멈춤'), risk: L('파괴 위험 구간에서 멈춤') }[run.why] || '';
+                    const why = { done: L('목표 달성!'), stop: L('중지했어요'), silverCap: L('은화 한도에서 멈춤'), stoneCap: L('강화석 한도에서 멈춤'), short: L('재화가 부족해 멈춤'), risk: L('파괴 위험 구간에서 멈춤') }[run.why] || '';
                     const m = modal([h('div.ribbon' + (it.enh > run.start ? '' : '.lose'), h('span', why)),
                         h('div.enh-stamp', itemCell(it, { noNew: true }), h('div.num', { style: { fontSize: '42px' } }, '+' + it.enh)),
                         h('div.enh-step' + (it.enh > run.start ? '.up' : '.same'), h('span', '+' + run.start), h('b', ' \u25B6 '), h('span', '+' + it.enh)),
                         h('div', L('{0}번 시도 · 성공 {1} · 하락 {2}', run.tries, run.ok, run.drops) + (run.guards ? L(' · 방지권 {0}개 사용', run.guards) : '') + (run.shields ? L(' · 파괴방지 {0}개 사용', run.shields) : '')),
                         h('div', ico('silver', 18), ' ', fmt(run.silver), run.stones ? h('span', '  ', img('i_stone', '.icon'), ' ', run.stones) : null),
                         h('button.btn.gold', { onclick: () => { click(); m.remove(); } }, L('확인'))]);
+                    });
                 } }, L('시작')),
                 h('button.btn.ghost', { onclick: () => { click(); d.remove(); } }, L('닫기')))], { dismiss: true });
         draw();
@@ -476,7 +526,7 @@
             h('button.btn.small.ghost', { onclick: () => { click(); UI.probModal(); } }, L('확률 정보'))));
         const left = h('div.inset.sm-left'), right = h('div.sm-right');
         const pityGauge = (label, cur, max) => { const pc = Math.min(100, Math.floor(cur / max * 100)); return h('div.pity-g', h('div.pg-top', h('span', label), h('b', pc + '%')), h('div.pg-bar', h('i', { style: { width: pc + '%' } }))); };
-        const rate = (r, face, v) => h('div.sm-rate', h('div.cell.r' + r, face), h('div.rn', { style: { color: RARITY[r].color } }, RARITY[r].name), h('div.num', v + '%'));
+        const rate = (r, face, v) => h('div.sm-rate', h('div.cell.r' + r, face), h('div.sm-rl', h('span.rn', { style: { color: RARITY[r].color } }, RARITY[r].name), h('span.num', v + '%')));
         const big = (label, cost, fn, bonus) => h('button.btn.gold.sm-big', { onclick: fn }, label,
             bonus ? h('span.sm-bonus', '+' + bonus) : null, ico('gem', 26), h('span.num', cost));
         if (!skin) {
@@ -485,9 +535,8 @@
                 h('div.btn.small' + (slot === k ? '.gold' : ''), { onclick: () => { if (slot === k) return; click(); S.summonSlot = k; showHub('summon'); } },
                     k === 'any' ? null : Art.domCanvas(Art.icon(k), 1.6), nm))));
             left.appendChild(h('div.sm-rates', RARITY.map((r, i) => rate(i, Art.domCanvas(Art.itemIcon({ slot: slot === 'any' ? 'weapon' : slot, r: i }), 3), SUMMON.table[i]))));   // each grade shows its own picture
-            left.appendChild(pityGauge(L('전설 확정 게이지'), p.pity, SUMMON.pity));
-            left.appendChild(pityGauge(L('영웅 확정 게이지'), p.pityEpic || 0, SUMMON.pityEpic));
-            left.appendChild(h('div.tip', L('현재 소환 장비 레벨 {0} (최고 클리어 스테이지가 높을수록 올라갑니다)', Math.round(summonIlvl(p)))));
+            left.appendChild(h('div.pity-row', pityGauge(L('전설 확정 게이지'), p.pity, SUMMON.pity), pityGauge(L('영웅 확정 게이지'), p.pityEpic || 0, SUMMON.pityEpic)));
+            left.appendChild(h('div.tip', L('현재 소환 장비 {0}단계 · 착용 Lv.{1} (영웅 레벨에 맞는 장비가 나와요)', Math.min(tierForIlvl(Math.round(summonIlvl(p))), wearTier(p)) + 1, GEAR_TIERS[Math.min(tierForIlvl(Math.round(summonIlvl(p))), wearTier(p))].req)));
             right.appendChild(h('div.sm-pair',
                 big(L('1회 소환'), SUMMON.cost1, () => { if (p.gems < SUMMON.cost1) { click(); UI.gemGate(SUMMON.cost1, '', () => {}); return; } runSummon(1, slot); }),
                 big(L('10회 소환'), SUMMON.cost10, () => { click(); UI.gemGate(SUMMON.cost10, L('보석 {0}개로 10+1회 소환할까요?', SUMMON.cost10), () => runSummon(10, slot)); }, SUMMON.bonus10)));
@@ -508,16 +557,15 @@
         } else {
             // one sample portrait per grade
             const sample = ['knight_red', 'mage_sunset', 'ranger_ninja', 'knight_santa', 'mage_kumiho'];
-            left.appendChild(h('div.sm-rates', SKIN_SUMMON.table.map((v, r) => { const s = skinById(sample[r]); return rate(r, img(heroFace(s.cls, s.id), '.sm-pic'), v); })));
+            left.appendChild(h('div.sm-rates.sm-skinrates', SKIN_SUMMON.table.map((v, r) => { const s = skinById(sample[r]); return rate(r, img(heroFace(s.cls, s.id), '.sm-pic'), v); })));
             left.appendChild(pityGauge(L('전설 확정 게이지'), p.skinPity, SKIN_SUMMON.pity));
-            left.appendChild(h('div.tip.sm-dup', L('중복 스킨 소환 시 보석으로 환급돼요')));
             const pool = [0, 1, 2, 3, 4].flatMap(skinPool);
-            left.appendChild(h('div.tip', L('모은 스킨 {0} / {1}', pool.filter(id => p.shop.skins.includes(id)).length, pool.length)));
+            left.appendChild(h('div.tip.sm-dup', L('중복 스킨 소환 시 보석으로 환급돼요') + ' · ' + L('모은 스킨 {0} / {1}', pool.filter(id => p.shop.skins.includes(id)).length, pool.length)));
             right.appendChild(h('div.sm-pair',
                 big(L('1회 소환'), SKIN_SUMMON.cost1, () => { if (p.gems < SKIN_SUMMON.cost1) { click(); UI.gemGate(SKIN_SUMMON.cost1, '', () => {}); return; } runSkinSummon(1); }),
                 big(L('10회 소환'), SKIN_SUMMON.cost10, () => { click(); UI.gemGate(SKIN_SUMMON.cost10, L('보석 {0}개로 스킨 10+1회 소환할까요?', SKIN_SUMMON.cost10), () => runSkinSummon(10)); }, SKIN_SUMMON.bonus10)));
             right.appendChild(h('button.btn.sm-cont', { onclick: () => { click(); contModal('skin'); } }, L('연속 소환 ▸')));
-            right.appendChild(h('div.tip', L('스킨마다 작은 능력치가 붙습니다. 소환권은 장비 소환에만 쓸 수 있습니다.')));
+            right.appendChild(h('div.tip.sm-note', L('스킨마다 작은 능력치가 붙습니다. 소환권은 장비 소환에만 쓸 수 있습니다.').replace(/([.。]) */g, '$1\n').trim()));
         }
         win.appendChild(h('div.sm-body', left, right));
         root().appendChild(win);

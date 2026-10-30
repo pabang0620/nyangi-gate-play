@@ -19,8 +19,8 @@ Object.assign(Battle.prototype, {
         }
         if (e.charge) {
             e.charge.t -= dt;
-            for (const s of this.soldiers) if (s.deadUntil <= this.t && dist2(s.x, s.y, e.x, e.y) < 36 * 36 && !e.charge.hit.has(s)) { e.charge.hit.add(s); this.hurtAlly(s, e.atk * 1.5); }
-            if (this.heroAlive && dist2(this.hero.x, this.hero.y, e.x, e.y) < 40 * 40 && !e.charge.hit.has(this.hero)) { e.charge.hit.add(this.hero); this.hurtAlly(this.hero, e.atk * 1.5); }
+            for (const s of this.soldiers) if (s.deadUntil <= this.t && dist2(s.x, s.y, e.x, e.y) < 36 * 36 && !e.charge.hit.has(s)) { e.charge.hit.add(s); this.bossHurt(s, e.atk * 1.5); }
+            for (const hh of this.heroList()) if (hh.deadUntil <= this.t && dist2(hh.x, hh.y, e.x, e.y) < 40 * 40 && !e.charge.hit.has(hh)) { e.charge.hit.add(hh); this.bossHurt(hh, e.atk * 1.5); }
             if (e.charge.t <= 0) e.charge = null;
             return false;
         }
@@ -81,6 +81,16 @@ Object.assign(Battle.prototype, {
         return true;
     },
 
+    // 레이드: a hero far below the difficulty's recommended level takes more from every boss hit, and is one-shot ten levels below (carried players must stay out of the danger)
+    bossHurt(o, amt) {
+        if (o.isHero && this.recLv) {
+            const gap = this.recLv - (o.lv || 1);
+            if (gap >= LOW_LV.lethal) amt = Math.max(amt, (o.maxHp || 0) * 4);   // survives the knight / oath damage cuts in hurtAlly
+            else if (gap > 0) amt *= 1 + LOW_LV.perLv * gap;
+        }
+        this.hurtAlly(o, amt);
+    },
+
     bossFire(e, c) {
         const S = BOSS_SKILL[c.k];
         const hitArea = (tl, fn) => {
@@ -88,14 +98,14 @@ Object.assign(Battle.prototype, {
                 : (() => { const q = closestOnSeg(x, y, tl.x1, tl.y1, tl.x2, tl.y2); return dist(x, y, q.x, q.y) < tl.wid / 2; })();
             for (const s of this.slots) if (s.tower && inside(s.x, s.y)) fn('tower', s);
             for (const s of this.soldiers) if (s.deadUntil <= this.t && inside(s.x, s.y)) fn('ally', s);
-            if (this.heroAlive && inside(this.hero.x, this.hero.y)) fn('ally', this.hero);
+            for (const hh of this.heroList()) if (hh.deadUntil <= this.t && inside(hh.x, hh.y)) fn('ally', hh);   // every hero in the party, not only the host's
         };
         if (c.k === 'charge') {
             this.releaseBlock(e);
             e.charge = { t: 0.6, spd: 380, hit: new Set() };
             this.addShake(8);
         } else if (c.k === 'stomp' || c.k === 'slam' || c.k === 'frostField') {
-            hitArea(c.tele, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun, c.k === 'frostField' ? L('빙결') : undefined); else this.hurtAlly(o, e.atk * 1.4); });
+            hitArea(c.tele, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun, c.k === 'frostField' ? L('빙결') : undefined); else this.bossHurt(o, e.atk * 1.4); });
             this.bigBoom(c.tele.x, c.tele.y, c.tele.r, S.color || '#c8a070'); this.addShake(12);
         } else if (c.k === 'blizzard' || c.k === 'sandstorm') {
             if (c.k === 'blizzard') { this.chillUntil = this.t + S.dur; this.chill = S.chill; }
@@ -117,13 +127,13 @@ Object.assign(Battle.prototype, {
             this.ringFx(e.x, e.y, 260, '#9fe0ff'); this.text(e.x, e.y - 70, L('보호막!'), '#9fe0ff', 20, true);
         } else if (c.k === 'lavaWave' || c.k === 'tornado') {
             const tor = c.k === 'tornado';
-            hitArea(c.tele, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun, tor ? L('회오리') : undefined); else this.hurtAlly(o, e.atk * (tor ? 1.2 : 1.6)); });
+            hitArea(c.tele, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun, tor ? L('회오리') : undefined); else this.bossHurt(o, e.atk * (tor ? 1.2 : 1.6)); });
             for (let i = 0; i < 26; i++) { const t = i / 26; this.parts.push({ x: lerp(c.tele.x1, c.tele.x2, t) + this.rng.range(-20, 20), y: lerp(c.tele.y1, c.tele.y2, t) + this.rng.range(-20, 20), vx: tor ? this.rng.range(-60, 60) : 0, vy: -70, life: 0.7, max: 0.7, color: tor ? (i % 2 ? '#e8f8ff' : '#9ad8f0') : (i % 2 ? '#ff7020' : '#ffd040'), size: 6 }); }
             this.addShake(12);
         } else if (c.k === 'darkness' || c.k === 'lightning') {
             const lt = c.k === 'lightning';
             for (const tl of (c.multi && c.multi.length ? c.multi : [c.tele])) {
-                hitArea(tl, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun, lt ? L('감전') : L('암흑')); else if (lt) this.hurtAlly(o, e.atk); });
+                hitArea(tl, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun, lt ? L('감전') : L('암흑')); else if (lt) this.bossHurt(o, e.atk); });
                 this.bigBoom(tl.x, tl.y, tl.r, lt ? '#fff27a' : '#5a3aa0', true);
             }
             this.addShake(8);
@@ -141,7 +151,7 @@ Object.assign(Battle.prototype, {
             for (const o of this.enemies) if (dist2(o.x, o.y, e.x, e.y) < S.r * S.r) o.hasteUntil = this.t + 4;
             this.ringFx(e.x, e.y, S.r, '#ff5050'); this.addShake(6);
         } else if (c.k === 'breath') {
-            hitArea(c.tele, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun); else this.hurtAlly(o, e.atk * 1.6); });
+            hitArea(c.tele, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun); else this.bossHurt(o, e.atk * 1.6); });
             const n = 26;
             for (let i = 0; i < n; i++) {
                 const t = i / n;
@@ -150,7 +160,7 @@ Object.assign(Battle.prototype, {
             this.addShake(12);
         } else if (c.k === 'meteor') {
             for (const tl of c.multi) {
-                hitArea(tl, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun); else this.hurtAlly(o, e.atk * 1.4); });
+                hitArea(tl, (kind, o) => { if (kind === 'tower') this.stunTower(o, S.stun); else this.bossHurt(o, e.atk * 1.4); });
                 this.bigBoom(tl.x, tl.y, tl.r, '#c060ff');
             }
             this.addShake(14);

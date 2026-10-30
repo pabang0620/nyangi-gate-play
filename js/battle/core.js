@@ -89,7 +89,7 @@ class Battle {
         this.cond = this.hard && this.mode === 'stage' ? hardCond(cfg.stageIdx) : null;   // 3성 조건
         this.condBroken = false;
         const M = this.hard ? HARD : null;
-        this.hpMul = this.endless ? 1 : stageHpMul(cfg.stageIdx) * (M ? hardHpMul(cfg.stageIdx) : 1) * (cfg.hpMulExtra || 1);
+        this.hpMul = this.endless ? 1 : stageHpMul(cfg.stageIdx) * (this.mode === 'stage' ? stageWall(cfg.stageIdx) : 1) * (M ? hardHpMul(cfg.stageIdx) : 1) * (cfg.hpMulExtra || 1);
         this.atkMul = this.endless ? 1 : (1 + 0.1 * cfg.stageIdx) * (M ? M.atkMul : 1);
         this.bountyMul = this.endless ? 1 : stageBountyMul(cfg.stageIdx);
         this.gold = Math.round(((this.endless ? ENDLESS.startGold : stageStartGold(cfg.stageIdx)) + this.b.startGold) * (M ? M.goldMul : 1));
@@ -124,6 +124,7 @@ class Battle {
         // game feel: hit sparks, death pops, coins flying to the gold counter, kill combo, screen flash, zoom punch
         this.sparks = []; this.corpses = []; this.coins = []; this.combo = { n: 0, t: 0, best: 0 }; this.flash = 0; this.zoom = 0;
         this.uid = 1;
+        this.recLv = cfg.recLv || 0;      // 레이드: recommended hero level (boss hits hurt a hero far below it more, js/battle/boss.js)
         this.party = cfg.party || [];    // 냥이 총출동: the other heroes' stats [{cls, skin, atk, crit}]
         this.allies = [];
         this.spells = SPELLS.filter(s => s.id !== 'party' || this.party.length).map(s => ({ ...s, left: 0, cdMax: s.id === 'beacon' ? s.cd * this.b.beaconCdMul : s.cd }));

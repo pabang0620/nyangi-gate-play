@@ -24,6 +24,8 @@ const SKIN_SUMMON = { cost1: 30, cost10: 270, bonus10: 1, table: [60, 30, 8, 1.9
 // 연속 소환: budget steps of one 10-pull; stop when a pull reaches this grade (null = never)
 // bosses and elites that reach the gate lose the stage (js/battle/enemies.js), so they are a bit easier to bring down
 const MUST_KILL = { bossHp: 0.8, eliteHp: 0.7, gateTime: 5, gateDps: 0.05, eliteGateDps: 0.12 };   // gateTime: seconds a boss/elite smashes the gate before the stage is lost; gateDps / eliteGateDps: share of max HP the gate guards deal per second to a boss / an elite
+const LOW_LV = { lethal: 10, perLv: 0.12 };   // raid boss hits vs a hero below the recommended level (js/battle/boss.js bossHurt)
+const BOSS_BLOCK_SLOW = 0.25;   // a boss held by blockers still walks at this share of its speed (any mode)
 // gear bag size; past it the weakest spare gear is salvaged automatically (js/save.js bagOverflow)
 const BAG_MAX = 600;
 // 장비 합성: n of one grade -> one of the next grade at rate[r] %, else one of the same grade (js/save.js fuseOnce).
@@ -103,7 +105,11 @@ const SYNERGY = { exposed: 1.3, burst: 2.0, allyHeal: 0.03, allyStunEvery: 3, al
 const HERO_GUIDE = { knight: [L('탱커'), L('체력이 높고 길을 막아 줘요'), L('사거리가 짧아요')], mage: [L('마법 딜러'), L('범위 마법과 아군 회복'), L('체력이 낮고 길을 못 막아요')], ranger: [L('원거리 딜러'), L('가장 긴 사거리와 빠른 공격'), L('체력이 낮고 길을 못 막아요')] };
 const SYNERGY_TEXT = { knight: L('기절시킨 적: 영웅 피해 +30%'), mage: L('빙결시킨 적: 영웅 피해 +30% · 아군 회복'), ranger: L('기절·빙결된 적: 피해 +100%') };
 const HERO_GROWTH = 1.07;
-const HERO_MAX_LV = 60;
+const HERO_MAX_LV = 40;
+// 장비 단계: a piece is made in the tier of the level it drops at (ilvl >= tier.ilvl); wearing it needs a hero at level >= req.
+// Stats only grow inside the tier, so a new tier's gear beats the old one. Add a row per content update (req 10/20/30/40; the first tier is the starter gear).
+const GEAR_TIERS = [{ req: 1, ilvl: 1 }, { req: 10, ilvl: 18 }, { req: 20, ilvl: 46 }, { req: 30, ilvl: 96 }, { req: 40, ilvl: 131 }];
+function tierForIlvl(v) { let t = 0; for (let i = 0; i < GEAR_TIERS.length; i++) if (v >= GEAR_TIERS[i].ilvl) t = i; return t; }
 const HERO_RESPAWN = 12;
 const HERO_LEASH = 260;      // AUTO hero only chases enemies this close to its guard post, so towers matter
 const SKILL_UNLOCK = [1, 2, 4, 7];
@@ -215,7 +221,7 @@ const SUB_OPTS = {
 // +15~+20 (2026-10-17 사용자 요청 "20강까지, 확률은 극악"): 하락·파괴방지권 없이는 사실상 불가(기대 2만 회 이상),
 // 방지권을 쓰면 약 57회 시도 + 하락방지권 50여 장 + 파괴방지권 15장 안팎
 // destroy[i]: chance that a FAILED try at +(destroyFrom + i) destroys the item (so the real destroy chance is (1 - rate) * destroy)
-const ENHANCE = { max: 20, rate: [1, 0.95, 0.9, 0.85, 0.75, 0.65, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.28, 0.25, 0.22, 0.18, 0.14, 0.1, 0.07, 0.05], dropFrom: 10, perLv: 0.12, stoneFrom: 10, destroyFrom: 10, destroy: [0.1, 0.1, 0.15, 0.15, 0.2, 0.25, 0.3, 0.3, 0.35, 0.4] };
+const ENHANCE = { max: 20, rate: [1, 0.95, 0.9, 0.85, 0.75, 0.65, 0.55, 0.5, 0.45, 0.4, 0.35, 0.3, 0.25, 0.18, 0.1, 0.04, 0.03, 0.02, 0.015, 0.01], dropFrom: 10, perLv: 0.12, stoneFrom: 10, destroyFrom: 10, destroy: [0.1, 0.1, 0.15, 0.15, 0.2, 0.25, 0.3, 0.3, 0.35, 0.4] };
 function destroyPct(enh) { return +(destroyChance(enh) * 100).toFixed(2) + '%'; }   // 6.5% / 7% / 10.8% / 11.25% / 15.6% / 20.5% / 25.8% / 27% / 32.55% / 38% (exact, same as docs/site-probability.md)
 function destroyChance(enh) { return enh >= ENHANCE.destroyFrom ? (1 - ENHANCE.rate[enh]) * (ENHANCE.destroy[enh - ENHANCE.destroyFrom] || 0) : 0; }   // 2026-10-16: +13 and up were unreachable (expected 46,000 tries / 3.8억 silver to +15); now about 900 tries / 1,640만 silver / 770 stones
 // 하락방지권 (gems, shop): a failed try at +10 or more keeps its level; used up only when it actually saves a drop.

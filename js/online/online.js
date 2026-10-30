@@ -141,6 +141,18 @@ const Online = {
         const { data, error } = await this.sb.rpc('board_view', { p_board: kind, p_limit: limit });
         return error ? null : data;
     },
+    // 종합 순위 (Top 100): server board_overall. The top list doubles as the cache of who wears a rank mark (name#tag -> rank)
+    crowns: new Map(), crownAt: 0,
+    async overall(limit = 100) {
+        if (!this.on) return null;
+        const { data, error } = await this.sb.rpc('board_overall', { p_limit: limit });
+        if (error || !data) return null;
+        this.crowns = new Map((data.top || []).map(r => [r.name + '#' + r.tag, r.rank]));
+        this.crownAt = Date.now();
+        return data;
+    },
+    loadCrowns() { if (this.on && Date.now() - this.crownAt > 600000) { this.crownAt = Date.now(); this.overall(100); } },
+    crownOf(name, tag) { return (name && this.crowns.get(name + '#' + tag)) || 0; },
     async league() {
         if (!this.on || !this.profile) return null;
         const { data, error } = await this.sb.rpc('league_division');

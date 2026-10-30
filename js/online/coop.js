@@ -25,7 +25,7 @@ const Coop = {
         const p = Save.p; Rewards.ensure(p); metaEnsure(p);
         const b = computeBonuses(p), sg = skinBonus(p, p.hero).gold;
         if (sg) b.bountyPct += sg;
-        return { name: Online.profile ? Online.profile.name : '', uid: Online.user ? Online.user.id : null, cls: p.hero, stats: heroStats(p, p.hero), skin: (p.shop.skin && p.shop.skin[p.hero]) || null,
+        return { name: Online.profile ? Online.profile.name : '', tag: Online.profile ? Online.profile.tag : '', uid: Online.user ? Online.user.id : null, cls: p.hero, stats: heroStats(p, p.hero), skin: (p.shop.skin && p.shop.skin[p.hero]) || null,
             bonuses: b, dmgMul: codexDmgMul(p), auto: !!p.set.autoHero };
     },
     channel(room) {

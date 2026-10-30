@@ -307,3 +307,264 @@ body { line-height: 1.4; }
 .paper *::-webkit-scrollbar-track, .paper::-webkit-scrollbar-track { background: rgba(110, 70, 28, .25); box-shadow: inset 0 0 0 1px rgba(110, 70, 28, .45); }
 .paper *::-webkit-scrollbar-thumb, .paper::-webkit-scrollbar-thumb { background: linear-gradient(90deg, #9a6a2a, #6e4416); border: 2px solid #e8d4a8; }
 .paper, .paper * { scrollbar-color: #8a5a1e rgba(110, 70, 28, .25); }
+
+/* 2026-10-30 화면 다듬기 (운영자 피드백 1~12) */
+/* 1, 2 소환: 확정 게이지 두 개를 가로로, 등급 이름과 확률을 한 줄로, 얼굴은 칸 안에 여백을 두고 */
+.pity-row { display: flex; gap: 14px; width: 61%; }
+.pity-row .pity-g { flex: 1 1 0; min-width: 0; margin: 0; }
+.sm-left .pity-g .pg-top { color: #f3e3c3; text-shadow: var(--stroke-s); gap: 6px; }
+.sm-left .pity-g .pg-top span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sm-left .pity-g .pg-top b { color: #ffd25a; }
+#app.mobile .sm-left .pity-g .pg-top { font-size: 15px; }
+.sm-left { justify-content: space-evenly; }
+.sm-rate .sm-rl { display: flex; gap: 4px; justify-content: center; align-items: baseline; margin-top: 6px; white-space: nowrap; font-size: 12px; }
+.sm-rate .sm-rl .rn { margin: 0; }
+.sm-rate .sm-rl .num { font-weight: normal; opacity: .9; }
+#app.mobile .sm-rate .sm-rl { font-size: 15px; }
+#app.mobile .summonwin.sm2 .sm-rate .cell { width: 72px; height: 72px; }
+#app.mobile .summonwin.sm2 .sm-rate .cell img.sm-pic { width: 42px; height: 42px; }
+.sm-rate .cell img.sm-pic { width: 40px; height: 40px; }
+.sm-dup { white-space: nowrap; }
+.sm-note { white-space: pre-line; }
+
+/* 3, 10 영웅: 직업 선택은 어두운 판 위 탭으로, 스킬 줄은 ? 아이콘, 프로필은 작게, 뱃지 여백, 가방은 회색 상자 */
+.hero-lcol { width: 360px; flex: none; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
+.hero-lcol > .hero-left { width: auto; flex: 1; }
+.hero-lcol > .classpick .cp { line-height: 1; padding-top: 4px; padding-bottom: 4px; gap: 3px; }
+#app.mobile .hero-lcol > .classpick .btn.small { min-height: 52px; }
+.skillrow .skill { width: 38px; height: 38px; }
+.skillrow .skill canvas { width: 26px; height: 26px; }
+.skillrow .sr-help { margin-left: auto; flex: none; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-family: 'Lilita'; font-size: 18px; color: #4a2a0e; background: linear-gradient(#ffe08a, #f0a530); box-shadow: inset 0 0 0 2px #6b3e12; }
+#app.mobile .hero-left .portrait { width: 58px !important; height: 58px !important; }
+.hero-left .portrait { width: 84px !important; height: 84px !important; }
+.hl-btns { gap: 8px; }
+.hl-pill { padding: 5px 16px; }
+.portrait .av-edit { padding: 2px 9px; }
+.equiprow .eq-skin { margin-left: auto; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; font-size: 13px; text-shadow: var(--stroke-s); white-space: nowrap; }
+.equiprow .eq-skin img { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; object-position: top; background: #3a2412; box-shadow: 0 0 0 3px #f2c14e, 0 0 0 5px #6b3e12; }
+.equiprow .eq-skin.r1 img { box-shadow: 0 0 0 3px var(--r1), 0 0 0 5px #4a2a0e; }
+.equiprow .eq-skin.r2 img { box-shadow: 0 0 0 3px var(--r2), 0 0 0 5px #4a2a0e; }
+.equiprow .eq-skin.r3 img { box-shadow: 0 0 0 3px var(--r3), 0 0 0 5px #4a2a0e; }
+.equiprow .eq-skin.r4 img { box-shadow: 0 0 0 3px var(--r4, #ff7a3a), 0 0 0 5px #4a2a0e; }
+#app.mobile .equiprow .eq-skin { font-size: 15px; }
+.bagbox { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 8px; padding: 8px; border-radius: 10px; background: rgba(120,120,120,.22); box-shadow: inset 0 0 0 2px rgba(200,200,200,.18); overflow-y: auto; }
+.baglabel { display: flex; align-items: baseline; gap: 8px; }
+.equiprow .eqlabel, .baglabel .eqlabel { font-size: 22px; }
+#app.mobile .equiprow .eqlabel, #app.mobile .baglabel .eqlabel { font-size: 24px; }
+.baglabel .bagnum { font-family: 'BlackHan'; font-size: 18px; color: #f5c451; text-shadow: var(--stroke-s); }
+.bagbox > .grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 8px 6px; justify-items: stretch; align-content: start; }
+.bagbox > .grid > .cell { width: 100% !important; height: auto !important; aspect-ratio: 1; box-sizing: border-box; }
+.bagbox > .grid > .cell > img { width: 100%; height: 100%; object-fit: contain; }
+.skbook .skc:not([class*=" r"]) img { box-shadow: 0 0 0 3px #d8c4a0; }
+
+/* 4 요일 도전: 난이도와 별을 한 줄로, 보상은 도전 버튼 바로 왼쪽에 */
+.dg-row .dg-nm { display: flex; align-items: center; gap: 6px; width: auto !important; white-space: nowrap; }
+.dg-row .dg-nm > div { line-height: 1; }
+.dg-row .dg-rw { flex: 0 0 auto; margin-left: auto; }
+
+/* 6 보스 토벌전: 보스 카드 위아래 여백, 단계와 피해를 한 줄로 작게 */
+.inset.raidleft { padding-top: 14px !important; padding-bottom: 14px !important; justify-content: space-evenly; gap: 2px !important; }
+#app.mobile .raidleft > canvas { max-height: 70px !important; }
+.raidtiers .rt-nm { display: flex; align-items: baseline; gap: 10px; flex: 1; width: auto !important; white-space: nowrap; font-size: 15px; }
+.raidtiers .rt-nm .tip { font-size: 13px; }
+#app.mobile .raidtiers .rt-nm, #app.mobile .raidtiers .rt-nm b { font-size: 21px !important; line-height: 1.2; }
+#app.mobile .raidtiers .rt-nm .tip { font-size: 17px !important; }
+
+/* 7 무한의 성벽: 줄 간격을 고르게 */
+.summonwin.wallwin { gap: 8px !important; }
+.summonwin.wallwin > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+.summonwin.wallwin > :first-child { margin-top: auto !important; }
+.summonwin.wallwin > :last-child { margin-bottom: auto !important; }
+
+/* 8 보상: 임무 글자 작게, 받을 수 있는 패스 칸은 아이콘만 두근두근, 출석과 무료 보석 사이 간격 */
+.rw-col:first-child .mrow > div:first-child > div:first-child { font-size: 15px; }
+#app.mobile .rw-col:first-child .mrow > div:first-child > div:first-child { font-size: 16px; }
+.pcell.can { animation: none; }
+.pcell.can .cell > :is(canvas, img):not(.cnt) { animation: iconbeat .6s ease-in-out infinite alternate; }
+@keyframes iconbeat { from { transform: translateY(-4px) scale(1); } to { transform: translateY(-4px) scale(1.16); } }
+.rw-side > h3:nth-of-type(2) { margin-top: 14px; }
+
+/* 10 하단 메뉴: 왼쪽 묶음과 오른쪽(보상, 상점), 아이콘만, 연 탭만 아이콘 오른쪽에 이름 */
+.navbar { left: 24px; right: 24px; transform: none; justify-content: space-between; align-items: flex-end; }
+.nav-l, .nav-r { display: flex; gap: 6px; align-items: flex-end; }
+.navbtn { width: 86px; height: 80px; flex-direction: row; justify-content: center; align-items: center; gap: 4px; padding: 0; }
+.navbtn img { position: static; top: auto; width: 58px; height: 58px; flex: none; }
+.navbtn > span:not(.badge) { display: none; }
+.navbtn.cur { width: auto; padding: 0 10px 0 4px; }
+.navbtn.cur > span:not(.badge) { display: block; font-size: 19px; }
+.navbtn.cur img { transform: none; }
+.navbtn .badge { top: -10px; right: -8px; }
+#app.mobile .navbtn { width: 74px; height: 66px; }
+#app.mobile .navbtn img { position: static; top: auto; width: 48px; height: 48px; }
+#app.mobile .navbtn.cur { width: auto; }
+#app.mobile .navbtn.cur > span:not(.badge) { font-size: 18px; }
+
+/* 11 지도: 장 이름 줄을 가운데로, 점 대신 n / 전체, 난이도 버튼은 이름 옆 */
+.chnav { position: absolute; left: 50%; top: 84px; transform: translateX(-50%); white-space: nowrap; }
+#app.mobile .chnav { top: 86px !important; left: 50% !important; }
+.chname { display: flex; flex-direction: column; align-items: center; line-height: 1.1; min-width: 180px; }
+.chname .chnum { font-family: 'Lilita'; font-size: 14px; color: #f3e3c3; text-shadow: var(--stroke-s); margin-top: 2px; }
+#app.mobile .chname .chnum { font-size: 15px; }
+
+/* 12 스토리: 그림을 크게, 글은 그림 위로 엔딩 크레딧처럼 */
+.story-body .story-ep.story-cine { position: relative; display: block; height: 390px; padding: 0; overflow: hidden; border-radius: 10px; background: #1a120a; }
+.story-body .story-cine .story-pic { display: block; width: 100%; height: 100%; max-height: none; flex: none; object-fit: cover; margin: 0; }
+.story-cine .story-roll { position: absolute; left: 0; right: 0; bottom: 0; height: 66%; overflow-y: auto; scrollbar-width: none; text-align: center;
+  background: linear-gradient(transparent, rgba(10,6,2,.55) 30%, rgba(10,6,2,.78));
+  -webkit-mask-image: linear-gradient(transparent, #000 22%, #000 82%, transparent); mask-image: linear-gradient(transparent, #000 22%, #000 82%, transparent); }
+.story-cine .story-roll::-webkit-scrollbar { display: none; }
+.story-cine .story-roll::before { content: ''; display: block; height: 72%; }
+.story-cine .story-roll::after { content: ''; display: block; height: 30%; }
+.story-cine .story-txt { max-height: none; overflow: visible; padding: 0 8%; color: #fff4dc; text-shadow: 0 2px 3px #000; font-size: 18px; line-height: 1.7; }
+.story-cine .story-txt b { display: block; color: #ffd98a; font-size: 21px; margin-bottom: 6px; }
+.story-cine.nopic { min-height: 280px; }
+.story-cine.nopic .story-roll { height: 100%; }
+.story-head { display: flex; align-items: center; justify-content: center; gap: 40px; width: 100%; }
+.story-head > .story-eps { margin: 0; }
+/* 5 레이드: 난이도 버튼 글자 키움 */
+#app.mobile .rd-win .rd-diffs .btn.rd-dbtn { font-size: 21px; }
+.rd-diffs .btn.rd-dbtn { font-size: 17px; }
+
+/* 2026-10-30 화면 다듬기 2차 */
+/* 스킨 소환: 등급 그림 틀을 키우고, 환급 안내와 모은 스킨을 한 줄로 */
+.sm-skinrates .sm-rate .cell { width: 82px; height: 82px; }
+#app.mobile .summonwin.sm2 .sm-skinrates .sm-rate .cell { width: 82px; height: 82px; }
+#app.mobile .summonwin.sm2 .sm-skinrates .sm-rate .cell img.sm-pic, .sm-skinrates .sm-rate .cell img.sm-pic { width: 47px; height: 47px; }
+.summonwin .sm-left > .pity-g { width: 156px; }   /* skin tab gauge: 30% longer than its old fit-to-label width */
+.sm-skinrates { gap: 12px; }
+/* 요일 도전: 설명 아래 나오는 아이템 그림 */
+.dg-head { display: flex; align-items: center; gap: 10px; }
+.dg-head > div:first-child { flex: 1; min-width: 0; }
+.dg-drops { display: flex; gap: 6px; flex: none; }
+.dg-drops .cell { width: 50px; height: 50px; }
+.dg-col.closed .dg-head { flex-direction: column; align-items: stretch; }
+.dg-drops .cell .cnt { font-size: 12px; white-space: nowrap; }
+.dg-col.closed .dg-drops { justify-content: center; }
+/* 보상: 임무 이름과 진행 수치를 한 줄로, 줄 높이 줄이기 */
+.mrow .mtop { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.mrow .mtop .num { white-space: nowrap; margin: 0; }
+.rw-col:first-child .mrow .mtop > span:first-child { font-size: 15px; }
+#app.mobile .rw-col:first-child .mrow .mtop > span:first-child { font-size: 16px; }
+.mrow .bar { margin-top: 4px; }
+#app.mobile .rw-col .mrow { padding-top: 4px; padding-bottom: 4px; }
+#app.mobile .rw-col .mrow .cell { width: 52px; height: 52px; }
+#app.mobile .rw-col .mrow .cell canvas, #app.mobile .rw-col .mrow .cell img { width: 34px; height: 34px; }
+#app.mobile .rw-col .mrow .btn.small { min-height: 44px; }
+/* 출석: 누적 일수는 제목 오른쪽 */
+.rw-side h3 .rw-cnt { margin-left: auto; font-size: 15px; color: #f3e3c3; }
+/* 스토리: < > 는 그림 좌우 끝, 화 번호는 그림 위 가운데 */
+.story-stage { position: relative; width: 100%; }
+.story-stage > .story-eps { position: absolute; inset: 0; margin: 0; padding: 0 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 3; }
+.story-stage > .story-eps .story-nav { pointer-events: auto; min-width: 54px; opacity: .92; }
+.story-stage > .story-eps .story-nav.ghost { opacity: .45; }
+.story-stage > .story-eps .story-cur { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); min-width: 0; padding: 2px 14px; border-radius: 99px;
+  background: rgba(20, 12, 4, .6); color: #ffd98a; font-size: 20px; text-shadow: 0 1px 2px #000; }
+.story-stage > .story-eps .story-cur i { color: #f3e3c3; }
+/* 레이드: 왼쪽에 모드 버튼 세로, 보스 토벌전처럼 보스 카드 + 난이도 목록 */
+.rd2 { display: flex; flex-direction: column; }
+.rd2-wrap { display: flex; gap: 10px; flex: 1; min-height: 0; }
+.rd2-nav { display: flex; flex-direction: column; gap: 8px; width: 168px; flex: none; }
+.rd2-nav .btn { width: 100%; min-height: 50px; font-size: 18px; margin: 0; }
+.rd2-nav .sp { flex: 1; }
+.rd2-area { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 6px; }
+.rd2-main { display: flex; gap: 10px; flex: 1; min-height: 0; }
+.rd2-card { width: 330px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: space-evenly; gap: 6px; text-align: center; overflow-y: auto; padding: 10px 12px; }
+.rd2-card > * { flex: none; }
+.rd2-card .rd-boss { max-height: 78px; max-width: 200px; }
+.rd2-card .rd-bigico { width: 64px; height: 64px; }
+.rd2-card .rd-title { font-size: 21px !important; white-space: normal; line-height: 1.15; }
+.rd2-card .rd-roombtns { grid-template-columns: 1fr 1fr; max-width: none; gap: 6px; }
+.rd2-card .rd-roombtns .btn { min-height: 44px; font-size: 17px; margin: 0; }
+.rd2-card .row { margin: 0; gap: 8px; justify-content: center; }
+.rd2-list { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; padding: 10px 12px; }
+.rd2-list > * { flex: none; }
+.rd2-dlist { display: flex; flex-direction: column; gap: 6px; }
+.rd2-drow { display: flex; align-items: center; gap: 14px; padding: 8px 14px; border-radius: 8px; background: rgba(0, 0, 0, .28); cursor: pointer; }
+.rd2-drow.on { background: rgba(245, 196, 81, .22); box-shadow: inset 0 0 0 2px var(--gold); }
+.rd2-dn { font-family: 'BlackHan'; font-weight: normal; font-size: 22px; min-width: 82px; color: #fff4dc; text-shadow: var(--stroke-s); }
+.rd2-drow.on .rd2-dn { color: #ffd25a; }
+.rd2-dn .icon { width: 20px; height: 20px; vertical-align: -2px; margin-right: 4px; }
+.rd2-db { flex: 1; min-width: 0; color: #f3e3c3; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rd2-dp { font-size: 16px; white-space: nowrap; margin-left: auto; }
+.rd2-dp.ok { color: #9be37a; }
+.rd2-dp.low { color: #ffb070; }
+.rd2-list .rd-weekly { margin-top: 2px; }
+.rd2-foot { font-size: 14px; text-align: center; margin-top: auto; }
+#app.mobile .rd2-foot { display: block; font-size: 14px; }
+.rd2-drow .rd-claim { min-height: 0; padding: 4px 12px; font-size: 15px; margin: 0; white-space: nowrap; }
+.rd2-drow .rd-done { font-size: 14px; }
+#app.mobile .rd2-dn { font-size: 24px; }
+#app.mobile .rd2-db { font-size: 19px; }
+#app.mobile .rd2-dp { font-size: 18px; }
+#app.mobile .rd2-nav .btn { font-size: 19px; }
+/* 스토리: 터치하면 글 전체를 한 번에 */
+.story-cine .story-roll.all { height: 100%; -webkit-mask-image: none; mask-image: none; background: rgba(10, 6, 2, .72); display: flex; flex-direction: column; }
+.story-cine .story-roll.all::before, .story-cine .story-roll.all::after { content: none; }
+.story-cine .story-roll.all .story-txt { margin: auto 0; padding-top: 52px; padding-bottom: 16px; }
+/* 요일 도전: 닫힌 날도 내용이 보이게, 안내는 글 아래 */
+.dg-col.closed > :not(.lock-over) { opacity: 1; }
+.dg-col.closed { filter: none; }
+.dg-col.closed h3, .dg-col.closed > .tip { opacity: .8; }
+.dg-shut { margin-top: auto; padding-top: 8px; text-align: center; color: #ffb070; text-shadow: var(--stroke-s); }
+.dg-shut .tip { color: #f3e3c3; }
+/* 무한의 성벽: 구간 보상은 버튼으로 열고, 웨이브마다 한 줄 */
+.wk-line { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.wk-line .btn { margin: 0; }
+.wk-list { display: flex; flex-direction: column; gap: 6px; min-width: 360px; }
+.wk-row { display: flex; align-items: center; gap: 14px; padding: 6px 14px; border-radius: 8px; background: rgba(0, 0, 0, .12); }
+.wk-row > b { min-width: 110px; font-family: 'BlackHan'; font-weight: normal; font-size: 20px; }
+.wk-row .wk-ic { display: flex; gap: 6px; }
+.wk-row.done { opacity: .55; }
+#app.mobile .dg-cols .dg-col.closed .dg-shut .tip { white-space: nowrap; font-size: 13px; }
+.wk-list { gap: 4px; }
+.wk-row { padding: 2px 14px; }
+.wk-row .cell { width: 50px; height: 50px; }
+.wk-row .cell :is(canvas, img):not(.cnt) { width: 34px; height: 34px; }
+.wk-row > b { font-size: 18px; }
+#app.mobile .wk-row .cell { width: 52px; height: 52px; }
+#app.mobile .wk-row .cell :is(canvas, img):not(.cnt) { width: 36px; height: 36px; }
+/* 4차: 지도 도움말 버튼은 왼쪽(영웅 칩 아래) */
+.map-q { right: auto; left: 24px; }
+#app.mobile .map-q { right: auto; left: 20px; }
+/* 요일 도전: 이름 옆에 나오는 것 상자(수량 없음) */
+.dg-head { display: flex; align-items: flex-start; gap: 10px; }
+.dg-head > div:first-child { flex: 1; min-width: 0; }
+.dg-drops { display: flex; gap: 6px; flex: none; }
+#app.mobile .dg-drops .cell, .dg-drops .cell { width: 48px; height: 48px; }
+#app.mobile .dg-drops .cell :is(canvas, img), .dg-drops .cell :is(canvas, img) { width: 34px; height: 34px; transform: none; }
+.dg-col.closed .dg-head { flex-direction: column; align-items: stretch; }
+.dg-col.closed .dg-drops { justify-content: center; }
+/* 레이드: 보상 카드에서 나오는 것 크게 */
+.rd2-list .rd-rwgrid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+#app.mobile .rd2-list .rd-rwgrid .cell, .rd2-list .rd-rwgrid .cell { width: 50px; height: 50px; }
+#app.mobile .rd2-list .rd-rwgrid .cell :is(canvas, img), .rd2-list .rd-rwgrid .cell :is(canvas, img) { width: 36px; height: 36px; }
+.rd2-list .rd-rwgrid .cell .cnt { display: none; }
+/* 월드 보스: 달성 보상과 기여 순위 보상 */
+.rd2-whead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rd2-whead .btn { margin: 0; }
+.rd2-wlist { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.rd2-wranks { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+.rd2-wrow { display: flex; align-items: center; gap: 8px; padding: 4px 10px; border-radius: 8px; background: rgba(0, 0, 0, .28); }
+.rd2-wrow.on { background: rgba(120, 200, 80, .25); }
+.rd2-wrow > b { min-width: 74px; font-size: 16px; color: #fff4dc; white-space: nowrap; }
+.rd2-wic { display: flex; gap: 4px; }
+#app.mobile .rd2-wic .cell, .rd2-wic .cell { width: 46px; height: 46px; }
+#app.mobile .rd2-wic .cell :is(canvas, img):not(.cnt), .rd2-wic .cell :is(canvas, img):not(.cnt) { width: 30px; height: 30px; }
+#app .rd2-list .rd-rwgrid .cell { width: 50px !important; height: 50px !important; min-width: 50px; }
+#app .rd2-list .rd-rwgrid .cell :is(canvas, img) { max-width: 38px; max-height: 38px; width: 38px; height: 38px; }
+.rd2-list .rd-weekly > .tip { font-size: 15px; }
+/* 월드 보스 보상 칸 촘촘하게(순위 보상 6칸이 다 보이게) */
+.rd2-wrow { padding: 2px 8px; }
+.rd2-wrow > b { min-width: 64px; font-size: 15px; }
+#app.mobile .rd2-wic .cell, .rd2-wic .cell { width: 40px; height: 40px; }
+#app.mobile .rd2-wic .cell :is(canvas, img):not(.cnt), .rd2-wic .cell :is(canvas, img):not(.cnt) { width: 26px; height: 26px; }
+.rd2-list:has(.rd2-wranks) .rd2-foot { display: none; }
+.rd2-list:has(.rd2-wranks) { gap: 6px; }
+#app .rd2-list .rd-rwgrid .cell { width: 42px !important; height: 42px !important; min-width: 42px; }
+#app .rd2-list .rd-rwgrid .cell :is(canvas, img) { max-width: 32px; max-height: 32px; width: 32px; height: 32px; }
+.rd2-drow { padding-top: 6px; padding-bottom: 6px; }
+.rd2-wlist { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.rd2-wranks { gap: 4px; }
+.rd2-wrow { gap: 4px; padding: 2px 6px; }
+.rd2-wrow > b { min-width: 0; font-size: 14px; }

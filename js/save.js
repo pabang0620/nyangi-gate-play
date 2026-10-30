@@ -27,7 +27,18 @@ const Save = {
         if (data && data.v === 1) {
             this.p = Object.assign(base, data);
             this.p.set = Object.assign(newProfile().set, data.set || {});
+            // story read marks used to be class + episode number; now class:stage (the ranger story gained an episode, which shifted the numbers)
+            for (const k of ['storySeen', 'storyHint']) {
+                const m = this.p.set[k]; if (!m || typeof CAT_STORY === 'undefined') continue;
+                for (const key of Object.keys(m)) {
+                    const mt = /^([a-z]+)(\d)$/.exec(key); if (!mt || !CAT_STORY[mt[1]]) continue;
+                    const i = +mt[2], need = mt[1] === 'ranger' ? [5, 15, 27, 46, 53][i] : CAT_STORY[mt[1]][i] && CAT_STORY[mt[1]][i].need;
+                    if (m[key] && need !== undefined) { m[mt[1] + ':' + need] = true; if (mt[1] === 'ranger' && i === 3) m['ranger:39'] = true; }
+                    delete m[key];
+                }
+            }
             this.p.heroes = Object.assign(newProfile().heroes, data.heroes || {});
+            for (const c in this.p.heroes) { const hh = this.p.heroes[c]; if (hh.lv >= HERO_MAX_LV) { hh.lv = HERO_MAX_LV; hh.xp = 0; } }   // max level was 60, now 40
         } else {
             this.p = base;
             // starter gear so the hero screen isn't empty
@@ -89,7 +100,7 @@ function makeItem(slot, rarity, ilvl, rng = Math.random) {
         v = o.pct ? Math.round(v * 1000) / 1000 : Math.round(v);
         subs.push({ k, v });
     }
-    const it = { id: p.nextId++, slot, r: rarity, ilvl: Math.max(1, Math.round(ilvl)), enh: 0, subs, art: Math.floor(rng() * ITEM_ARTS), isNew: true, t: Date.now() };
+    const it = { id: p.nextId++, slot, r: rarity, ilvl: Math.max(1, Math.round(ilvl)), tier: tierForIlvl(Math.round(ilvl)), enh: 0, subs, art: Math.floor(rng() * ITEM_ARTS), isNew: true, t: Date.now() };
     p.items.push(it);
     while (p.items.length > BAG_MAX && bagOverflow(p)) { }
     return it;
@@ -115,7 +126,23 @@ function bagOverflow(p) {
 function itemName(it) { const a = it.r >= 2 && ITEM_ART_NAMES[it.slot] && ITEM_ART_NAMES[it.slot][it.r]; return a ? a[itemForm(it)] : ITEM_NAMES[it.slot][it.r]; }
 // gear grows with progress: the level used for stats is the item's own level or what a summon gives right now, whichever is higher.
 // So gear bought or summoned early (a day-1 purchase) never falls behind new drops of the same grade.
-function itemLv(it) { const p = Save.p; return Math.max(it.ilvl, p && p.stars ? Math.round(summonIlvl(p)) : 0); }
+function heroTopLv(p) { let m = 1; for (const c in p.heroes) m = Math.max(m, p.heroes[c].lv || 1); return m; }
+// older gear without a tier keeps following progress (its tier is worked out each time, never above what the best hero can wear), so nothing equipped gets locked out
+function itemTier(it) {
+    if (it.tier !== undefined) return it.tier;
+    const p = Save.p; let t = tierForIlvl(Math.max(it.ilvl, p && p.stars ? summonIlvl(p) : 0));
+    while (t > 0 && p && GEAR_TIERS[t].req > heroTopLv(p)) t--;
+    return t;
+}
+// the highest tier the best hero can wear; drops and summons never come out above it (a Lv.20 hero is not handed Lv.40 gear)
+function wearTier(p) { let t = 0; for (let i = 0; i < GEAR_TIERS.length; i++) if (GEAR_TIERS[i].req <= heroTopLv(p)) t = i; return t; }
+function capTier(it) { it.tier = Math.min(it.tier, wearTier(Save.p)); return it; }
+function itemReq(it) { return GEAR_TIERS[itemTier(it)].req; }
+function canWear(it) { return heroTopLv(Save.p) >= itemReq(it); }
+function itemLv(it) {
+    const p = Save.p, t = itemTier(it), lo = GEAR_TIERS[t].ilvl, hi = t + 1 < GEAR_TIERS.length ? GEAR_TIERS[t + 1].ilvl - 1 : Infinity;
+    return Math.min(hi, Math.max(lo, it.ilvl, p && p.stars ? Math.round(summonIlvl(p)) : 0));
+}
 // picture variant for the high-grade item images (img/it_{slot}_{r}_{n}.png); older items get one from their id
 const ITEM_ARTS = 4;
 function itemArt(it) { return it.art !== undefined ? it.art : it.id % ITEM_ARTS; }
@@ -138,7 +165,7 @@ function fmtOpt(name, v, isPct) { return name + ' +' + (isPct ? (v * 100).toFixe
 function itemById(id) { return Save.p.items.find(i => i.id === id) || null; }
 function isEquipped(it) { return Save.p.equip[it.slot] === it.id; }
 // salvage keeps the item's own level (old gear grown by progress is not a silver mine); enhance cost follows the level it fights at
-function salvageValue(it) { return Math.round(30 * [1, 3, 10, 40, 150][it.r] * (1 + it.ilvl / 15) + it.enh * 40); }
+function salvageValue(it) { return Math.round(30 * [1, 3, 10, 40, 150][it.r] * (1 + Math.min(it.ilvl, itemLv(it)) / 15) + it.enh * 40); }
 function enhanceCost(it) { return Math.round(60 * Math.pow(1.35, it.enh) * (1 + 0.5 * it.r) * (1 + itemLv(it) / 20)); }
 
 // useGuard: spend one 하락방지권 (p.mats.guard) when a failure would drop the level.
@@ -166,20 +193,27 @@ function tryEnhance(it, useGuard, noSave, useShield) {
 }
 // 자동 강화: try until the target level or a spending cap (silver / stones) is reached
 // in the destroy zone it only goes on while a 파괴방지권 is switched on and owned (never destroys an item unattended)
+function autoEnhanceRun(it) { return { tries: 0, ok: 0, drops: 0, guards: 0, shields: 0, silver: 0, stones: 0, start: it.enh, why: '' }; }
+// one try of the 자동 강화 loop; returns the tryEnhance result, or null once it has stopped (run.why says why)
+function autoEnhanceStep(it, run, target, silverCap, stoneCap, useGuard, useShield, noSave) {
+    const p = Save.p;
+    if (run.destroyed) return null;
+    if (it.enh >= Math.min(target, ENHANCE.max)) { run.why = 'done'; return null; }
+    if (it.enh >= ENHANCE.destroyFrom && !(useShield && ((p.mats && p.mats.shield) || 0) > 0)) { run.why = 'risk'; return null; }
+    const cost = enhanceCost(it), st = enhanceStones(it.enh);
+    if (run.silver + cost > silverCap) { run.why = 'silverCap'; return null; }
+    if (run.stones + st > stoneCap) { run.why = 'stoneCap'; return null; }
+    const r = tryEnhance(it, useGuard, noSave, useShield);
+    if (!r) { run.why = 'short'; return null; }
+    run.tries++; run.silver += r.cost; run.stones += r.stones;
+    if (r.ok) run.ok++; if (r.dropped) run.drops++; if (r.guarded) run.guards++; if (r.shielded) run.shields++;
+    if (r.destroyed) { run.destroyed = true; run.why = 'destroyed'; return r; }
+    if (run.tries >= 5000) { run.why = run.why || 'cap'; return null; }
+    return r;
+}
 function autoEnhance(it, target, silverCap, stoneCap, useGuard, useShield) {
-    const p = Save.p, start = it.enh, run = { tries: 0, ok: 0, drops: 0, guards: 0, shields: 0, silver: 0, stones: 0, start, why: '' };
-    while (it.enh < Math.min(target, ENHANCE.max)) {
-        if (it.enh >= ENHANCE.destroyFrom && !(useShield && ((p.mats && p.mats.shield) || 0) > 0)) { run.why = 'risk'; break; }
-        const cost = enhanceCost(it), st = enhanceStones(it.enh);
-        if (run.silver + cost > silverCap) { run.why = 'silverCap'; break; }
-        if (run.stones + st > stoneCap) { run.why = 'stoneCap'; break; }
-        const r = tryEnhance(it, useGuard, true);
-        if (!r) { run.why = 'short'; break; }
-        run.tries++; run.silver += r.cost; run.stones += r.stones;
-        if (r.ok) run.ok++; if (r.dropped) run.drops++; if (r.guarded) run.guards++; if (r.shielded) run.shields++;
-        if (run.tries >= 5000) break;
-    }
-    if (!run.why && it.enh >= target) run.why = 'done';
+    const run = autoEnhanceRun(it);
+    while (autoEnhanceStep(it, run, target, silverCap, stoneCap, useGuard, useShield, true));
     Save.save();
     return run;
 }
@@ -195,7 +229,7 @@ function equipBest() {
     const p = Save.p;
     for (const s of SLOTS) {
         let best = null;
-        for (const it of p.items) if (it.slot === s && (!best || itemScore(it) > itemScore(best))) best = it;
+        for (const it of p.items) if (it.slot === s && canWear(it) && (!best || itemScore(it) > itemScore(best))) best = it;
         if (best) p.equip[s] = best.id;
     }
     // equipped items never show the NEW tag
@@ -228,6 +262,7 @@ function fuseOnce(p, r, withEnh, skip) {
     p.items = p.items.filter(x => !ids.has(x.id));
     const ok = Math.random() * 100 < FUSE.rate[r];
     const it = makeItem(src[Math.floor(Math.random() * src.length)].slot, ok ? r + 1 : r, Math.max(...src.map(x => x.ilvl)));
+    it.tier = Math.min(it.tier, Math.max(...src.map(x => itemTier(x))), wearTier(p));   // never above the sources' tier or what the best hero can wear
     return { ok, it };
 }
 // 일괄 합성: every three of one grade until fewer than three are left (a failed try's item can go in again)
@@ -257,7 +292,7 @@ function doSummon(n, slot, pay, keepOpen) {
         else if (p.pityEpic >= SUMMON.pityEpic && r < 2) r = 2;
         if (r >= 2) p.pityEpic = 0;
         if (r >= 3) { p.pity = 0; hit = true; }
-        out.push(makeItem(SLOTS.includes(slot) ? slot : SLOTS[Math.floor(Math.random() * 3)], r, summonIlvl(p)));
+        out.push(capTier(makeItem(SLOTS.includes(slot) ? slot : SLOTS[Math.floor(Math.random() * 3)], r, summonIlvl(p))));
     }
     if (hit) p.pity = 0;   // a legend in this summon resets the pity, even if pulls after it were counted
     if (!keepOpen) Save.save();

@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.14';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.15';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
     const SITE_URL = 'https://pabang0620.github.io/nyangi-gate/';   // game intro page (hosted in the developer site repo); the app hands external links to the phone's browser
@@ -179,12 +179,13 @@
         const p = Save.p; if (typeof CAT_STORY === 'undefined') return;
         const hinted = p.set.storyHint = p.set.storyHint || {};
         for (const c in CAT_STORY) CAT_STORY[c].forEach((ep, i) => {
-            if (catStoryOpen(p, ep) && !hinted[c + i] && !(p.set.storySeen || {})[c + i]) { hinted[c + i] = true; Save.save(); setTimeout(() => toast(L('{0}의 기억 하나를 찾았어요 · 영웅 > 스토리 모음', HERO_NAMES[c])), 900); }
+            if (catStoryOpen(p, ep) && !hinted[c + ':' + ep.need] && !(p.set.storySeen || {})[c + ':' + ep.need]) { hinted[c + ':' + ep.need] = true; Save.save(); setTimeout(() => toast(L('{0}의 기억 하나를 찾았어요 · 영웅 > 스토리 모음', HERO_NAMES[c])), 900); }
         });
     }
     function showHub(tab) {
         if (S.screen !== 'hub') storyHint();
         UI.ensureAccount();
+        Online.loadCrowns();   // who wears a rank mark (10 min cache)
         if (UI.raidLiveCheck) UI.raidLiveCheck();     // the app closed during a 파티 레이드 / 협동 디펜스: offer to go back (once)
         S.screen = 'hub';
         S.tab = tab || S.tab;
@@ -195,27 +196,30 @@
         const bgs = { map: ['map_bg', 0.12], hero: ['hero_bg', 0.35], research: ['map_bg', 0.5], summon: ['summon_bg', 0.15], rewards: ['title_bg', 0.55], shop: ['hero_bg', 0.5], endless: ['endless_bg', 0.2], settings: ['hero_bg', 0.55] };
         Game.backdrop = { map: bgs[S.tab][0], theme: ch.theme, dim: bgs[S.tab][1] };
         const p = Save.p;
+        // the hero chip leads the top bar on every screen (no game title)
         const top = h('div.topbar',
-            h('div.title-t', { style: { fontSize: '24px', marginRight: '10px' } }, L('냥이 수비대')),
+            h('div.chip.herochip', { style: { cursor: 'pointer' }, onclick: () => { click(); showHub('hero'); } },
+                (() => { const a = img(heroFace(p.hero, p.shop && p.shop.skin[p.hero]), '.icon'); a.style.background = avatarBg(); const rk = Online.profile ? Online.crownOf(Online.profile.name, Online.profile.tag) : 0; if (!rk) return a; const w = h('span.avatar.crown' + (rk <= 3 ? rk - 1 : rk <= 50 ? 3 : 4), a); w.appendChild(UI.rankMark(rk, 15)); return w; })(), h('span.hc', h('b', HERO_NAMES[p.hero]), h('i', `Lv.${p.heroes[p.hero].lv}`))),
             ...currencyBar(),
             h('div.sp'),
             h('div.chip.curchip', { onclick: () => { click(); UI.currencyInfo('ticket'); } }, img('i_ticket', '.icon'), fmtShort(p.tickets || 0)),
             UI.mailButton(),
             Online.enabled ? friendsButton() : null,
             h('div.iconbtn', { onclick: () => { click(); showHub('settings'); } }, img('nav_settings')),
-            h('div.chip.herochip', { style: { cursor: 'pointer' }, onclick: () => { click(); showHub('hero'); } },
-                (() => { const a = img(heroFace(p.hero, p.shop && p.shop.skin[p.hero]), '.icon'); a.style.background = avatarBg(); return a; })(), h('span.hc', h('b', HERO_NAMES[p.hero]), h('i', `Lv.${p.heroes[p.hero].lv}`))),
         );
         Rewards.ensure(p);
         const tabs = [['map', L('지도')], ['hero', L('영웅')], ['research', L('연구')], ['summon', L('소환')], ['rewards', L('보상')], ['shop', L('상점')], ['endless', L('도전')]];
-        const nav = h('div.navbar', tabs.map(([id, name]) => {
+        // icons only; the open tab also shows its name to the right of the icon. 보상 and 상점 sit apart on the right
+        const navBtn = ([id, name]) => {
             const b = h('div.navbtn' + (S.tab === id ? '.cur' : ''), { onclick: () => { click(); showHub(id); } }, img(id === 'endless' ? 'nav_challenge' : 'nav_' + id), h('span', name));
             if (id === 'hero' && S.tab !== 'hero' && p.items.some(i => i.isNew)) b.appendChild(h('span.badge', 'NEW'));   // the hero tab clears isNew once its bag is drawn
             if (id === 'research' && researchAffordable(p)) b.appendChild(h('span.badge', '!'));
             if (id === 'rewards' && Rewards.pending(p)) b.appendChild(h('span.badge', '!'));
             if (id === 'endless' && ((p.league && p.league.pending) || (Meta.dungeonUnlocked(p) && Meta.dungeonLeft(p) > 0) || (Meta.raidUnlocked(p) && p.raid.runs < RAID.tries))) b.appendChild(h('span.badge', '!'));
             return b;
-        }));
+        };
+        const RIGHT = ['rewards', 'shop'];
+        const nav = h('div.navbar', h('div.nav-l', tabs.filter(t => !RIGHT.includes(t[0])).map(navBtn)), h('div.nav-r', tabs.filter(t => RIGHT.includes(t[0])).map(navBtn)));
         root().appendChild(top);
         root().appendChild(nav);
         ({ map: tabMap, hero: tabHero, research: tabResearch, summon: tabSummon, rewards: tabRewards, shop: tabShop, endless: tabEndless, settings: tabSettings })[S.tab]();

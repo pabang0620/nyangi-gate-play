@@ -12,6 +12,26 @@
     const TIER_COLOR = ['#c08050', '#c8d0e0', '#f2c14e', '#7fe0d0', '#9ad0ff', '#ff8ad8'];
     function tierName(t) { const n = (Online.cfg && Online.cfg.league && Online.cfg.league.tiers) || [L('브론즈'), L('실버'), L('골드'), L('플래티넘'), L('다이아'), L('마스터')]; return L(n[t] || n[0]); }   // server config sends Korean names
     function tierBadge(t) { return h('span.tierbadge', { style: { borderColor: TIER_COLOR[t] || TIER_COLOR[0], color: TIER_COLOR[t] || TIER_COLOR[0] } }, tierName(t)); }
+    // 순위 마크: 1~3위 금은동 트로피, 4~50위 방패, 51~100위 작은 원형 (drawn in code)
+    const MARK_COL = ['#f2c230', '#cdd5df', '#cd8138', '#3fb6a3', '#a39a86'];
+    function markKind(rank) { return rank <= 3 ? rank - 1 : rank <= 50 ? 3 : 4; }
+    function rankMark(rank, px = 18) {
+        const k = markKind(rank), c = MARK_COL[k], dk = 'rgba(60,35,10,.85)';
+        const svg = k <= 2
+            ? `<svg viewBox="0 0 24 24" width="${px}" height="${px}"><path d="M6 3h12v6a6 6 0 0 1-12 0z" fill="${c}" stroke="${dk}" stroke-width="1.4" stroke-linejoin="round"/><path d="M6 5H3v2a4 4 0 0 0 3.6 4M18 5h3v2a4 4 0 0 1-3.6 4" fill="none" stroke="${dk}" stroke-width="1.4"/><path d="M12 15v3M8 21h8M9.5 18h5v3h-5z" fill="${c}" stroke="${dk}" stroke-width="1.4" stroke-linejoin="round"/><path d="M9 5.5v3" stroke="#fff" stroke-opacity=".7" stroke-width="1.4" stroke-linecap="round"/></svg>`
+            : k === 3
+                ? `<svg viewBox="0 0 24 24" width="${px}" height="${px}"><path d="M12 2l8 3v6c0 5-3.5 9-8 11-4.500-2-8-6-8-11V5z" fill="${c}" stroke="${dk}" stroke-width="1.4" stroke-linejoin="round"/><path d="M12 7l1.600 3.300 3.600.5-2.600 2.500.6 3.600L12 15l-3.200 1.900.6-3.600L6.800 10.800l3.600-.5z" fill="#fff6c8" stroke="${dk}" stroke-width=".8" stroke-linejoin="round"/></svg>`
+                : `<svg viewBox="0 0 24 24" width="${px}" height="${px}"><circle cx="12" cy="12" r="8" fill="${c}" stroke="${dk}" stroke-width="1.4"/><circle cx="12" cy="12" r="3.200" fill="#f1ead8" stroke="${dk}" stroke-width="1"/></svg>`;
+        const s = h('span.rkmark.mk' + k, { title: L('종합 {0}위', rank) });
+        s.innerHTML = svg;
+        return s;
+    }
+    // a hero face with the rank ring and mark of its player (cached 종합 순위, name#tag)
+    function avatar(hero, skin, name, tag) {
+        const rk = Online.crownOf(name, tag), a = h('span.avatar' + (rk ? '.crown' + markKind(rk) : ''), img(heroFace(hero, skin), '.rk-pic'));
+        if (rk) a.appendChild(rankMark(rk, 15));
+        return a;
+    }
     function onlineStatusText() {
         if (!Online.enabled) return L('오프라인 모드 (서버 미설정)');
         return { connecting: L('연결 중…'), online: L('연결됨'), error: L('인터넷에 연결하지 못했어요 (인터넷 없이 계속해요)') }[Online.status] || L('연결 안 됨');
@@ -318,14 +338,15 @@
     function rankList(view, unit, fmtValue = v => fmt(v)) {
         if (!view) return h('div.muted', { style: { margin: '20px' } }, Online.enabled ? L('랭킹을 불러오지 못했습니다') : L('온라인 기능이 아직 설정되지 않았습니다'));
         if (!view.top.length) return h('div.muted', { style: { margin: '20px' } }, L('아직 기록이 없습니다. 첫 기록의 주인공이 되어 보세요!'));
-        return h('div.lg-list.rank-list', view.top.map(r => h('div.lg-row' + (r.me ? '.me' : ''),
-            h('span.lg-rank', `${r.rank}`), img(heroFace(r.hero, r.skin), '.rk-pic'), tierBadge(r.tier || 0),
+        const list = h('div.lg-list.rank-list', view.top.map(r => h('div.lg-row' + (r.me ? '.me' : ''),
+            h('span.lg-rank', view.board === 'overall' ? [rankMark(r.rank, 20), ' ' + r.rank] : `${r.rank}`), avatar(r.hero, r.skin, r.name, r.tag), tierBadge(r.tier || 0),
             h('span.lg-name', `${r.name}`, h('span.tip', ` #${r.tag}`)), h('span.lg-score', `${fmtValue(Number(r.value))} ${unit}`))));
+        return view.board === 'overall' ? h('div.rk-wrap', list, h('div.tip.rk-legend', L('무한의 성벽, 토벌전, 주간 공방전, 심연의 탑 순위를 합친 점수예요 · 1~3위 트로피, 50위까지 방패, 100위까지 원형 마크가 프로필 테두리에 붙어요'))) : list;
     }
     function myRankLine(view, unit, fmtValue = v => fmt(v)) {
         if (!view || !view.me) return h('div.tip', L('이번 기간 기록 없음'));
         const pct = view.total ? Math.max(1, Math.round(view.me.rank / view.total * 100)) : 0;
-        return h('div', L('내 순위 '), h('span.gold-t', L('{0}위', view.me.rank)), L(' / {0}명 (상위 {1}%) · {2} {3}', view.total, pct, fmtValue(Number(view.me.value)), unit));
+        return h('div.myrank', h('span', L('내 순위 '), h('b.gold-t', L('{0}위', view.me.rank))), h('span.tip', L('{0}명 중 상위 {1}%', view.total, pct)), h('span.tip', `${fmtValue(Number(view.me.value))} ${unit}`));
     }
 
     // league board rows: real division members first; small divisions are topped up with labelled AI rivals
@@ -347,5 +368,5 @@
         if (box && x) box.textContent = L('주간 순위에 등록했습니다 · 이번 주 최고 {0}점{1}', fmt(x.value), x.flagged ? L(' (검토 중)') : '');
     }
 
-    Object.assign(UI, { tierName, tierBadge, ensureProfile, profileModal, accountText, accountLine, logoutButton, SIGNIN_ICON, linkButtons, idModal, idLoginModal, signUpModal, switchModal, linkModal, accountPrompts, cloudChoice, rankList, myRankLine, leagueRows, cupRankLine, onlineStatusText, policyModal, probModal });
+    Object.assign(UI, { rankMark, avatar, tierName, tierBadge, ensureProfile, profileModal, accountText, accountLine, logoutButton, SIGNIN_ICON, linkButtons, idModal, idLoginModal, signUpModal, switchModal, linkModal, accountPrompts, cloudChoice, rankList, myRankLine, leagueRows, cupRankLine, onlineStatusText, policyModal, probModal });
 })();

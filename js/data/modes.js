@@ -36,7 +36,7 @@ const RAID = {
     startGold: 1400, goldPerStage: 110,
     // per-boss damage reference: chosen with tools/balance.js so an on-level player reaches about tier 4 (x1.5)
     refPerHpMul: 9800,   // tools/balance.js --raid KIND --at IDX: on-level damage ~1.5x at idx 23~41
-    refMul: { ironfang: 1.178, grak: 0.707, vargas: 0.433, frosna: 0.715, setka: 0.52, morga: 0.711, ignis: 0.436, nox: 0.891, aeris: 1.001, chronos: 0.698 },
+    refMul: { ironfang: 1.178, grak: 0.707, vargas: 0.433, frosna: 0.715, setka: 0.52, morga: 0.711, ignis: 0.436, nox: 0.891, aeris: 1.27, chronos: 0.698 },
     // damage thresholds as multiples of the boss's campaign HP (def.hp x stageHpMul of its stage)
     tiers: [
         { x: 0.3, reward: { silver: 2000 } }, { x: 0.6, reward: { gems: 30 } }, { x: 1, reward: { stones: 3 } },
@@ -49,7 +49,7 @@ const RAID = {
 // 온라인 레이드 (docs/PLAN_ONLINE_RAID.md, server 20261018000000_raid.sql). The server's game_config 'raid' decides cards, HP and caps;
 // these copies are for display and the battle setup. Points = damage / the 보스 토벌전 reference x 100 (an on-level run is about 150).
 const RAID_ON = {
-    diffs: [{ name: L('일반'), eq: 17, power: 1700 }, { name: L('어려움'), eq: 29, power: 4000 }, { name: L('지옥'), eq: 41, power: 6600 }, { name: L('악몽'), eq: 53, power: 10100 }],   // power: 권장 전투력 = Meta.power of a player at that stage (tools/balance.js profileFor, +10 gear)
+    diffs: [{ name: L('일반'), eq: 17, power: 1700, lv: 18 }, { name: L('어려움'), eq: 29, power: 4000, lv: 25 }, { name: L('지옥'), eq: 41, power: 6600, lv: 30 }, { name: L('악몽'), eq: 53, power: 10100, lv: 34 }],   // lv: 권장 영웅 레벨(첫 클리어 속도 기준; 이보다 많이 낮으면 보스 공격에 쓰러진다), power: 권장 전투력 = Meta.power of a player at that stage (tools/balance.js profileFor, +10 gear)
     medals: [20, 35, 55, 80],
     // 파티 레이드: 1~4 players fight one boss live (lockstep like 협동 디펜스) on the 보스 토벌전 map, 3 entries a week.
     // Boss health = hp[difficulty][players - 1] x Meta.raidRef(boss, strength); killing it before it reaches the gate wins. walk[players - 1] is the
@@ -70,7 +70,7 @@ const RAID_ON = {
     // 협동 디펜스: two roads, 15 waves, a boss at 8 and the raid boss at 15; each player keeps 60% of every kill's gold
     // bossHp: the final raid boss per difficulty (each difficulty has its own boss). Tuned with tools/coopbalance.js: two free
     // players who just opened it lose most games, a paying player with a free one wins about half (2026-10-20)
-    coop: { waves: 15, midWave: 8, maps: ['m2', 'm8', 'm12', 'm13'], hpMul: 1.7, bossHp: [3.3, 2.0, 2.4, 5.5], goldShare: 0.6, startGold: 0.8, tick: 1 / 30 },
+    coop: { waves: 15, midWave: 8, maps: ['m2', 'm8', 'm12', 'm13'], hpMul: 1.7, bossHp: [2.3, 1.4, 1.7, 3.2], goldShare: 0.6, startGold: 0.8, tick: 1 / 30 },
 };
 
 // 도감: kills per enemy kind -> points; each point = all damage +0.2%
@@ -119,7 +119,7 @@ const ACHIEVEMENTS = (() => {
     for (let c = 0; c < CHAPTERS.length; c++) add('ch' + (c + 1), L('진행'), L('{0}장 {1} 정복', c + 1, CHAPTERS[c].name), 1, p => ((p.stars[chapterBossIdx(c)] || 0) > 0 ? 1 : 0), { gems: 50 + c * 40, tickets: c >= 3 ? 1 : 0 });
     [30, 60, 90, 126, 162].forEach((g, i) => add('star' + g, L('별'), L('별 {0}개', g), g, p => normalStars(p), { gems: 40 + i * 30 }));
     [30, 60, 90, 126, 162].forEach((g, i) => add('hstar' + g, L('별'), L('영웅 별 {0}개', g), g, p => hardStars(p), { gems: 80 + i * 40, stones: 3 + i * 2 }));
-    [10, 20, 30, 40, 50, 60].forEach((g, i) => add('lv' + g, L('영웅'), L('영웅 레벨 {0}', g), g, p => Math.max(...Object.values(p.heroes).map(x => x.lv)), { gems: 30 + i * 20 }));
+    [10, 20, 30, 40].forEach((g, i) => add('lv' + g, L('영웅'), L('영웅 레벨 {0}', g), g, p => Math.max(...Object.values(p.heroes).map(x => x.lv)), { gems: 30 + i * 20 }));
     [5, 10, 13, 15, 20].forEach((g, i) => add('enh' + g, L('강화'), L('장비 +{0} 달성', g), g, p => Math.max(0, ...p.items.map(it => it.enh)), { silver: 3000 * (i + 1), stones: i >= 1 ? 2 + i * 2 : 0 }));
     add('legend', L('수집'), L('전설 장비 얻기'), 1, p => (p.items.some(it => it.r >= 3) ? 1 : 0), { gems: 80 });
     add('mythic', L('수집'), L('신화 장비 얻기'), 1, p => (p.items.some(it => it.r >= 4) ? 1 : 0), { gems: 200 });

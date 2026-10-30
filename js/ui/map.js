@@ -33,11 +33,11 @@
         const unlocked = idx => (S.hard ? hardUnlocked(p, idx) : stageUnlocked(p, idx));
         // chapter selector: ◀ n장 이름 ▶ + progress dots (8 chapters do not fit as tabs)
         const go = d => { const c = ch + d; if (c < 0 || c >= CHAPTERS.length) return; if (!chOpen(c)) { toast(L('이전 장의 보스를 물리치면 열립니다')); return; } click(); S.chapter = c; showHub('map'); };
-        root().appendChild(h('div.chnav', { style: { position: 'absolute', left: '24px', top: '70px' } },
+        // centred: ◀ chapter name (n / total under it) ▶ and the 보통 / 영웅 switch right beside it
+        root().appendChild(h('div.chnav',
             h('button.btn.small' + (ch > 0 ? '' : '.off'), { onclick: () => go(-1) }, '◀'),
-            h('div.chname' + (S.hard ? '.hard' : ''), L('{0}장 {1}', ch + 1, CHAPTERS[ch].name)),
+            h('div.chname' + (S.hard ? '.hard' : ''), h('div', L('{0}장 {1}', ch + 1, CHAPTERS[ch].name)), h('div.chnum', `${ch + 1} / ${CHAPTERS.length}`)),
             h('button.btn.small' + (ch < CHAPTERS.length - 1 && chOpen(ch + 1) ? '' : '.off'), { onclick: () => go(1) }, '▶'),
-            h('div.chdots', CHAPTERS.map((c, i) => h('span' + (i === ch ? '.cur' : chapterCleared(p, i) ? '.done' : chOpen(i) ? '' : '.lock'), { onclick: () => { if (chOpen(i)) { click(); S.chapter = i; showHub('map'); } } }))),
             h('div.modetog',
                 h('button.btn.small' + (!S.hard ? '.gold' : '.ghost'), { onclick: () => { click(); S.hard = false; showHub('map'); } }, L('보통')),
                 h('button.btn.small' + (S.hard ? '.red' : '.ghost') + (hardOpen ? '' : '.off'), { onclick: () => {
@@ -76,7 +76,7 @@
         }
         root().appendChild(layer);
         const starRule = [L('별 3개: 목숨을 2 이하로 잃고 승리'), S.hard ? L('영웅 난이도: 별 1개마다 보석 {0}', HARD.gemsPerStar) : L('처음 얻는 별 1개마다 보석 15')];
-        root().appendChild(h('div.tip.hubtip', { style: { position: 'absolute', right: '24px', top: '78px', textAlign: 'right' } }, starRule[0], h('br'), starRule[1]));
+        root().appendChild(h('div.tip.hubtip', { style: { position: 'absolute', left: '24px', top: '78px', textAlign: 'left' } }, starRule[0], h('br'), starRule[1]));
         root().appendChild(UI.helpBtn(L('별 얻는 법'), () => starGuide(S.hard, ch), '.mob-q.map-q'));
         if (!p.seenTips.map) firstCoach();
     }

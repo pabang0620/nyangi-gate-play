@@ -238,7 +238,7 @@ const Rewards = {
             if (had) got.push({ item: had });
             else { const it = makeItem(SLOTS.includes(g.slot) ? g.slot : 'weapon', g.item, g.ilvl || 1, makeRng(g.seed)); it.mid = g.mid; it.seed = g.seed; got.push({ item: it }); }
         } else if (g.item !== undefined) {
-            const it = makeItem(SLOTS.includes(g.slot) ? g.slot : SLOTS[Math.floor(Math.random() * 3)], g.item, Math.max(summonIlvl(p), g.ilvlMin || 0));
+            const it = capTier(makeItem(SLOTS.includes(g.slot) ? g.slot : SLOTS[Math.floor(Math.random() * 3)], g.item, Math.max(summonIlvl(p), g.ilvlMin || 0)));
             got.push({ item: it });
         }
         if (g.gold) { got.push({ icon: 'i_gold', n: g.gold }); if (typeof Market !== 'undefined') Market.gold += g.gold; }   // server wallet (거래소); the save never holds it
@@ -338,7 +338,7 @@ const Rewards = {
         const items = [];
         for (let k = 0; k < n; k++) {
             const rolls = [['elite', DROP.rolls.elite + (hard ? 1 : 0)]].concat(st.boss ? [['boss', DROP.rolls.boss + (hard ? 1 : 0)]] : []);
-            for (const [tier, cnt] of rolls) for (let i = 0; i < cnt; i++) if (Math.random() < DROP.chance[tier]) items.push(makeItem(SLOTS[Math.floor(Math.random() * 3)], pickWeighted(DROP.table[tier]), ilvl));
+            for (const [tier, cnt] of rolls) for (let i = 0; i < cnt; i++) if (Math.random() < DROP.chance[tier]) items.push(capTier(makeItem(SLOTS[Math.floor(Math.random() * 3)], pickWeighted(DROP.table[tier]), ilvl)));
         }
         p.daily.sweeps = (p.daily.sweeps || 0) + n;
         p.silver += silver;

@@ -21,7 +21,7 @@
         return L('{0}일 전', Math.floor(m / 1440));
     }
     const nameTag = f => h('span.lg-name', f.name, h('span.tip', ` #${f.tag}`));
-    const row = (f, ...right) => h('div.lg-row', img(heroFace(f.hero, f.skin), '.rk-pic'), UI.tierBadge(f.tier || 0), nameTag(f), ...right);
+    const row = (f, ...right) => h('div.lg-row', UI.avatar(f.hero, f.skin, f.name, f.tag), UI.tierBadge(f.tier || 0), nameTag(f), ...right);
 
     function friendBadge() { return Friends.badge; }
 

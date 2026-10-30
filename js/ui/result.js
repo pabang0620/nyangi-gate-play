@@ -21,9 +21,14 @@
         const p = Save.p;
         const cells = [];
         const dblCells = [];   // what the ad doubles: silver and hero xp
-        if (R.silver > 0) cells.push(dblCells[dblCells.length] = rewardCell('silver', fmt(R.silver)));
+        // the same currency from several sources (battle, weekly milestones, raid cards) is one cell with the total
+        const gotCur = new Map();
+        for (const g of (R.got || []).concat(...(R.weekly || []).map(w => w.got))) { const ic = g && !g.item ? g.icon || (g.mat ? (g.mat === 'shield' ? 'i_shield' : 'i_guard') : null) : null; if (ic) gotCur.set(ic, (gotCur.get(ic) || 0) + g.n); }
+        const take = k => { const v = gotCur.get(k) || 0; gotCur.delete(k); return v; };
+        const gotSilver = take('silver'), gotGems = take('gem');
+        if (R.silver + gotSilver > 0) { const c = rewardCell('silver', fmt(R.silver + gotSilver)); cells.push(c); if (R.silver > 0) dblCells.push(c); }
         if (R.xp) cells.push(dblCells[dblCells.length] = rewardCell('i_xp', R.xp));
-        if (R.gems) cells.push(rewardCell('gem', R.gems));
+        if (R.gems + gotGems > 0) cells.push(rewardCell('gem', R.gems + gotGems));
         const gear = R.items.map(it => itemCell(it, { noNew: true, onclick: () => { click(); UI.itemInfo(it); } }));   // second row; tap for the options
         const content = [];
         if (R.cup) {
@@ -35,7 +40,6 @@
             content.push(h('div', R.newBest ? h('span.gold-t', L('최고 기록 갱신!')) : L('최고 기록 {0} 웨이브', p.endlessBest)));
             if (R.league) content.push(h('div', { style: { fontSize: '16px' } }, L('시즌 리그 '), h('span.gold-t', L('{0}위', R.league.after)), R.league.after < R.league.before ? ` (▲${R.league.before - R.league.after})` : ''));
             if (R.weekly && R.weekly.length) {
-                for (const w of R.weekly) for (const g of w.got) if (g.icon) cells.push(rewardCell(g.icon, g.icon === 'silver' ? fmt(g.n) : g.n));
                 content.push(h('div.gold-t', L('이번 주 구간 보상: {0}', R.weekly.map(w => L('{0}웨이브', w.wave)).join(', '))));
             }
         } else if (R.raidOn) {
@@ -65,15 +69,17 @@
             if (!R.win && R.leaks && R.leaks.some(([k]) => ENEMIES[k] && (ENEMIES[k].boss || ENEMIES[k].elite))) content.push(h('div.tip', { style: { color: '#a8401a' } }, L('보스·정예가 성문을 넘으면 바로 패배! 5초 안에 잡으세요')));
             if (R.cond) content.push(h('div', { style: { fontSize: '16px', color: R.cond.ok ? '#3a7a2a' : '#a8401a' } }, L('3성 조건 · {0}: {1}', R.cond.name, R.cond.ok ? L('달성') : L('실패'))));
         }
-        for (const g of (R.got || [])) g.item ? gear.push(itemCell(g.item, { noNew: true, onclick: () => { click(); UI.itemInfo(g.item); } })) : cells.push(rewardCell(g.icon, g.icon === 'silver' ? fmt(g.n) : g.n));
+        for (const g of (R.got || [])) if (g.item) gear.push(itemCell(g.item, { noNew: true, onclick: () => { click(); UI.itemInfo(g.item); } }));
+        for (const [icon, n] of gotCur) cells.push(rewardCell(icon, icon === 'silver' ? fmt(n) : n));
         content.push(h('div', { style: { fontSize: '15px', color: '#5a3a1c' } }, L('처치 {0} · 잃은 목숨 {1}', R.kills, R.lost) + (R.levelUp ? L(' · 영웅 레벨 업! Lv.{0}', R.heroLv) : '')));
+        if (R.xpLost) content.push(h('div.tip', { style: { color: '#a8401a' } }, L('영웅이 쓰러진 채 끝나서 경험치를 받지 못했어요')));
         if (R.xpShare) content.push(h('div.tip', L('다른 영웅도 경험치 +{0}', fmt(R.xpShare))));
         // silver and xp always come first, gear on its own row under them
         if (cells.length) content.push(h('div.row.res-row', cells));
         if (gear.length) content.push(h('div.row.res-row', gear));
         const btns = h('div.row');
         const toChallenge = R.endless || R.dungeon || R.raid || R.raidOn || R.coop || R.praid || R.tower;
-        btns.appendChild(h('button.btn.ghost', { onclick: () => { click(); if (R.dungeon) S.ctab = 'dungeon'; if (R.raid) S.ctab = 'raid'; if (R.raidOn || R.coop || R.praid) S.ctab = 'online'; if (R.cup) S.ctab = 'cup'; if (R.tower) S.ctab = 'tower'; showHub(toChallenge ? 'endless' : 'map'); } }, toChallenge ? L('돌아가기') : L('지도로')));
+        const exitBtn = h('button.btn.ghost', { onclick: () => { click(); if (R.dungeon) S.ctab = 'dungeon'; if (R.raid) S.ctab = 'raid'; if (R.raidOn || R.coop || R.praid) S.ctab = 'online'; if (R.cup) S.ctab = 'cup'; if (R.tower) S.ctab = 'tower'; showHub(toChallenge ? 'endless' : 'map'); } }, toChallenge ? L('나가기') : L('지도로'));
         const again = R.cup ? { cup: true } : R.endless ? { endless: true } : R.dungeon ? { dungeon: R.dungeon.kind, tier: R.dungeon.tier } : R.raid ? { raid: true } : { stageIdx: R.stageIdx, hard: R.hard };
         const canAgain = R.raidOn || R.coop || R.praid || R.tower ? false : R.cup ? Meta.cupLeft(p) > 0 : R.dungeon ? Meta.dungeonLeft(p) > 0 : R.raid ? p.raid.runs < RAID.tries : true;   // online raids start from the 레이드 tab
         if (canAgain) btns.appendChild(h('button.btn', { onclick: () => { click(); Game.startBattle(again); } }, L('다시 하기')));
@@ -83,7 +89,7 @@
         if ((R.win || R.endless) && R.silver > 0) {
             const doubleNow = () => {
                 Save.p.silver += R.silver; grantBattleXp(Save.p, Game.lastHero || Save.p.hero, R.xp); Save.save();
-                UI.markDouble(dblCells[0], fmt(R.silver * 2)); if (R.xp) UI.markDouble(dblCells[dblCells.length - 1], R.xp * 2);
+                UI.markDouble(dblCells[0], fmt(R.silver * 2 + gotSilver)); if (R.xp) UI.markDouble(dblCells[dblCells.length - 1], R.xp * 2);
             };
             if (Save.p.shop && Save.p.shop.premium) {
                 // 냥이의 가호: no button, the x2 is applied right away while today's count lasts
@@ -134,6 +140,7 @@
             });
             btns.appendChild(autoTog);
         }
+        btns.appendChild(exitBtn);   // 나가기 is always the right-most button
         content.push(btns);
         if (stageWin) content.push(autoLine);
         const d = modal(content, { noClose: true });

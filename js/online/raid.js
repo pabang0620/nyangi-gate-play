@@ -14,7 +14,9 @@ const RaidOn = {
     async state() { const r = await this.call('raid_state'); if (!r.error) this.st = r; return r; },
     party(diff) { return this.st && (this.st.parties || []).find(p => p.diff === diff) || null; },
     claimed(mode, diff) { return !!(this.st && (this.st.claims || []).some(c => c.mode === mode && (mode === 'world' || c.diff === diff))); },
-    diffOpen(diff) { return this.st ? this.st.highest >= RAID_ON.diffs[diff].eq : false; },
+    diffOpen(diff) { return !!this.st && diff >= 0 && diff < RAID_ON.diffs.length; },   // no stage requirement: a stronger friend can carry a weaker one (the server agrees, migration 20261033)
+    // the difficulty that matches this player's progress: the default pick
+    fitDiff() { let d = 0; RAID_ON.diffs.forEach((x, i) => { if (this.st && this.st.highest >= x.eq) d = i; }); return d; },
     // the world boss card difficulty: the highest one this player's progress opens
     worldDiff() { let d = 0; RAID_ON.diffs.forEach((x, i) => { if (this.st && this.st.highest >= x.eq) d = i; }); return d; },
     // run points from damage: the 보스 토벌전 reference of that boss at that strength (Meta.raidRef) = 100

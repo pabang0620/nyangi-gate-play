@@ -47,7 +47,7 @@
             claimAllBtn(dayCan, () => { const g = Rewards.claimAllMissions(p); Save.save(); showHub('rewards'); showGot(L('임무 보상'), g); })));
         byReady(MISSIONS, m => Rewards.missionState(p, m)).forEach(({ m, st }) => {
             ms.appendChild(h('div.mrow' + (st.claimed ? '.claimed' : st.done ? '.ready' : ''),
-                h('div', { style: { flex: 1 } }, h('div', m.name), h('div.bar', h('i', { style: { width: (st.v / m.goal * 100) + '%' } })), h('div.num.tip', `${st.v} / ${m.goal}`)),
+                h('div', { style: { flex: 1 } }, h('div.mtop', h('span', m.name), h('span.num.tip', `${st.v} / ${m.goal}`)), h('div.bar', h('i', { style: { width: (st.v / m.goal * 100) + '%' } }))),
                 ...rewardIcons(m.reward),
                 st.claimed ? h('span.claimed-t', L('완료')) : h('button.btn.small' + (st.done ? '.gold' : '.off'), { onclick: () => { if (!st.done) { notYet(st.v, m.goal); return; } click(); const g = Rewards.claimMission(p, m.id); showHub('rewards'); showGot(L('임무 보상'), g); } }, L('받기'))));
         });
@@ -55,15 +55,14 @@
         ms.appendChild(h('div.mrow.bonus', h('div', { style: { flex: 1 } }, L('모든 임무 완료 보너스')), ...rewardIcons(MISSION_BONUS),
             p.daily.bonus ? h('span.claimed-t', L('완료')) : h('button.btn.small' + (allDone ? '.gold' : '.off'), { onclick: () => { if (!allDone) { toast(L('임무를 모두 완료하고 보상을 받으면 받을 수 있습니다')); return; } click(); const g = Rewards.claimAllMissions(p); showHub('rewards'); showGot(L('임무 보상'), g); } }, L('받기'))));
         // side: login + free gems by ad
-        const side = h('div.inset.rw-col.rw-side', h('h3', img('i_calendar', '.icon'), L('출석')),
-            h('div.tip', L('누적 {0}일 · {1}', p.login.count, Rewards.loginAvailable(p) ? L('오늘 보상 대기 중') : L('오늘 받음'))),
+        const side = h('div.inset.rw-col.rw-side', h('h3', img('i_calendar', '.icon'), L('출석'), h('span.tip.rw-cnt', L('누적 {0}일', p.login.count))),
             h('button.btn' + (Rewards.loginAvailable(p) ? '.gold.rw-pulse' : ''), { onclick: () => { click(); loginModal(); } }, Rewards.loginAvailable(p) ? L('출석 보상 받기') : L('출석부 보기')),
             h('h3', img('i_ad', '.icon'), L('무료 보석')),
-            h('div.tip', L('광고를 보고 보석 {0}개 (오늘 {1}번 남음)', AD_FREE_GEMS, Rewards.adLeft(p, 'freeGems'))),
+            h('div.tip', L('광고를 보고 보석 {0}개', AD_FREE_GEMS)),
             h('button.btn' + (Rewards.adLeft(p, 'freeGems') ? '.gold' : '.off'), { onclick: async () => {
                 if (!Rewards.adLeft(p, 'freeGems')) { toast(L('오늘 무료 보석을 모두 받았습니다. 내일 다시 받을 수 있습니다')); return; } click();
                 if (await Rewards.watchAd('freeGems')) { const g = Rewards.grant(p, { gems: AD_FREE_GEMS }); showHub('rewards'); showGot(L('무료 보석'), g); }
-            } }, p.shop.premium ? L('바로 받기 (가호)') : L('광고 보기')));
+            } }, (p.shop.premium ? L('바로 받기 (가호)') : L('광고 보기')) + ` ${Rewards.adLeft(p, 'freeGems')}/${AD_LIMITS.freeGems}`));
         // growth pass
         // how many pass rewards can be taken right now (free row, and the paid row when the pass is owned)
         const passCan = PASS_TIERS.reduce((n, t, i) => n + (Rewards.passTierOpen(p, i) ? (!p.passClaimed.free.includes(i) ? 1 : 0) + (p.shop.pass && !p.passClaimed.paid.includes(i) ? 1 : 0) : 0), 0);
@@ -120,7 +119,7 @@
             })));
         byReady(WEEKLY_MISSIONS, m => Meta.weeklyState(p, m)).forEach(({ m, st }) => {
             ms.appendChild(h('div.mrow' + (st.claimed ? '.claimed' : st.done ? '.ready' : ''),
-                h('div', { style: { flex: 1 } }, h('div', m.name), h('div.bar', h('i', { style: { width: (st.v / m.goal * 100) + '%' } })), h('div.num.tip', `${st.v} / ${m.goal}`)),
+                h('div', { style: { flex: 1 } }, h('div.mtop', h('span', m.name), h('span.num.tip', `${st.v} / ${m.goal}`)), h('div.bar', h('i', { style: { width: (st.v / m.goal * 100) + '%' } }))),
                 ...rewardIcons(m.reward),
                 st.claimed ? h('span.claimed-t', L('완료')) : h('button.btn.small' + (st.done ? '.gold' : '.off'), { onclick: () => { if (!st.done) { notYet(st.v, m.goal); return; } click(); const g = Meta.claimWeekly(p, m.id); Save.save(); showHub('rewards'); showGot(L('주간 임무'), g); } }, L('받기'))));
         });

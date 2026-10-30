@@ -567,24 +567,7 @@ const Render = (() => {
         shadow(s.x, s.y, 9);
         const f = Math.floor(s.walk) % 2;
         const ss = Art.soldier(s.kind, f);
-        if (s.expire) {   // summoned helpers (증원): a super-saiyan style golden aura flares behind the body, so they read as temporary; countdown before they vanish
-            const nw = performance.now() / 1000, ph = s.hx * 0.07, cx = s.x, base = s.y + 4;
-            x.save();
-            // soft halo
-            const g = x.createRadialGradient(cx, base - 16, 2, cx, base - 16, 34); g.addColorStop(0, 'rgba(255,240,130,0.95)'); g.addColorStop(0.55, 'rgba(255,170,20,0.6)'); g.addColorStop(1, 'rgba(255,120,0,0)');
-            x.fillStyle = g; x.beginPath(); x.arc(cx, base - 16, 40, 0, TAU); x.fill();
-            // flame tongues licking up around the body
-            for (let i = 0; i < 6; i++) {
-                const side = (i / 5 - 0.5) * 2, flick = Math.sin(nw * (8 + i) + i * 1.9 + ph) * 0.5 + 0.5, hgt = 26 + flick * 18 - Math.abs(side) * 8, bx = cx + side * 15;
-                for (let layer = 0; layer < 2; layer++) {
-                    x.fillStyle = layer ? 'rgba(255,246,170,0.95)' : 'rgba(255,165,10,0.9)';
-                    const wd = layer ? 4 : 7, hh2 = layer ? hgt * 0.65 : hgt;
-                    x.beginPath(); x.moveTo(bx - wd, base - 6); x.quadraticCurveTo(bx - wd * 0.5, base - 6 - hh2 * 0.6, bx + side * 3, base - 6 - hh2); x.quadraticCurveTo(bx + wd * 0.5, base - 6 - hh2 * 0.5, bx + wd, base - 6); x.closePath(); x.fill();
-                }
-            }
-            // drifting sparks
-            for (let i = 0; i < 5; i++) { const k = (nw * 0.9 + i * 0.2 + ph) % 1; x.fillStyle = 'rgba(255,240,150,' + (1 - k) + ')'; x.fillRect(cx + Math.sin(i * 3.1 + nw * 2) * 14, base - 8 - k * 46, 2, 2); }
-            x.restore();
+        if (s.expire) {   // summoned helpers (증원): countdown before they vanish
             const left = s.expire - T;
             if (s.label && left > 0 && left <= 3.99) {
                 const n = Math.floor(left), fr = left - n;   // 3, 2, 1, 0
@@ -655,10 +638,31 @@ const Render = (() => {
         x.strokeText(nm, h.x, h.y - hs.h * 2 - 14); x.fillText(nm, h.x, h.y - hs.h * 2 - 14);
     }
 
+    // 냥이 총출동 allies: golden flames licking up behind the body, so they read as temporary
+    function flameAura(cx, base, ph, nw) {
+            x.save();
+            // soft halo
+            const g = x.createRadialGradient(cx, base - 16, 2, cx, base - 16, 34); g.addColorStop(0, 'rgba(255,240,130,0.95)'); g.addColorStop(0.55, 'rgba(255,170,20,0.6)'); g.addColorStop(1, 'rgba(255,120,0,0)');
+            x.fillStyle = g; x.beginPath(); x.arc(cx, base - 16, 40, 0, TAU); x.fill();
+            // flame tongues licking up around the body
+            for (let i = 0; i < 6; i++) {
+                const side = (i / 5 - 0.5) * 2, flick = Math.sin(nw * (8 + i) + i * 1.9 + ph) * 0.5 + 0.5, hgt = 26 + flick * 18 - Math.abs(side) * 8, bx = cx + side * 15;
+                for (let layer = 0; layer < 2; layer++) {
+                    x.fillStyle = layer ? 'rgba(255,246,170,0.95)' : 'rgba(255,165,10,0.9)';
+                    const wd = layer ? 4 : 7, hh2 = layer ? hgt * 0.65 : hgt;
+                    x.beginPath(); x.moveTo(bx - wd, base - 6); x.quadraticCurveTo(bx - wd * 0.5, base - 6 - hh2 * 0.6, bx + side * 3, base - 6 - hh2); x.quadraticCurveTo(bx + wd * 0.5, base - 6 - hh2 * 0.5, bx + wd, base - 6); x.closePath(); x.fill();
+                }
+            }
+            // drifting sparks
+            for (let i = 0; i < 5; i++) { const k = (nw * 0.9 + i * 0.2 + ph) % 1; x.fillStyle = 'rgba(255,240,150,' + (1 - k) + ')'; x.fillRect(cx + Math.sin(i * 3.1 + nw * 2) * 14, base - 8 - k * 46, 2, 2); }
+            x.restore();
+    }
+
     // 냥이 총출동 ally: the hero's own look, a little see-through, with a golden ring that fades in its last second
     function drawAlly(B, a, T, now) {
         const fade = Math.min(1, (a.until - T) / 1);
         shadow(a.x, a.y, 12);
+        x.globalAlpha = fade; flameAura(a.x, a.y + 4, a.x * 0.07, now); x.globalAlpha = 1;
         x.strokeStyle = `rgba(255,224,138,${0.8 * fade})`; x.lineWidth = 2;
         x.beginPath(); x.ellipse(a.x, a.y, 16 + Math.sin(now * 8) * 2, 6, 0, 0, TAU); x.stroke();
         const hs = a.skin ? heroSprite(a.cls, a.skin) : Art.hero(a.cls, 0);

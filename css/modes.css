@@ -534,3 +534,23 @@
 .pity-g .pg-bar { height: 12px; margin-top: 3px; border-radius: 7px; background: #e9d6b0; border: 2px solid #8a5a2a; overflow: hidden; }
 .pity-g .pg-bar i { display: block; height: 100%; background: linear-gradient(#ffd25a, #f0951e); transition: width .3s; }
 #app.mobile .pity-g .pg-top { font-size: 18px; }
+
+.cell .reqlv { position: absolute; left: 0; bottom: 0; padding: 0 4px; font-family: 'Lilita'; font-size: 12px; color: #fff; background: rgba(170,40,30,.9); border-radius: 0 6px 0 4px; text-shadow: var(--stroke-s); }
+#app.mobile .cell .reqlv { font-size: 14px; }
+
+/* 순위 마크와 프로필 테두리 */
+.rkmark { display: inline-flex; vertical-align: middle; filter: drop-shadow(0 1px 1px rgba(40,20,5,.5)); }
+.avatar { position: relative; display: inline-flex; flex: none; border-radius: 50%; }
+.avatar .rkmark { position: absolute; right: -6px; bottom: -5px; }
+.avatar .rk-pic, .avatar > img { display: block; }
+.avatar.crown0 { box-shadow: 0 0 0 2px #f2c230, 0 0 8px 2px rgba(242,194,48,.8); }
+.avatar.crown1 { box-shadow: 0 0 0 2px #cdd5df, 0 0 7px 2px rgba(205,213,223,.75); }
+.avatar.crown2 { box-shadow: 0 0 0 2px #cd8138, 0 0 7px 2px rgba(205,129,56,.7); }
+.avatar.crown3 { box-shadow: 0 0 0 2px #3fb6a3; }
+.avatar.crown4 { box-shadow: 0 0 0 2px #a39a86; }
+.rank-list .lg-rank { display: inline-flex; align-items: center; gap: 2px; min-width: 52px; }
+.rk-wrap { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.rk-wrap .rank-list { flex: 1; min-height: 0; overflow-y: auto; }
+.rk-legend { margin-top: 6px; text-align: center; }
+.myrank { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 10px; }
+.myrank > span { white-space: nowrap; }

@@ -92,6 +92,7 @@ const UI = {};
         const m = itemMain(it);
         infoModal(`${itemName(it)}${it.enh ? ' +' + it.enh : ''}`, h('div', { style: { display: 'flex', gap: '14px', alignItems: 'center', textAlign: 'left' } }, itemCell(it, { noNew: true }),
             h('div', h('div', { style: { color: RARITY[it.r].color } }, L('{0} {1} · 아이템 레벨 {2}', RARITY[it.r].name, SLOT_NAME[it.slot], itemLv(it))),
+                h('div', { style: { color: canWear(it) ? '#9fd65a' : '#ff7a5c' } }, L('{0}단계 · 착용 Lv.{1}', itemTier(it) + 1, itemReq(it))),
                 h('div', { style: { color: '#f5c451' } }, fmtOpt(m.name, m.v, m.pct)),
                 it.subs.map(sb => h('div', fmtOpt(SUB_OPTS[sb.k].name, sb.v, SUB_OPTS[sb.k].pct))))));
     }
@@ -102,6 +103,7 @@ const UI = {};
         const c = h('div.cell.r' + it.r, { title: itemName(it) });
         c.appendChild(Art.domImg(Art.itemIcon(it), 3));   // <img>, not a canvas each: bags can hold thousands
         if (it.enh) c.appendChild(h('span.enh', '+' + it.enh));
+        if (!canWear(it)) c.appendChild(h('span.reqlv', 'Lv.' + itemReq(it)));
         if (it.mid) c.appendChild(h('span.trd', L('거래##배지')));   // server-minted gear: can go on the market (js/ui/market.js)
         if (isEquipped(it)) c.appendChild(h('span.eq', L('장착##배지')));
         else if (it.isNew && !opts.noNew) c.appendChild(h('span.eq.new', 'NEW'));   // shown until the bag has been seen once
@@ -277,12 +279,6 @@ const UI = {};
     function fitAll(scope) {
         scope = scope || root();
         if (UI.catDecor) requestAnimationFrame(() => UI.catDecor(scope));
-        const inner = e => { const c = getComputedStyle(e); return e.clientWidth - parseFloat(c.paddingLeft) - parseFloat(c.paddingRight); };
-        scope.querySelectorAll('.navbtn > span:not(.badge)').forEach(e => fitText(e, () => inner(e.parentElement) + 8));
-        // then every nav label uses the smallest size so the row looks even
-        const navs = [...scope.querySelectorAll('.navbtn > span:not(.badge)')];
-        const minNav = Math.min(...navs.map(e => parseFloat(getComputedStyle(e).fontSize)));
-        if (navs.length) navs.forEach(e => { e.style.fontSize = minNav + 'px'; });
         scope.querySelectorAll('.btn, .topbar .title-t, .topbar .chip:not(.herochip), .tcol h3').forEach(e => fitText(e, () => e.clientWidth));
         scope.querySelectorAll('.topbar .herochip > span:not(.hc)').forEach(e => fitText(e, () => e.clientWidth, 12));
         scope.querySelectorAll('.skillrow .sr-l').forEach(e => fitText(e, () => e.clientWidth, 12));

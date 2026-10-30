@@ -211,7 +211,7 @@ Object.assign(Battle.prototype, {
                 if (e.cd <= 0) {
                     e.cd = 1.0;
                     const tgt = e.blockedBy;
-                    this.hurtAlly(tgt, e.atk);
+                    e.def.boss ? this.bossHurt(tgt, e.atk) : this.hurtAlly(tgt, e.atk);
                     if (e.def.cleave) {                              // 설인: hits everyone around the blocker
                         for (const s of this.soldiers) if (s !== tgt && s.deadUntil <= this.t && dist2(s.x, s.y, tgt.x, tgt.y) < e.def.cleave ** 2) this.hurtAlly(s, e.atk * 0.6);
                         for (const hh of this.heroList()) if (tgt !== hh && hh.deadUntil <= this.t && dist2(hh.x, hh.y, tgt.x, tgt.y) < e.def.cleave ** 2) this.hurtAlly(hh, e.atk * 0.6);
@@ -219,6 +219,7 @@ Object.assign(Battle.prototype, {
                     }
                 }
                 if (e.def.boss && this.raidLive && this.raidLive.gateLose) held = this.raidLive.blockSlow || 0.3;
+                else if (e.def.boss) held = BOSS_BLOCK_SLOW;   // blockers only slow a boss, it walks through them (a wall of 성기사 used to hold it forever)
                 else { e.walk += dt * 2; continue; }
             }
             // a boss or elite at the gate smashes it for a few seconds: last chance to bring it down
