@@ -21,7 +21,7 @@
         // the hero pick sits above the dark panel as its tabs (inside it, it read like part of the hero's info)
         const pick = h('div.classpick', Object.keys(HEROES).map(c =>
             h('button.btn.small.cp' + (c === cls ? '.gold' : '.ghost'), { onclick: () => { click(); p.hero = c; Save.save(); showHub('hero'); } }, h('span', HEROES[c].name), h('span.cp-r', HERO_GUIDE[c][0]))));
-        const port = h('div', { style: { display: 'flex', gap: '12px', alignItems: 'center' } },
+        const port = h('div', { style: { display: 'flex', gap: '12px', alignItems: 'center', padding: '10px 0' } },
             h('div.portrait', { style: { width: '100px', height: '100px' }, title: L('배경색 바꾸기'), onclick: () => { click(); avatarBgModal(); } },
                 (() => { const a = img(heroFace(cls, Save.p.shop && Save.p.shop.skin[cls])); a.style.background = avatarBg(); return a; })(), h('span.av-edit', L('배경'))),
             h('div.hl-info',
@@ -557,7 +557,7 @@
         } else {
             // one sample portrait per grade
             const sample = ['knight_red', 'mage_sunset', 'ranger_ninja', 'knight_santa', 'mage_kumiho'];
-            left.appendChild(h('div.sm-rates.sm-skinrates', SKIN_SUMMON.table.map((v, r) => { const s = skinById(sample[r]); return rate(r, img(heroFace(s.cls, s.id), '.sm-pic'), v); })));
+            left.appendChild(h('div.sm-rates.sm-skinrates', SKIN_SUMMON.table.map((v, r) => { const s = skinById(sample[r]); return rate(r, img(heroPortrait(s.cls, s.id), '.sm-pic.sm-full'), v); })));
             left.appendChild(pityGauge(L('전설 확정 게이지'), p.skinPity, SKIN_SUMMON.pity));
             const pool = [0, 1, 2, 3, 4].flatMap(skinPool);
             left.appendChild(h('div.tip.sm-dup', L('중복 스킨 소환 시 보석으로 환급돼요') + ' · ' + L('모은 스킨 {0} / {1}', pool.filter(id => p.shop.skins.includes(id)).length, pool.length)));

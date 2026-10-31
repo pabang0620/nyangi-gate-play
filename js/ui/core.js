@@ -43,7 +43,7 @@ const UI = {};
             silver: [ico('silver', 40), L('은화'), L('장비 강화에 쓰입니다.'), L('얻는 곳: 스테이지 보상, 무한의 성벽, 수비대 보급, 장비 분해, 요일 도전 은화 광산'), [[L('영웅 · 장비'), go('hero')]]],
             gem: [ico('gem', 40), L('보석'), L('장비 소환과 냥이 스킨 구매에 쓰입니다.'), L('얻는 곳: 처음 얻는 별, 출석, 임무, 업적, 성장 패스, 무한의 성벽, 요일 도전 보석 동굴'), [[L('소환'), go('summon')], [L('상점'), go('shop')]]],
             star: [ico('star', 40), L('별'), L('남은 별 {0} / 지금까지 얻은 별 {1}', totalStars(p) - spentStars(p), totalStars(p)) + '\n' + L('별로 영구 강화를 연구하고, 모은 별 수만큼 성장 패스 단계가 열립니다. 연구는 언제든 무료로 초기화할 수 있습니다.'),
-                L('얻는 곳: 스테이지마다 최대 3개 (목숨을 2 이하로 잃고 이기면 3개). 영웅 난이도에서도 따로 3개'), [[L('연구'), go('research')]]],
+                L('얻는 곳: 스테이지마다 최대 3개 (목숨을 2 이하로 잃고 이기면 3개). 어려움 난이도에서도 따로 3개'), [[L('연구'), go('research')]]],
             stone: [img('i_stone', '.icon'), L('강화석'), L('장비를 +{0} 이상으로 강화할 때 필요합니다.', ENHANCE.stoneFrom + 1), L('얻는 곳: 요일 도전 강화석 채굴장 (화·금·일), 28일 출석, 업적, 시즌 리그'), [[L('요일 도전'), go('endless', { ctab: 'dungeon' })]]],
             ticket: [img('i_ticket', '.icon'), L('소환권'), L('보석 없이 장비를 1회 소환합니다.'), L('얻는 곳: 출석, 주간 임무, 무한의 성벽 구간 보상, 성장 패스, 업적'), [[L('소환'), go('summon')]]],
         };
@@ -113,7 +113,7 @@ const UI = {};
     }
 
     function rewardCell(iconKey, amount, cls = '') {
-        const c = h('div.cell' + cls);
+        const c = h('div.cell.rwc' + cls);   // .rwc: one size rule for every reward box (css/cat-theme.css end)
         const gen = iconKey.startsWith('i_') && Art.gen(iconKey);
         c.appendChild(gen ? Art.domCanvas(gen, 2) : Art.domCanvas(Art.icon(iconKey.startsWith('i_') ? 'star' : iconKey), 3));
         c.appendChild(h('span.cnt', amount));

@@ -181,8 +181,8 @@
             h('div.inset.rd2-list',
                 h('div.rd2-whead', h('div', L('내 기여 '), h('span.gold-t', L('{0}점', fmt(w.me.pts))), w.me.rank ? L(' · {0}위', w.me.rank) : ''),
                     h('button.btn.small', { onclick: () => { click(); worldRank(w); } }, L('기여 순위'))),
-                h('b', L('전체 달성 보상 (다음 주 우편)')), marks,
-                ranks ? h('b', L('기여 순위 보상 (다음 주 우편)')) : null, ranks, foot)));
+                h('b.rd2-wtitle', L('전체 달성 보상 (다음 주 우편)')), marks,
+                ranks ? h('b.rd2-wtitle', L('기여 순위 보상 (다음 주 우편)')) : null, ranks, foot)));
     }
     function worldRank(w) {
         const d = modal([h('h2', L('월드 보스 기여 순위')),

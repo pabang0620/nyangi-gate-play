@@ -41,7 +41,7 @@
             h('div.iconbtn', { onclick: () => { click(); pause(true); } }, img('i_pause')));
         root().appendChild(top);
         if (B.coop) root().appendChild(hud.mate = h('div.hud-mates'));   // the other players' gold: its own row under the top bar
-        if (B.cond) root().appendChild(hud.cond = h('div.hud-cond.top', { title: L('영웅 난이도 3성 조건') }));
+        if (B.cond) root().appendChild(hud.cond = h('div.hud-cond.top', { title: L('어려움 난이도 3성 조건') }));
         // hero panel
         const cls = B.hero.cls;
         hud.hpBar = h('i'); hud.dead = h('div.dead');

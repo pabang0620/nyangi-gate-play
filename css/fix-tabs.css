@@ -74,7 +74,7 @@
 #app.mobile .dg-row .dg-nm { width: auto; min-width: 56px; white-space: nowrap; line-height: 1.15; }
 #app.mobile .dg-row .dg-btns { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; gap: 3px; flex: 0 1 auto; min-width: 0; }
 #app.mobile .dg-row .dg-btns .btn.small { min-height: 50px; font-size: 15px; padding: 0 3px; border-width: 11px; border-image-width: 11px; }
-#app.mobile .dg-cols .dg-col.closed { flex: 0.36; min-width: 0; }
+#app.mobile .dg-cols .dg-col.closed { flex: 0.73; min-width: 0; }
 #app.mobile .dg-cols .dg-col.wide .dg-rows { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 #app.mobile .dg-cols .dg-row { min-width: 0; }
 #app.mobile .dg-cols .dg-rw .cell { width: 52px; height: 52px; }

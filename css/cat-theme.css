@@ -23,8 +23,8 @@
 .portrait.cat-frame::after { content: ''; position: absolute; left: -11%; top: -24%; width: 122%; height: 128%; pointer-events: none;
     background: url('../img/ui_avatar_frame.png') center / 100% 100% no-repeat; }
 .portrait.cat-frame .dead { border-radius: 50%; z-index: 1; }
-.portrait .av-edit { position: absolute; right: -6px; bottom: -4px; z-index: 2; padding: 1px 7px; border-radius: 10px; font-size: 12px; color: #fff4dc; background: #6b3e12; box-shadow: 0 0 0 2px #f2c14e; text-shadow: none; }
-#app.mobile .portrait .av-edit { font-size: 16px; }
+.portrait .av-edit { position: absolute; right: -4px; bottom: -2px; z-index: 2; padding: 0 4px; border-radius: 8px; font-size: 8px; line-height: 13px; color: #fff4dc; background: #6b3e12; box-shadow: 0 0 0 2px #f2c14e; text-shadow: none; }
+#app.mobile .portrait .av-edit { font-size: 10px; line-height: 15px; }
 /* avatar background picker */
 .av-swatches { display: grid; grid-template-columns: repeat(5, 72px); gap: 12px; justify-content: center; margin: 8px 0 12px; }
 .av-sw { width: 72px; height: 72px; padding: 0; border: none; border-radius: 50%; overflow: hidden; cursor: pointer; box-shadow: 0 0 0 2px #c08a3a, 0 0 0 4px #2a170a; }
@@ -340,7 +340,7 @@ body { line-height: 1.4; }
 .hero-left .portrait { width: 84px !important; height: 84px !important; }
 .hl-btns { gap: 8px; }
 .hl-pill { padding: 5px 16px; }
-.portrait .av-edit { padding: 2px 9px; }
+.portrait .av-edit { padding: 0 4px; }
 .equiprow .eq-skin { margin-left: auto; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; font-size: 13px; text-shadow: var(--stroke-s); white-space: nowrap; }
 .equiprow .eq-skin img { width: 54px; height: 54px; border-radius: 50%; object-fit: cover; object-position: top; background: #3a2412; box-shadow: 0 0 0 3px #f2c14e, 0 0 0 5px #6b3e12; }
 .equiprow .eq-skin.r1 img { box-shadow: 0 0 0 3px var(--r1), 0 0 0 5px #4a2a0e; }
@@ -430,7 +430,7 @@ body { line-height: 1.4; }
 /* 스킨 소환: 등급 그림 틀을 키우고, 환급 안내와 모은 스킨을 한 줄로 */
 .sm-skinrates .sm-rate .cell { width: 82px; height: 82px; }
 #app.mobile .summonwin.sm2 .sm-skinrates .sm-rate .cell { width: 82px; height: 82px; }
-#app.mobile .summonwin.sm2 .sm-skinrates .sm-rate .cell img.sm-pic, .sm-skinrates .sm-rate .cell img.sm-pic { width: 47px; height: 47px; }
+#app.mobile .summonwin.sm2 .sm-skinrates .sm-rate .cell img.sm-pic, .sm-skinrates .sm-rate .cell img.sm-pic { width: 68px; height: 72px; border-radius: 0; object-fit: contain; object-position: bottom; }   /* whole portrait, ears never cut */
 .summonwin .sm-left > .pity-g { width: 156px; }   /* skin tab gauge: 30% longer than its old fit-to-label width */
 .sm-skinrates { gap: 12px; }
 /* 요일 도전: 설명 아래 나오는 아이템 그림 */
@@ -568,3 +568,16 @@ body { line-height: 1.4; }
 .rd2-wranks { gap: 4px; }
 .rd2-wrow { gap: 4px; padding: 2px 6px; }
 .rd2-wrow > b { min-width: 0; font-size: 14px; }
+/* 월드 보스 보상: 수량 글자를 아주 작게 아이콘 아래 띠로(아이콘을 가리지 않게), 등급 글자도 가늘게 */
+#app .rd2-wrow > b { font-size: 11px; font-weight: normal; opacity: .85; }
+#app .rd2-wrow { align-items: center; padding-top: 3px; padding-bottom: 3px; }
+#app .rd2-wtitle { font-size: 13px; font-weight: normal; margin-top: 8px; margin-bottom: 2px; }   /* smaller headings, the room they free goes to space above each list */
+/* 보상 칸 통일 (UI.rewardCell이 .rwc를 붙임): 어디서든 아이콘은 칸의 2/3, 수량은 칸 크기에 맞춘 작은 글자로 아래 테두리에 걸쳐 아이콘을 가리지 않게.
+   칸 크기는 화면마다 그대로 두고 그 안의 비율만 맞춘다. 테두리를 7px로 고정해서 100cqw + 14px = 칸 바깥 크기 */
+#app .cell.rwc { container-type: size; border-width: 7px; border-image-width: 7px; }
+#app .cell.rwc:not(.gear3) > :is(canvas, img):not(.cnt) { width: calc((100cqw + 14px) * .66) !important; height: calc((100cqw + 14px) * .66) !important; max-width: none !important; max-height: none !important; transform: translateY(calc((100cqw + 14px) * -.07)); }
+#app .cell.rwc .cnt { left: 50%; right: auto; bottom: -7px; transform: translateX(-50%); font-family: inherit; font-weight: normal; font-size: clamp(9px, calc((100cqw + 14px) * .2), 13px) !important; line-height: 1.15; padding: 0 3px; border-radius: 4px; background: rgba(24, 12, 4, .78); }
+#app .cell.rwc:not(:has(> .cnt)) > :is(canvas, img) { transform: none; }   /* no amount (요일 도전 drops): icon stays centred */
+/* 지도: 난이도 버튼 하나를 장 이름 오른쪽에 */
+.chname .chtitle { display: flex; align-items: center; gap: 8px; }
+.chname .chtitle .modetog { margin-left: 0; }

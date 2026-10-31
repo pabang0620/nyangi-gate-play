@@ -31,7 +31,7 @@ const STORY = [
       outro: [['mage', L('아에리스가 떨어뜨린 깃털에 톱니 무늬가… 시간의 탑?')], ['ranger', L('저 탑의 시계가 거꾸로 돌고 있어.')]] },
     { intro: [['mage', L('태엽 병사는 쓰러지기 직전에 한 번 되감겨. 끝까지 몰아쳐야 해.')], ['knight', L('시간 술사 근처의 탑은 느려진다냥. 탑을 넓게 퍼뜨리자!')]],
       boss: [['chronos', L('모든 패배는 되감을 수 있다. 너희의 승리만 빼고.')], ['ranger', L('시간 정지가 오면 탑이 멈춰. 영웅 스킬을 아껴 둬!')]],
-      outro: [['knight', L('크로노스의 시계가 멈췄다냥! 이제 진짜 평화야!')], ['mage', L('영웅 난이도, 시즌 리그, 토벌전… 우리 수비대는 계속 강해질 거야.')], ['ranger', L('성문은 우리가 지킨다. 냥이 수비대, 영원히!')]] }
+      outro: [['knight', L('크로노스의 시계가 멈췄다냥! 이제 진짜 평화야!')], ['mage', L('어려움 난이도, 시즌 리그, 토벌전… 우리 수비대는 계속 강해질 거야.')], ['ranger', L('성문은 우리가 지킨다. 냥이 수비대, 영원히!')]] }
 ];
 
 // 스토리 모음: each cat's own past (all three were left behind by their owners). An episode opens when its stage is first cleared

@@ -155,7 +155,7 @@
         // first clear of a chapter boss: outro scene on top of the result
         if (R.chapterClear !== undefined) {
             const lines = Meta.storyFor(p, R.chapterClear, 'outro');
-            if (lines) { Meta.markStory(p, R.chapterClear, 'outro'); setTimeout(() => playStory(lines, () => toast(R.chapterClear + 1 < CHAPTERS.length ? L('{0}장이 열렸습니다! 영웅 난이도도 열렸습니다', R.chapterClear + 2) : L('영웅 난이도가 열렸습니다'))), 600); }
+            if (lines) { Meta.markStory(p, R.chapterClear, 'outro'); setTimeout(() => playStory(lines, () => toast(R.chapterClear + 1 < CHAPTERS.length ? L('{0}장이 열렸습니다! 어려움 난이도도 열렸습니다', R.chapterClear + 2) : L('어려움 난이도가 열렸습니다'))), 600); }
         }
         // count the silver up so the reward lands
         const sc = d.querySelector('.cell .cnt');

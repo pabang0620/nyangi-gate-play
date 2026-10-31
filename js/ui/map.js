@@ -33,19 +33,20 @@
         const unlocked = idx => (S.hard ? hardUnlocked(p, idx) : stageUnlocked(p, idx));
         // chapter selector: ◀ n장 이름 ▶ + progress dots (8 chapters do not fit as tabs)
         const go = d => { const c = ch + d; if (c < 0 || c >= CHAPTERS.length) return; if (!chOpen(c)) { toast(L('이전 장의 보스를 물리치면 열립니다')); return; } click(); S.chapter = c; showHub('map'); };
-        // centred: ◀ chapter name (n / total under it) ▶ and the 보통 / 영웅 switch right beside it
+        // centred: ◀ chapter name (n / total under it) ▶; one difficulty button right of the name shows the current one (보통 / 어려움), a tap switches
+        const toHard = () => {
+            if (!hardOpen) { hardInfo(false); return; }
+            if (!p.seenTips.hardMode) { p.seenTips.hardMode = true; Save.save(); hardInfo(true, () => { S.hard = true; showHub('map'); }); return; }
+            S.hard = true; showHub('map');
+        };
+        // still locked: the tap explains how 어려움 opens
+        const modeBtn = h('div.modetog',
+            h('button.btn.small' + (S.hard ? '.red' : '.gold'), { onclick: () => { click(); if (S.hard) { S.hard = false; showHub('map'); } else toHard(); } }, S.hard ? L('어려움') : L('보통')),
+            hardOpen && !p.seenTips.hardMode ? h('span.badge.hard-new', '!') : null);
         root().appendChild(h('div.chnav',
             h('button.btn.small' + (ch > 0 ? '' : '.off'), { onclick: () => go(-1) }, '◀'),
-            h('div.chname' + (S.hard ? '.hard' : ''), h('div', L('{0}장 {1}', ch + 1, CHAPTERS[ch].name)), h('div.chnum', `${ch + 1} / ${CHAPTERS.length}`)),
-            h('button.btn.small' + (ch < CHAPTERS.length - 1 && chOpen(ch + 1) ? '' : '.off'), { onclick: () => go(1) }, '▶'),
-            h('div.modetog',
-                h('button.btn.small' + (!S.hard ? '.gold' : '.ghost'), { onclick: () => { click(); S.hard = false; showHub('map'); } }, L('보통')),
-                h('button.btn.small' + (S.hard ? '.red' : '.ghost') + (hardOpen ? '' : '.off'), { onclick: () => {
-                    click();
-                    if (!hardOpen) { hardInfo(false); return; }
-                    if (!p.seenTips.hardMode) { p.seenTips.hardMode = true; Save.save(); hardInfo(true, () => { S.hard = true; showHub('map'); }); return; }
-                    S.hard = true; showHub('map');
-                } }, L('영웅 난이도')), hardOpen && !p.seenTips.hardMode ? h('span.badge.hard-new', '!') : null)));
+            h('div.chname' + (S.hard ? '.hard' : ''), h('div.chtitle', h('span', L('{0}장 {1}', ch + 1, CHAPTERS[ch].name)), modeBtn), h('div.chnum', `${ch + 1} / ${CHAPTERS.length}`)),
+            h('button.btn.small' + (ch < CHAPTERS.length - 1 && chOpen(ch + 1) ? '' : '.off'), { onclick: () => go(1) }, '▶')));
         const layer = h('div.pass', { style: { position: 'absolute', inset: '0' } });
         const svgNS = 'http://www.w3.org/2000/svg';
         const svg = document.createElementNS(svgNS, 'svg');
@@ -75,7 +76,7 @@
             layer.appendChild(node);
         }
         root().appendChild(layer);
-        const starRule = [L('별 3개: 목숨을 2 이하로 잃고 승리'), S.hard ? L('영웅 난이도: 별 1개마다 보석 {0}', HARD.gemsPerStar) : L('처음 얻는 별 1개마다 보석 15')];
+        const starRule = [L('별 3개: 목숨을 2 이하로 잃고 승리'), S.hard ? L('어려움 난이도: 별 1개마다 보석 {0}', HARD.gemsPerStar) : L('처음 얻는 별 1개마다 보석 15')];
         root().appendChild(h('div.tip.hubtip', { style: { position: 'absolute', left: '24px', top: '78px', textAlign: 'left' } }, starRule[0], h('br'), starRule[1]));
         root().appendChild(UI.helpBtn(L('별 얻는 법'), () => starGuide(S.hard, ch), '.mob-q.map-q'));
         if (!p.seenTips.map) firstCoach();
@@ -119,8 +120,8 @@
         ].filter(Boolean).join('\n');
         // the reward line gets icons you can tap for the full explanation
         const rw = h('div.rwrow', UI.rewardCell('gem', HARD.gemsPerStar), UI.rewardCell('silver', 'x' + HARD.silverMul));
-        const lock = open ? null : h('div.locknote', img('i_lock', '.icon'), ' ', L('이 장의 보스를 물리치면 영웅 난이도가 열립니다'));
-        UI.infoModal(L('영웅 난이도'), [h('div', text), rw, lock], open && then ? [[L('도전하러 가기'), then]] : []);
+        const lock = open ? null : h('div.locknote', img('i_lock', '.icon'), ' ', L('이 장의 보스를 물리치면 어려움 난이도가 열립니다'));
+        UI.infoModal(L('어려움 난이도'), [h('div', text), rw, lock], open && then ? [[L('도전하러 가기'), then]] : []);
     }
 
 
@@ -165,7 +166,7 @@
             h('div.hp' + (p.hero === c ? '.on' : ''), { onclick: () => { click(); p.hero = c; Save.save(); d.remove(); stageInfo(idx, hard); } },
                 img(heroFace(c, p.shop && p.shop.skin[c])), h('div', h('b', `${HERO_NAMES[c]} · ${HEROES[c].name}`), h('span.num', ` Lv.${p.heroes[c].lv}`), h('div.tip', HEROES[c].desc)))));
         const left = h('div.si-left',
-            h('div.title-t', { style: hard ? { color: '#ff7a5c' } : {} }, `${hard ? L('[영웅] ') : ''}${stageLabel(idx)} ${st.name}`),
+            h('div.title-t', { style: hard ? { color: '#ff7a5c' } : {} }, `${hard ? L('[어려움] ') : ''}${stageLabel(idx)} ${st.name}`),
             h('div.row', { style: { alignItems: 'center' } }, starsStr(have), h('span', { style: { marginLeft: '8px' } }, L('웨이브 {0}', st.waves) + (st.boss ? L(' · 보스 {0}', ENEMIES[st.boss].name) : ''))),
             h('div.inset', { style: { padding: '8px', display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' } },
                 kinds.concat(st.boss ? [st.boss] : []).map(k => h('div.si-enemy', { style: { textAlign: 'center', fontSize: '12px', width: '78px' }, onclick: () => { click(); UI.enemyInfo(k); } },

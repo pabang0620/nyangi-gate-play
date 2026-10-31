@@ -20,7 +20,7 @@
 .dg-cols { display: flex; gap: 10px; flex: 1; min-height: 0; }
 .dg-col { flex: 1; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
 .dg-col h3 { font-family: 'BlackHan'; font-weight: normal; font-size: 20px; color: var(--gold); text-shadow: var(--stroke-s); }
-.dg-col.closed { filter: grayscale(.75) brightness(.7); flex: 0.55; }
+.dg-col.closed { filter: grayscale(.75) brightness(.7); flex: 0.96; }   /* the open column ~20% narrower than 0.55 gave it */
 .dg-row { display: flex; align-items: center; gap: 8px; padding: 2px 6px; border-radius: 8px; background: rgba(0,0,0,.22); }
 .dg-row.lock { opacity: .45; }
 .dg-row .star { width: 16px; height: 16px; }

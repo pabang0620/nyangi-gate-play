@@ -136,7 +136,7 @@
     function signUpModal(after) {
         const id = field(L('아이디 (영어 소문자·숫자 4~16자)')), pw = field(L('비밀번호 (8자 이상)'), 'password'), pw2 = field(L('비밀번호 확인'), 'password');
         const err = errLine();
-        const d = modal([h('h2', L('회원가입')),
+        const d = modal([h('h2', L('간편하게 가입하기')),
             h('div.tip', L('이 아이디로 다른 기기나 웹에서도 이어서 할 수 있어요.')),
             h('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', margin: '8px 0', minWidth: '260px' } }, id, pw, pw2),
             h('div.tip', L('비밀번호를 잊으면 찾을 수 없어요. 꼭 기억해 두세요. 이메일은 받지 않아요.')),
@@ -299,7 +299,7 @@
                 h('b', L('적 처치 시 장비 등급 (장비가 떨어졌을 때)')),
                 tbl([L('등급'), L('일반 적'), L('정예'), L('보스')], names.map((n, i) => h('tr', h('td', n), h('td', DROP.table.normal[i] + '%'), h('td', DROP.table.elite[i] + '%'), h('td', DROP.table.boss[i] + '%')))),
                 h('div.tip', L('장비가 떨어질 확률: 일반 적 {0}, 정예 {1}, 보스 {2} ({3}번)', pct(DROP.chance.normal), pct(DROP.chance.elite), pct(DROP.chance.boss), DROP.rolls.boss)),
-                h('div.tip', L('영웅 난이도에서는 정예·보스가 1번씩 더 굴립니다. 소탕도 같은 표를 씁니다.')),
+                h('div.tip', L('어려움 난이도에서는 정예·보스가 1번씩 더 굴립니다. 소탕도 같은 표를 씁니다.')),
                 h('b', L('장비 강화 성공 확률')),
                 tbl([L('단계'), L('성공')], ENHANCE.rate.map((r, i) => row(`+${i} → +${i + 1}`, pct(r) + (i >= ENHANCE.dropFrom ? L(' (실패 시 1단계 하락)') : '') + (i >= ENHANCE.destroyFrom ? L(' · 파괴 {0}', destroyPct(i)) : '')))),
                 h('div.tip', L('하락방지권·파괴방지권은 성공 확률을 바꾸지 않고, 실제로 막았을 때만 줄어듭니다.')),

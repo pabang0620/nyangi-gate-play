@@ -338,9 +338,12 @@ html:not(:lang(ja)):not(:lang(zh)) body { word-break: keep-all; overflow-wrap: a
 .btn.signin.idl { border: 2px solid #8a6a44; background: rgba(250, 238, 210, .94); color: #3a2410; }
 .signin-ico svg { width: 18px; height: 18px; }
 .title-logins .btn { min-height: 26px; font-size: 13px; padding: 0 12px; }
+.title-logins { width: min(300px, 86vw); }
+.title-logins .btn { width: 100%; }   /* same width as the sign-in buttons above */
 
 /* sign-in buttons: about half the old height on phones too (the title is zoomed 1.25 there) */
 #app.mobile .btn.signin { height: 32px; min-height: 0; font-size: 15px; border-radius: 8px; border-width: 2px; }
 #app.mobile .signin-list { gap: 5px; width: min(260px, 70vw); }
 #app.mobile .signin-ico svg { width: 15px; height: 15px; }
 #app.mobile .title-logins .btn { min-height: 30px; font-size: 13px; border-width: 8px; border-image-width: 8px; }
+#app.mobile .title-logins { width: min(260px, 70vw); }

@@ -77,7 +77,7 @@ const Game = {
         } else if (opt.tower) {
             // 심연의 탑: the run's current floor (js/tower.js builds the stage, its mutators and the run's blessings)
             banner = Tower.setup(p, cfg); music = Tower.state(p).run.floor % 5 === 0 ? 'boss' : 'endless';
-        } else banner = `${opt.hard ? L('[영웅] ') : ''}${stageLabel(opt.stageIdx)} ${STAGES[opt.stageIdx].name}`;
+        } else banner = `${opt.hard ? L('[어려움] ') : ''}${stageLabel(opt.stageIdx)} ${STAGES[opt.stageIdx].name}`;
         this.lastOpt = opt; this.lastBanner = banner;
         // limited-entry modes: the entry counts from the start, so restarting or killing the app can't reroll a run
         if (opt.cup || opt.dungeon || (opt.raid && !opt.raidOn)) { p.runLock = { cup: !!opt.cup, dungeon: opt.dungeon || null, tier: opt.tier, raid: !!opt.raid }; Save.save(); }
