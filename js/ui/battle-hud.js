@@ -122,11 +122,11 @@
         if (Game.speed === 3 && !Rewards.speed3Unlocked(Save.p)) { Game.speed = 2; Save.p.set.speed = 2; toast(L('3배속 시간이 끝났습니다')); }
         set('speed', (B.coop ? Coop.speed : Game.speed) + L('배'), hud.speedLbl);
         if (hud.mate) {
-            const mates = B.acts.map((a, k) => k === B.actor ? null : { name: Coop.nameOf(k), gold: fmt(B.goldOf(k)), auto: !!Coop.goneOf(k) }).filter(Boolean);
+            const mates = B.acts.map((a, k) => k === B.actor ? null : { name: Coop.nameOf(k), ai: Coop.isAi(k), gold: fmt(B.goldOf(k)), auto: !!Coop.goneOf(k) }).filter(Boolean);
             const key = mates.map(m => `${m.name}|${m.gold}|${m.auto}`).join('/');
             if (S.lastHud.mate !== key) {
                 S.lastHud.mate = key;
-                hud.mate.replaceChildren(...mates.map(m => h('div.hud-box.mate-chip', h('span.mn', m.name), h('span.mg', ico('gold'), m.gold), m.auto ? h('span.ma', L(' (자동)').trim()) : null)));
+                hud.mate.replaceChildren(...mates.map(m => h('div.hud-box.mate-chip', m.ai ? UI.aiBadge() : null, h('span.mn', m.name), h('span.mg', ico('gold'), m.gold), m.auto ? h('span.ma', L(' (자동)').trim()) : null)));
             }
         }
         if (hud.cond) { set('cond', L('3성: {0} {1}', B.cond.name, B.condBroken ? '✗' : '✓'), hud.cond); hud.cond.classList.toggle('broken', B.condBroken); }
@@ -398,10 +398,10 @@
             TOWER_ORDER.forEach((type, i) => {
                 const d = TOWERS[type], c = B.towerCost(type, 0);
                 const bb = add(pos[i][0], pos[i][1], Art.domCanvas(Art.tower(type, 0, null), 1.15), c,
-                    () => { if (B.ban === type) { toast(B.mode === 'tower' ? L('이번 층에서는 {0}을(를) 지을 수 없습니다', d.name) : L('이번 주 공방전에서는 {0}을(를) 지을 수 없습니다', d.name)); return; } if (B.build(slot, type)) { closePopup(); if (!tipSeen('t_' + type)) coach(L('{0} 완성!', d.name), [d.desc, type === 'barracks' ? L('탑을 다시 누르면 업그레이드, 깃발 버튼으로 집결지를 옮겨요') : L('탑을 다시 누르면 업그레이드할 수 있어요')]); } else toast(L('금화가 {0} 부족합니다', c - Math.floor(B.gold))); },
+                    () => { if (B.towerOk && !B.towerOk(type, null)) { toast(L('대전 덱에 없는 탑이에요')); return; } if (B.ban === type) { toast(B.mode === 'tower' ? L('이번 층에서는 {0}을(를) 지을 수 없습니다', d.name) : L('이번 주 공방전에서는 {0}을(를) 지을 수 없습니다', d.name)); return; } if (B.build(slot, type)) { closePopup(); if (!tipSeen('t_' + type)) coach(L('{0} 완성!', d.name), [d.desc, type === 'barracks' ? L('탑을 다시 누르면 업그레이드, 깃발 버튼으로 집결지를 옮겨요') : L('탑을 다시 누르면 업그레이드할 수 있어요')]); } else toast(L('금화가 {0} 부족합니다', c - Math.floor(B.gold))); },
                     () => [h('b', d.name), h('div', d.desc), statLines(B, { type, lv: 0, spec: null })]);
                 bb.appendChild(h('span.nm', d.name)); bb.range = B.towerStats({ type, lv: 0, spec: null }).range;
-                if (B.ban === type) bb.classList.add('banned');
+                if (B.ban === type || (B.towerOk && !B.towerOk(type, null))) bb.classList.add('banned');   // towerOk: 냥냥 대전 deck (js/battle/pvp.js)
             });
         } else {
             const d = TOWERS[t.type];
@@ -413,9 +413,10 @@
             } else if (t.spec === null) {
                 d.specs.forEach((sp, i) => {
                     const sb2 = add(i ? 64 : -64, -66, Art.domCanvas(Art.tower(t.type, 2, sp.id), 1.15), B.towerCost(t.type, 0, i),
-                        () => { if (!B.upgrade(slot, i)) toast(B.coop && !B.ownsTower(slot.tower) ? L('친구가 지은 탑이에요') : L('금화가 부족합니다')); else if (B.coop) closePopup(); else openPopup(B, slot); },
+                        () => { if (B.towerOk && !B.towerOk(t.type, i)) { toast(L('대전 덱에 없는 특화예요')); return; } if (!B.upgrade(slot, i)) toast(B.coop && !B.ownsTower(slot.tower) ? L('친구가 지은 탑이에요') : L('금화가 부족합니다')); else if (B.coop) closePopup(); else openPopup(B, slot); },
                         () => [h('b', sp.name), h('div', sp.desc), statLines(B, { type: t.type, lv: 2, spec: i }, t)]);
                     sb2.appendChild(h('span.nm', sp.name)); sb2.range = B.towerStats({ type: t.type, lv: 2, spec: i }).range;
+                    if (B.towerOk && !B.towerOk(t.type, i)) sb2.classList.add('banned');
                 });
             } else {
                 add(0, -78, [img('i_max', '.tico'), h('span.nm', L('최고'))], null, () => { }, () => [h('b', d.specs[t.spec].name), h('div', d.specs[t.spec].desc), statLines(B, t)]);
@@ -498,6 +499,7 @@
     // ------------------------------------------------------------ pause / banners / result
     function pause(on) {
         const Bp = Game.battle;
+        if (on && Bp && Bp.pvp && UI.pvpPause) { UI.pvpPause(); return; }   // 냥냥 대전 (js/ui/pvp.js): never stops, its own menu
         if (on && (!Bp || Bp.state === 'win' || Bp.state === 'lose' || S.result)) return;   // outcome already decided
         S.paused = on;
         Game.paused = on && !(Bp && Bp.coop);   // co-op never stops (the partner keeps playing)

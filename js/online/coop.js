@@ -10,7 +10,10 @@
 // (tie: the lower player number). A player whose app closed comes back with 'rejoin' and gets the host's state ('welcome').
 // Messages: hi {seat, info} · go {order, infos, seed} · c {k, c} · f {to, c, s, sp, end, h, e, n} · rs {k} · snap {to, at, snap, h}
 // · hb {k} · bye {k, seat} · sig {k, id} · host {k, e, at, snap, sp, n} · rejoin {seat} · welcome {seat, order, infos, seed, at, snap, h, e, sp}
+// AI 동료 (js/battle/aimate.js): the host may fill one empty seat with an AI cat at the start. It is a battle player like the others
+// (info.ai, order entry AI_SEAT) but sends nothing: every device runs it inside the shared tick, and it never counts as heard or lost.
 const Coop = {
+    AI_SEAT: 100,
     TICK: 1 / 30, FRAME: 8, LOST_MS: 8000, HOST_LOST_MS: 6000, ALONE_MS: 45000,
     room: null, ch: null, seat: 0, me: 0, host: 0, epoch: 0, seats: [], infos: [], order: [], B: null, onLobby: null,
     tick: 0, acc: 0, pend: [], sent: [], sums: {}, availTo: 0, speed: 1, ended: false, wantSnap: [],
@@ -62,11 +65,12 @@ const Coop = {
     },
     // battle player k: name, and whether that player dropped (their hero fights on AUTO)
     nameOf(k) { const i = this.infos[k]; return (i && i.name) || L('친구'); },
+    isAi(k) { const i = this.infos[k]; return !!(i && i.ai); },
     goneOf(k) { return !!this.gone[k]; },
     partnerName() { return this.nameOf(1 - this.me); },
     get partnerGone() { return this.gone.some(Boolean); },
     // players heard from lately (this device counts itself)
-    alive() { const now = Date.now(); return this.infos.map((x, k) => k === this.me || (!this.byes[k] && now - (this.heard[k] || 0) < this.LOST_MS)); },
+    alive() { const now = Date.now(); return this.infos.map((x, k) => k === this.me || (!(x && x.ai) && !this.byes[k] && now - (this.heard[k] || 0) < this.LOST_MS)); },
     // the battle state as every device keeps it between ticks: player 0's view
     snapNow() { const B = this.B; B.setActor(0); const s = B.snapshot(); B.setActor(this.me); return s; },
     loadSnap(at, snap) {
@@ -169,19 +173,26 @@ const Coop = {
     },
 
     // host: start with everyone present (a 파티 레이드 host may also start alone). Guests start on 'go'
-    async hostStart() {
+    // withAi: one AI cat takes an empty seat (협동 디펜스 only when alone); the server marks the room so its reward card is smaller
+    async hostStart(withAi) {
         const order = this.present();
-        if (this.me !== 0 || (!this.raid && order.length < 2)) return false;
-        const r = this.raid ? await RaidOn.praidSet(this.room.id, 'start') : await RaidOn.coopSet(this.room.id, 'start');
+        if (this.me !== 0 || (!this.raid && order.length < (withAi ? 1 : 2))) return false;
+        if (withAi && !this.canAi()) return false;
+        const r = withAi ? (this.raid ? await RaidOn.praidStartAi(this.room.id) : await RaidOn.coopStartAi(this.room.id))
+            : this.raid ? await RaidOn.praidSet(this.room.id, 'start') : await RaidOn.coopSet(this.room.id, 'start');
         if (r.error) { toast(RaidOn.errText(r.error, r)); return false; }
         const seats = r.seats ? r.seats.map(x => x.seat) : null;    // the server's list: someone who left in the meantime is not in
         this.order = seats ? order.filter(s => seats.includes(s)) : order;
         this.infos = this.order.map(s => this.infos[s]);
+        if (withAi) { this.order.push(this.AI_SEAT); this.infos.push(aiMateInfo(Save.p, 0)); }
         this.send('go', { order: this.order, infos: this.infos, seed: this.room.seed });
         this.begin(this.room.seed);
         return true;
     },
     // resume: a rejoining player starts from the host's state (at, snap), with that host's clock
+    // the lobby's "AI 냥이와 시작": host, and only one or two people (협동 디펜스: nobody else came). tools/aimatetest.js: an AI cat
+    // helps one or two people, but a third person's party does no better with it (and its card is smaller)
+    canAi() { const n = this.present().length; return this.seat === 0 && (this.raid ? n <= 2 : n === 1); },
     begin(seed, resume) {
         clearInterval(this.hiTimer); this.hiTimer = null;
         this.tick = 0; this.acc = 0; this.pend = []; this.sent = []; this.sums = {}; this.availTo = 0; this.speed = 1;
@@ -189,7 +200,7 @@ const Coop = {
         this.host = resume ? resume.host : 0; this.epoch = resume ? resume.epoch : 0; this.ended = false; this.lostLink = false; this.aloneSince = 0;
         const now = Date.now();
         this.gone = this.infos.map(() => false); this.byes = this.infos.map(() => false); this.heard = this.infos.map(() => now);
-        this.seen = this.infos.map((x, k) => k === this.me); this.lastGo = now; this.lastFrameAt = 0;
+        this.seen = this.infos.map((x, k) => k === this.me || !!(x && x.ai)); this.lastGo = now; this.lastFrameAt = 0;
         if (this.onLobby) this.onLobby('start');
         const r = this.room;
         try { localStorage.setItem('nyangi-live', JSON.stringify({ id: r.id, raid: this.raid, at: Date.now() })); } catch (e) { }
@@ -198,6 +209,7 @@ const Coop = {
     },
     attach(B) {
         this.B = B;
+        B.aiSetup(this.infos);                       // AI 동료 seats (js/battle/aimate.js), the same on every device
         if (this.me !== 0) B.setActor(this.me);      // a resting view of this device's own hero, gold and spells
         this.installUI(B);
     },
@@ -245,6 +257,7 @@ const Coop = {
                 this.pend = this.pend.filter(x => x[0] > this.tick);
                 for (const [t, k, c] of due) { try { B.runCmd(k, c); } catch (e) { } if (host) this.sent.push([this.tick, k, c]); }   // a bad command fails the same way everywhere
             }
+            B.aiTick(this.tick);                     // AI 동료: decided from the tick and the battle's rand, so every device does the same
             B.update(this.TICK);
             if (!host && this.sums[this.tick] !== undefined) {
                 if (this.sums[this.tick] !== B.checksum() && (!this.resyncing || Date.now() - this.resyncAt > 3000)) { this.resyncing = true; this.resyncAt = Date.now(); this.send('rs', { k: this.me }); }   // ask again if the state never came
@@ -272,7 +285,7 @@ const Coop = {
             this.acc += dt * this.speed;
             let n = 0;
             while (this.acc >= this.TICK && n < 8 && !over) { this.acc -= this.TICK; this.step(); n++; }
-            if (!over) for (let k = 0; k < this.infos.length; k++) if (k !== this.me && !this.gone[k] && now - (this.heard[k] || 0) > this.LOST_MS) this.playerLeft(k);
+            if (!over) for (let k = 0; k < this.infos.length; k++) if (k !== this.me && !this.isAi(k) && !this.gone[k] && now - (this.heard[k] || 0) > this.LOST_MS) this.playerLeft(k);
             // 'go' can be missed: repeat it until every guest answered (a late one catches up from the frames)
             if (this.me === 0 && this.epoch === 0 && !over && now - this.lastGo > 1000 && this.tick < 30 * 20 && this.seen.some(x => !x)) { this.lastGo = now; this.send('go', { order: this.order, infos: this.infos, seed: this.room.seed }); }
             if (now - (this.lastBeat || 0) > 1500) { this.lastBeat = now; this.send('hb', { k: this.me, t: this.tick }); }
@@ -291,7 +304,7 @@ const Coop = {
     // device is the one offline: wait (and give up after ALONE_MS)
     hostLost(now) {
         const live = this.alive(), others = live.filter((x, k) => x && k !== this.me && k !== this.host).length;
-        if (!others && this.infos.length > 2) {
+        if (!others && this.infos.filter(x => !(x && x.ai)).length > 2) {
             if (!this.aloneSince) { this.aloneSince = now; toast(L('연결이 끊겼어요. 다시 연결하는 중…')); }
             if (now - this.aloneSince > this.ALONE_MS) this.linkLost();
             return;

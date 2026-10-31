@@ -1,0 +1,65 @@
+/* 냥냥단 (js/ui/guild.js). The window reuses the 거래소 layout (.mk-* in css/cat-theme.css); these are the guild-only parts. Phone: no sideways scroll */
+.gd-modal .mk-body { min-height: 200px; }
+.gd-wallet { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; width: 100%; font-size: 16px; color: #5a3a10; }
+.gd-wallet .tip { font-size: 13px; }
+.gd-coin { display: inline-block; width: 16px; height: 16px; flex: none; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #fff2a8, #f0b52a 55%, #b0700e); box-shadow: 0 0 0 2px #7a4a0a; vertical-align: -2px; }
+.gd-ctxt { display: inline-flex; align-items: center; gap: 4px; font-weight: bold; color: #5a3a10; white-space: nowrap; }
+.gd-tabs.gd-five { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.gd-tabs .mk-tab { position: relative; }
+.gd-dot { position: absolute; top: 3px; right: 5px; width: 9px; height: 9px; border-radius: 50%; background: #e0401a; box-shadow: 0 0 0 2px #fff4dc; }
+.gd-emb { width: 40px; height: 40px; object-fit: contain; flex: none; }
+.gd-emb.big { width: 56px; height: 56px; }
+.gd-lv { font-size: 14px; color: #8a5a10; }
+.gd-card .btn { flex: none; }
+.gd-embs { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px; width: 100%; }
+.gd-embbtn { display: flex; align-items: center; justify-content: center; min-width: 0; padding: 4px; border-radius: 10px; border: 2px solid #b08a50; background: rgba(255, 248, 225, .7); cursor: pointer; }
+.gd-embbtn.on { background: linear-gradient(#ffd66a, #f0a93a); border-color: #8a5a10; }
+.gd-embbtn .gd-emb { width: 34px; height: 34px; }
+.gd-in { width: 100%; min-width: 0; box-sizing: border-box; font-size: 16px; padding: 5px 10px; }
+.gd-line { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.gd-line > span { min-width: 0; overflow-wrap: anywhere; }
+.gd-donate { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; width: 100%; }
+.gd-donate .btn { display: flex; flex-direction: column; align-items: center; min-width: 0; height: auto; padding-top: 4px; padding-bottom: 4px; line-height: 1.2; font-size: 12px; }
+.gd-donate .btn b { font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.gd-mis { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; }
+.gd-mis.done .gd-line > span:first-child { color: #2f6a1a; }
+.gd-mis .rd-bar { height: 20px; }
+.gd-mis .rd-bar span { line-height: 20px; font-size: 13px; }
+.gd-log { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.gd-log > span { min-width: 0; overflow-wrap: anywhere; }
+.gd-log > i { font-style: normal; color: #7a5a3a; white-space: nowrap; }
+.gd-log.me { font-weight: bold; color: #8a3a12; }
+.gd-btns { justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
+.gd-role { display: inline-block; padding: 0 5px; border-radius: 6px; font-size: 12px; line-height: 18px; color: #fff; background: #8a7a6a; vertical-align: 1px; white-space: nowrap; }
+.gd-role.leader { background: #c0701a; }
+.gd-role.vice { background: #4a7ab0; }
+.gd-face { width: 40px; height: 40px; object-fit: contain; flex: none; border-radius: 50%; background: rgba(255, 248, 225, .8); box-shadow: 0 0 0 2px #b08a50; }
+.gd-mem { cursor: default; }
+.gd-mem.me { background: #ffe08a; }
+.gd-more { flex: none; padding: 0 6px; font-weight: bold; color: #7a5a3a; }
+.gd-title { font-size: 12px; color: #9a4ab0; font-weight: bold; }
+.gd-boss { width: 72px; height: auto; flex: none; }
+.gd-bosshead .btn { flex: none; }
+.gd-tier { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 3px 4px; border-radius: 8px; }
+.gd-tier.on { background: rgba(140, 220, 110, .35); }
+.gd-tier > b { width: 44px; flex: none; }
+.gd-ric { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-left: auto; }
+.gd-ric .cell { width: 44px; height: 44px; border-width: 7px; border-image-width: 7px; }
+.gd-ric .cell canvas, .gd-ric .cell img { width: 28px; height: 28px; }
+.gd-tcell { display: flex; align-items: center; justify-content: center; font-size: 12px; color: #9a4ab0; font-weight: bold; }
+.gd-chat { display: flex; flex-direction: column; gap: 4px; width: 100%; height: 300px; max-height: 50vh; overflow-y: auto; overflow-x: hidden; padding: 4px; box-sizing: border-box; border-radius: 10px; background: rgba(0, 0, 0, .05); }
+.gd-msg { align-self: flex-start; max-width: 85%; padding: 4px 8px; border-radius: 10px; background: #fff8e8; box-shadow: 0 1px 0 #b08a50; cursor: pointer; }
+.gd-msg.me { align-self: flex-end; background: #ffe08a; cursor: default; }
+.gd-who { font-size: 12px; color: #8a5a10; font-weight: bold; }
+.gd-who > i { font-style: normal; font-weight: normal; color: #9a7a5a; margin-left: 6px; }
+.gd-txt { font-size: 15px; color: #3a2410; overflow-wrap: anywhere; white-space: pre-wrap; }
+.gd-send { margin-top: 4px; }
+.gd-cin { flex: 1 1 auto; min-width: 0; width: auto; font-size: 16px; padding: 5px 10px; }
+.gd-pop { width: 420px; max-width: calc(100% - 12px); min-width: 0; box-sizing: border-box; gap: 6px; }
+.gd-pop > * { max-width: 100%; box-sizing: border-box; }
+@media (max-width: 560px) {
+  .gd-tabs.gd-five { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .gd-embs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .gd-donate { grid-template-columns: 1fr; }
+  .gd-chat { height: 260px; }
+}

@@ -44,7 +44,7 @@
                 content.push(h('div.gold-t', L('이번 주 구간 보상: {0}', R.weekly.map(w => L('{0}웨이브', w.wave)).join(', '))));
             }
         } else if (R.raidOn) {
-            content.push(h('div.ribbon', h('span', R.raidOn.mode === 'party' ? L('파티 레이드') : L('월드 보스'))));
+            content.push(h('div.ribbon', h('span', R.raidOn.mode === 'party' ? L('파티 레이드') : R.raidOn.mode === 'guild' ? L('냥단 보스') : L('월드 보스'))));
             content.push(h('div', { style: { fontSize: '20px' } }, L('피해량 '), h('span.gold-t.res-num', fmt(R.raidOn.dmg)), L(' · {0}점', fmt(R.raidOn.pts))));
             content.push(h('div.rd-result', L('기록을 보내는 중…')));
         } else if (R.praid) {
@@ -106,7 +106,7 @@
         }
         const btns = h('div.row');
         const toChallenge = R.endless || R.dungeon || R.raid || R.raidOn || R.coop || R.praid || R.tower;
-        const exitBtn = h('button.btn.ghost', { onclick: () => { click(); if (R.dungeon) S.ctab = 'dungeon'; if (R.raid) S.ctab = 'raid'; if (R.raidOn || R.coop || R.praid) S.ctab = 'online'; if (R.cup) S.ctab = 'cup'; if (R.tower) S.ctab = 'tower'; showHub(toChallenge ? 'endless' : 'map'); } }, L('나가기'));
+        const exitBtn = h('button.btn.ghost', { onclick: () => { click(); if (R.dungeon) S.ctab = 'dungeon'; if (R.raid) S.ctab = 'raid'; if (R.raidOn || R.coop || R.praid) S.ctab = 'online'; if (R.cup) S.ctab = 'cup'; if (R.tower) S.ctab = 'tower'; showHub(toChallenge ? 'endless' : 'map'); if (R.raidOn && R.raidOn.mode === 'guild' && UI.guildScreen) UI.guildScreen(); } }, L('나가기'));
         const again = R.cup ? { cup: true } : R.endless ? { endless: true } : R.dungeon ? { dungeon: R.dungeon.kind, tier: R.dungeon.tier } : R.raid ? { raid: true } : { stageIdx: R.stageIdx, hard: R.hard };
         const canAgain = R.raidOn || R.coop || R.praid || R.tower ? false : R.cup ? Meta.cupLeft(p) > 0 : R.dungeon ? Meta.dungeonLeft(p) > 0 : R.raid ? p.raid.runs < RAID.tries : true;   // online raids start from the 레이드 tab
         if (canAgain) btns.appendChild(h('button.btn', { onclick: () => { click(); Game.startBattle(again); } }, L('다시 하기')));

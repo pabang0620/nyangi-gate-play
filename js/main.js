@@ -51,13 +51,13 @@ const Game = {
             const on = opt.raidOn, kind = on ? on.kind : Meta.raidBoss(p), si = on ? on.si : Meta.raidStage(p, kind);
             Object.assign(cfg, { mode: 'raid', stageIdx: si, raidKind: kind, map: RAID.map, theme: CHAPTERS[STAGES[si].ch].theme,
                 escortPool: STAGES[si].pool, stageDef: { name: L('토벌전'), map: RAID.map, waves: 1, pool: STAGES[si].pool, ch: STAGES[si].ch } });
-            banner = on ? (on.mode === 'party' ? L('파티 레이드 · {0}', ENEMIES[kind].name) : L('월드 보스 · {0}', ENEMIES[kind].name)) : L('보스 토벌전 · {0}', ENEMIES[kind].name); music = 'boss';
+            banner = on ? (on.mode === 'party' ? L('파티 레이드 · {0}', ENEMIES[kind].name) : on.mode === 'guild' ? L('냥단 보스 · {0}', ENEMIES[kind].name) : L('월드 보스 · {0}', ENEMIES[kind].name)) : L('보스 토벌전 · {0}', ENEMIES[kind].name); music = 'boss';
         } else if (opt.coop && opt.coop.raid) {
             // 파티 레이드: 1~4 players, one boss with real health on the 보스 토벌전 map (js/online/coop.js keeps every device in step)
             const o = opt.coop, R = RAID_ON.party, si = RAID_ON.diffs[o.diff].eq, kind = o.kind, inf = o.infos, n = inf.length, [a] = inf;
             Object.assign(cfg, { mode: 'raid', coop: true, recLv: RAID_ON.diffs[o.diff].lv, stageIdx: si, raidKind: kind, map: RAID.map, theme: CHAPTERS[STAGES[si].ch].theme, seed: o.seed,
                 escortPool: STAGES[si].pool, stageDef: { name: L('파티 레이드'), map: RAID.map, waves: 1, pool: STAGES[si].pool, ch: STAGES[si].ch },
-                raidLive: { hpMul: Meta.partyBossMul(kind, o.diff, n), time: Meta.partyTime(n), walk: Meta.partyWalk(n), gateLose: true, enrage: R.enrage, enrageSpd: R.enrageSpd, enrageCd: R.enrageCd },
+                raidLive: { hpMul: Meta.partyBossMul(kind, o.diff, n) * aiBossScale(inf), time: Meta.partyTime(n), walk: Meta.partyWalk(n), gateLose: true, enrage: R.enrage, enrageSpd: R.enrageSpd, enrageCd: R.enrageCd },
                 startGoldMul: R.startGold[n - 1], goldShare: R.goldShare,
                 heroCls: a.cls, heroStats: a.stats, skin: a.skin, bonuses: a.bonuses, dmgMul: inf.reduce((t, x) => t + x.dmgMul, 0) / n, party: [],
                 mates: inf.slice(1).map(x => ({ cls: x.cls, stats: x.stats, skin: x.skin, bonuses: x.bonuses })), autos: inf.map(x => x.auto), names: inf.map(x => x.name),
@@ -186,7 +186,8 @@ const Game = {
             const on = this.lastOpt.raidOn, dmg = Math.round(B.raidDamage), pts = RaidOn.points(B.raidKind, B.stageIdx, dmg);
             R.win = true; R.raidOn = { mode: on.mode, id: on.id, kind: B.raidKind, dmg, pts, res: null };
             R.xp = Math.round(stageRewards(B.stageIdx, 1, false).xp * 0.8);
-            (on.mode === 'party' ? RaidOn.partySubmit(on.id, pts) : RaidOn.worldSubmit(pts)).then(x => { R.raidOn.res = x; if (UI.S.result === R && UI.raidResultLine) UI.raidResultLine(R); });
+            if (on.mode === 'guild') GuildOn.bossSubmit(pts).then(x => { R.raidOn.res = x; if (UI.S.result === R && UI.guildResultLine) UI.guildResultLine(R); });   // 냥단 보스 (js/online/guild.js)
+            else (on.mode === 'party' ? RaidOn.partySubmit(on.id, pts) : RaidOn.worldSubmit(pts)).then(x => { R.raidOn.res = x; if (UI.S.result === R && UI.raidResultLine) UI.raidResultLine(R); });
         } else if (B.mode === 'raid' && this.lastOpt.coop) {
             // 파티 레이드: the boss died (win) or the time / lives ran out; every player reports, the server checks the host's word
             const o = this.lastOpt.coop, boss = B.bossRef, left = boss ? Math.max(0, boss.hp) / boss.maxHp : 1;
@@ -223,7 +224,7 @@ const Game = {
             if (win) {
                 R.stars = B.stars();
                 const rw = stageRewards(idx, R.stars, prev === 0);
-                R.silver = Math.round(rw.silver * HARD.silverMul * (p.shop && p.shop.premium ? 1.1 : 1)); R.xp = Math.round(rw.xp * 1.5);
+                R.silver = Math.round(rw.silver * HARD.silverMul * (p.shop && p.shop.premium ? 1.1 : 1) * (typeof GuildOn !== 'undefined' ? GuildOn.silverMul() : 1)); R.xp = Math.round(rw.xp * 1.5);
                 if (R.stars > prev) { R.gems = (R.stars - prev) * HARD.gemsPerStar; p.hstars[idx] = R.stars; }
             } else {
                 const frac = Math.max(0, B.waveIdx) / B.totalWaves;
@@ -237,7 +238,7 @@ const Game = {
             if (win) {
                 R.stars = B.stars();
                 const rw = stageRewards(idx, R.stars, first && win);
-                R.silver = Math.round(rw.silver * (p.shop && p.shop.premium ? 1.1 : 1)); R.xp = rw.xp;
+                R.silver = Math.round(rw.silver * (p.shop && p.shop.premium ? 1.1 : 1) * (typeof GuildOn !== 'undefined' ? GuildOn.silverMul() : 1)); R.xp = rw.xp;
                 if (R.stars > prev) { R.gems = (R.stars - prev) * 15; p.stars[idx] = R.stars; }
                 R.firstThree = R.stars === 3 && prev < 3;
                 if (first && STAGES[idx].boss) R.chapterClear = STAGES[idx].ch;
@@ -362,7 +363,7 @@ const Game = {
         const dt = Math.min(0.05, (now - last) / 1000);
         last = now;
         const B = Game.battle;
-        if (B && UI.S.screen === 'battle') {
+        if (B && (UI.S.screen === 'battle' || UI.S.screen === 'siege')) {   // siege: 냥이 공성전 screens (js/ui/siege.js), fixed ticks inside B.update
             if (B.coop) Coop.frame(dt);              // 협동 디펜스: fixed ticks shared with the partner, never paused
             else if (!Game.paused) {
                 const steps = Game.speed;

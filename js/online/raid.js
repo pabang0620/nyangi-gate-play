@@ -47,6 +47,9 @@ const RaidOn = {
     coopQuick(diff) { return this.call('coop_quick', { p_diff: diff }); },
     coopRoom(id) { return this.call('coop_room', { p_id: id }); },
     coopSet(id, action) { return this.call('coop_set', { p_id: id, p_action: action }); },
+    // AI 동료 (20261041000000_raid_ai.sql): start with one AI cat in an empty seat; the reward card of that room is smaller
+    coopStartAi(id) { return this.call('coop_start_ai', { p_id: id }); },
+    praidStartAi(id) { return this.call('praid_start_ai', { p_id: id }); },
     // 파티 레이드 live rooms (20261027000000_party_live.sql): 1~4 seats, 3 entries a week, the battle runs over js/online/coop.js
     praidCreate(diff) { return this.call('praid_create', { p_diff: diff }); },
     praidJoin(code) { return this.call('praid_join', { p_code: code }); },

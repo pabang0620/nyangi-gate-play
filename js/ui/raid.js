@@ -17,6 +17,9 @@
     const bossPic = (kind, k = 2.4) => { const c = Art.domCanvas(Art.enemy(kind, 0), k); c.classList.add('rd-boss'); return c; };
     const busy = (b, fn) => UI.busyBtn(b, fn);
     const say = r => { if (r && r.error) { toast(RaidOn.errText(r.error, r)); return false; } return true; };
+    // AI 동료 (js/battle/aimate.js): the small "AI" mark next to an AI cat's name
+    const aiBadge = () => h('span.ai-badge', { style: { display: 'inline-block', padding: '0 5px', marginRight: '4px', borderRadius: '6px', background: '#5a6b8c', color: '#fff', fontSize: '0.75em', lineHeight: '1.5', verticalAlign: 'middle' } }, 'AI');
+    const aiRewardTip = () => L('AI 냥이는 사람보다 서툴러요. 함께 이기면 보상 카드 훈장 70%, 천장은 쌓이지 않아요');
 
     // the reward card face: what was rolled (gems, stones, an item grade ...)
     function cardFace(g) {
@@ -65,7 +68,7 @@
                 });
                 c.classList.add('rd-pick');
                 Sfx.play(r.cards[i].item >= 3 ? 'rare' : 'coin');
-                tip.textContent = (r.pity ? L('천장 발동! {0} 장비 확정', RARITY[r.pity === 'myth' ? 4 : 3].name) : L('토벌 훈장 +{0}', r.medals)) + (r.friend ? L(' · 친구 보너스 +20%') : '');
+                tip.textContent = (r.pity ? L('천장 발동! {0} 장비 확정', RARITY[r.pity === 'myth' ? 4 : 3].name) : L('토벌 훈장 +{0}', r.medals)) + (r.friend ? L(' · 친구 보너스 +20%') : '') + (r.ai ? L(' · AI 동료와 함께: 훈장 70%') : '');
                 setTimeout(() => {
                     d.querySelector('.modal').appendChild(h('button.btn.gold', { onclick: () => { click(); d.remove(); if (r.got && r.got.length) showGot(title, r.got); done && done(); } }, L('받기')));
                 }, 1400);
@@ -259,6 +262,8 @@
     function lobby(room, quick) {
         const raid = room.mode === 'raid';
         const who = h('div.rd-lobby-who'), start = h('button.btn.gold.off'), status = h('div.tip'), bonus = h('div.gold-t');
+        // AI 동료: the host can fill one empty seat with an AI cat (협동 디펜스: when nobody came)
+        const aiBtn = h('button.btn.small', h('span', aiBadge(), L('AI 냥이와 시작'))), aiRow = h('div.row', { style: { justifyContent: 'center', alignItems: 'center', gap: '8px', flexWrap: 'wrap' } }, aiBtn, h('span.tip', aiRewardTip()));
         const draw = () => {
             who.innerHTML = '';
             Coop.infos.forEach((inf, i) => who.appendChild(h('div.rd-mem' + (i === Coop.seat ? '.me' : '') + (inf ? '' : '.empty'),
@@ -266,12 +271,14 @@
             const n = Coop.present().length, ready = raid ? n >= 1 : n >= 2;
             bonus.textContent = Coop.infos.some((x, i) => x && i !== Coop.seat && Friends.isFriend(x.uid)) ? L('친구와 함께: 보상 카드 훈장 +20%') : '';
             start.classList.toggle('off', !(ready && Coop.seat === 0));
+            aiRow.style.display = Coop.canAi() ? '' : 'none';
             status.textContent = Coop.seat !== 0 ? L('방장이 시작하길 기다리는 중')
                 : raid ? (n > 1 ? L('{0}명이 모였어요. 시작을 눌러 주세요', n) : L('혼자 시작하거나 파티원을 기다려요'))
                 : ready ? L('준비 완료! 시작을 눌러 주세요') : quick ? L('같이 할 냥이를 찾는 중… 코드를 친구에게 알려 줘도 돼요') : L('친구가 코드로 들어오길 기다리는 중');
         };
         start.textContent = L('시작');
         start.onclick = async () => { if (start.classList.contains('off')) return; click(); start.classList.add('off'); if (!(await Coop.hostStart())) start.classList.remove('off'); };
+        aiBtn.onclick = async () => { if (aiBtn.classList.contains('off') || !Coop.canAi()) return; click(); aiBtn.classList.add('off'); start.classList.add('off'); if (!(await Coop.hostStart(true))) { aiBtn.classList.remove('off'); draw(); } };
         const setRoom = a => raid ? RaidOn.praidSet(room.id, a) : RaidOn.coopSet(room.id, a);
         const cancel = h('button.btn.ghost', { onclick: async () => {
             click(); Coop.send('bye', { seat: Coop.seat }); Coop.close(300);
@@ -281,6 +288,7 @@
         const d = modal([h('div.title-t', title),
             h('div', L('방 코드 '), h('b.res-num', room.code)), who, status, bonus,
             raid ? h('div.tip', L('시작하면 모두 이번 주 입장 1번을 써요')) : null,
+            room.me === 0 ? aiRow : null,
             // room.me, not Coop.seat: Coop.open below sets it (before that it is still the last room's seat)
             h('div.row', cancel, room.me === 0 ? h('button.btn', { onclick: () => { click(); UI.friendPick(raid ? 'party' : 'coop', room.code, room.diff); } }, L('친구 초대')) : null, room.me === 0 ? start : null)]);
         Coop.open(room, ev => {
@@ -395,6 +403,7 @@
             RaidOn.at = 0;
             if (R.win && !x.win) { el.append(h('div.tip', L('이번 판은 보상으로 인정되지 않았어요'))); return; }
             if (!x.win) { el.append(h('div.tip', L('더 강해지거나 파티원과 함께 다시 도전해 보세요'))); return; }
+            if ((Coop.infos || []).some(i => i && i.ai)) el.append(h('div.tip', aiBadge(), aiRewardTip()));
             if ((x.seats || []).some(m => m.uid !== (Online.user && Online.user.id) && Friends.isFriend(m.uid))) el.append(h('div.gold-t', L('친구 보너스 +20%: 보상 카드 훈장이 늘어나요')));
             if (!RaidOn.claimed('praid', R.praid.diff)) el.append(h('button.btn.gold', { onclick: () => { click(); flipModal('praid', R.praid.room, L('파티 레이드 보상'), () => { el.innerHTML = ''; el.append(h('div.tip', L('이번 주 이 난이도 보상은 이미 받았어요'))); }); } }, L('보상 카드 뒤집기')));
             else el.append(h('div.tip', L('이번 주 이 난이도 보상은 이미 받았어요')));
@@ -405,10 +414,11 @@
             const mate = Coop.infos && Coop.infos[1 - Coop.me];
             if (x.win && mate && Friends.isFriend(mate.uid)) el.append(h('div.gold-t', L('친구 보너스 +20%: 보상 카드 훈장이 늘어나요')));
             if (R.win && !x.win) { el.append(h('div.tip', L('이번 판은 보상으로 인정되지 않았어요'))); return; }   // the server did not count it (partner saw a loss, or too fast)
+            if (x.win && (Coop.infos || []).some(i => i && i.ai)) el.append(h('div.tip', aiBadge(), aiRewardTip()));
             if (x.win && !RaidOn.claimed('coop', R.coop.diff)) el.append(h('button.btn.gold', { onclick: () => { click(); flipModal('coop', R.coop.room, L('협동 디펜스 보상'), () => { el.innerHTML = ''; el.append(h('div.tip', L('이번 주 이 난이도 보상은 이미 받았어요'))); }); } }, L('보상 카드 뒤집기')));
             else if (x.win) el.append(h('div.tip', L('이번 주 이 난이도 보상은 이미 받았어요')));
         }
     }
 
-    Object.assign(UI, { tabRaidOn, raidResultLine, raidFlip: flipModal, raidShop: shopModal, raidJoinInvite, raidLiveCheck });
+    Object.assign(UI, { tabRaidOn, raidResultLine, raidFlip: flipModal, raidShop: shopModal, raidJoinInvite, raidLiveCheck, aiBadge });
 })();

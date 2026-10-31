@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.20';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.21';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
     const SITE_URL = 'https://pabang0620.github.io/nyangi-gate/';   // game intro page (hosted in the developer site repo); the app hands external links to the phone's browser
@@ -172,6 +172,14 @@
         friendsBtn.sync = sync; sync();
         return friendsBtn;
     }
+    // 냥냥단 (js/ui/guild.js): badge = what waits there (check-in, applications, boss tries), refreshed at most once a minute
+    function guildButton() {
+        const badge = h('span.badge');
+        const paint = n => { badge.textContent = String(Math.min(99, n || 0)); badge.style.display = n ? '' : 'none'; };
+        paint(UI.guildBadge ? UI.guildBadge() : 0);
+        if (UI.guildRefresh) UI.guildRefresh().then(paint).catch(() => { });
+        return h('div.iconbtn.guildbtn', { title: L('냥냥단'), onclick: () => { click(); UI.guildScreen(); } }, img('i_league'), badge);
+    }
     if (typeof Friends !== 'undefined') Friends.onChange(() => { if (friendsBtn && friendsBtn.isConnected) friendsBtn.sync(); });
 
     // a stage clear can open a cat's story episode: one quiet line pointing at 영웅 > 스토리 모음 (once per episode)
@@ -205,6 +213,7 @@
             h('div.chip.curchip', { onclick: () => { click(); UI.currencyInfo('ticket'); } }, img('i_ticket', '.icon'), fmtShort(p.tickets || 0)),
             UI.mailButton(),
             Online.enabled ? friendsButton() : null,
+            Online.enabled && UI.guildScreen ? guildButton() : null,
             h('div.iconbtn', { onclick: () => { click(); showHub('settings'); } }, img('nav_settings')),
         );
         Rewards.ensure(p);

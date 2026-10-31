@@ -46,6 +46,12 @@
         { id: 'cup', need: CUP.unlockStage, open: p => Meta.cupUnlocked(p), name: () => L('주간 공방전'), cards: () => [
             [img('i_league'), L('주간 공방전'), L('모두 같은 지도·같은 제한으로 점수를 겨뤄요.')],
             [img('i_ticket'), L('하루 {0}번', CUP.attempts), L('매주 월요일 순위대로 보상!')]] },
+        { id: 'siege', need: RAID_ON.diffs[0].eq, open: p => (p.stars[RAID_ON.diffs[0].eq] || 0) > 0, name: () => L('냥이 공성전'), cards: () => [
+            [img('i_skull'), L('냥이 공성전'), L('내 성채를 지어 두고, 다른 냥이의 성채를 쳐들어가요.')],
+            [img('i_league'), L('리그'), L('별을 따서 트로피를 모으고 2주 시즌 보상을 받아요.')]] },
+        { id: 'pvp', need: RAID_ON.diffs[0].eq, open: p => (p.stars[RAID_ON.diffs[0].eq] || 0) > 0, name: () => L('냥냥 대전'), cards: () => [
+            [img('i_coop'), L('냥냥 대전'), L('실시간 1:1! 내 성문을 지키면서 번 금화로 상대에게 적을 보내요.')],
+            [img('i_league'), L('레이팅'), L('하루 첫 3승은 상자, 시즌 등급 보상도 있어요.')]] },
         { id: 'rank', need: ENDLESS.unlockStage, open: p => (p.stars[ENDLESS.unlockStage] || 0) > 0, name: () => L('랭킹'), cards: () => [
             [img('i_league'), L('랭킹'), L('다른 냥이들과 기록을 비교해요.')]] },
     ];
@@ -62,12 +68,21 @@
         UI.confirmBox(L('전투력이 부족해요. 그래도 도전할까요?') + '\n' + L('내 전투력 {0}', fmt(mine)) + ' / ' + L('권장 전투력 {0}', fmt(rec)), go);
     }
 
+    // 냥이 공성전 / 냥냥 대전: their screens are popups (js/ui/siege.js, js/ui/pvp.js); the tab shows what it is and the way in
+    function tabOnlineEntry(mode) {
+        const open = mode.id === 'siege' ? UI.siegeScreen : UI.pvpScreen;
+        const win = h('div.panel.win.glass.ch-entry', h('div.title-t', mode.name()),
+            mode.cards().map(c => h('div.ch-entry-row', c[0], h('div', h('b', c[1]), h('div.tip', c[2])))),
+            h('button.btn.gold', { onclick: () => { click(); if (open) open(); } }, L('입장')));
+        root().appendChild(win);
+    }
+
     // endless ---------------------------------------------------
     // 도전 tab: 무한의 성벽 · 요일 도전 · 보스 토벌전 (PLAN_V2 1.3)
     function tabEndless() {
         const p = Save.p; metaEnsure(p);
         S.ctab = S.ctab || 'wall';
-        const names = { online: L('레이드'), wall: L('무한의 성벽'), dungeon: L('요일 도전 {0}/{1}', Meta.dungeonLeft(p), DUNGEON.entries), raid: L('보스 토벌전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries), cup: L('주간 공방전 {0}/{1}', Meta.cupLeft(p), CUP.attempts), rank: L('랭킹'), tower: L('심연의 탑') };
+        const names = { online: L('레이드'), siege: L('냥이 공성전'), pvp: L('냥냥 대전'), wall: L('무한의 성벽'), dungeon: L('요일 도전 {0}/{1}', Meta.dungeonLeft(p), DUNGEON.entries), raid: L('보스 토벌전 {0}/{1}', Math.max(0, RAID.tries - p.raid.runs), RAID.tries), cup: L('주간 공방전 {0}/{1}', Meta.cupLeft(p), CUP.attempts), rank: L('랭킹'), tower: L('심연의 탑') };
         const seen = p.seenTips || {};
         const sub = h('div.subtabs', CH_MODES.map(m => {
             const open = m.open(p);
@@ -91,6 +106,7 @@
         if (S.ctab === 'cup') return tabCup();
         if (S.ctab === 'tower') return UI.tabTower();
         if (S.ctab === 'rank') return tabRank();
+        if (S.ctab === 'siege' || S.ctab === 'pvp') return tabOnlineEntry(mode);
         const un = (p.stars[ENDLESS.unlockStage] || 0) > 0;
         const rule = Meta.endlessRule();
         const win = h('div.panel.win.summonwin');
