@@ -173,6 +173,7 @@
                 kinds.concat(st.boss ? [st.boss] : []).map(k => h('div.si-enemy', { style: { textAlign: 'center', fontSize: '12px', width: '78px' }, onclick: () => { click(); UI.enemyInfo(k); } },
                     fitC(Art.domCanvas(Art.enemy(k, 0), 2.5), 70, 58), h('div', ENEMIES[k].name),
                     ENEMIES[k].tag ? h('div', { style: { color: '#a8401a' } }, ENEMIES[k].tag.replace(/·/g, '·​')) : null))),
+            UI.powerLine(Meta.recFor('stage', hard ? Math.max(idx, STAGES.length - 1) : idx)),
             h('div.tip.si-hint', L('적을 누르면 특징과 상대법을 볼 수 있습니다')),
             hard ? h('div', { style: { fontSize: '15px', color: '#a8401a', fontWeight: 'bold' } }, L('3성 조건: {0} (+ 잃은 목숨 2 이하)', hardCond(idx).name)) : null,
             h('div', { style: { fontSize: '14px', color: '#6a4a2a' } }, first ? L('첫 클리어 보상 (별 3개 기준)') : L('보상 (별 3개 기준)')),
@@ -180,7 +181,7 @@
         const right = h('div.si-right',
             h('div', { style: { fontFamily: 'BlackHan', fontSize: '16px', color: '#5a2a0a' } }, L('출전 영웅')),
             heroPick,
-            h('button.btn' + (hard ? '.red' : '.gold'), { style: { fontSize: '22px', minHeight: '64px', width: '100%' }, onclick: () => { click(); d.remove(); startStage(idx, hard); } }, L('전투 시작')),
+            h('button.btn' + (hard ? '.red' : '.gold'), { style: { fontSize: '22px', minHeight: '64px', width: '100%' }, onclick: () => { click(); UI.powerGate(Meta.recFor('stage', hard ? Math.max(idx, STAGES.length - 1) : idx), () => { d.remove(); startStage(idx, hard); }); } }, L('전투 시작')),
             have >= 3 ? sweepRow(idx, hard, () => { d.remove(); stageInfo(idx, hard); }) : null,
             h('button.btn.ghost', { style: { width: '100%' }, onclick: () => { click(); d.remove(); } }, L('닫기')));
         const d = modal([h('div.si', left, right)

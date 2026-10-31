@@ -124,10 +124,11 @@ const STAGES = [
     { ch: 9, name: L('되감긴 길'),     map: 'm9', waves: 16, pool: ['clocksoldier', 'gearbeast', 'chronomage', 'cloudthief', 'voidknight'] },
     { ch: 9, name: L('시간의 정점'),   map: 'm14', waves: 16, pool: ['clocksoldier', 'gearbeast', 'chronomage', 'griffin'], boss: 'chronos' },
 ];
-// 2-1부터 체력 보정을 단계적으로 올려 2장 후반~3장은 x1.3 (2026-10-12, player-sim 튜닝 실험 T_combo30)
-const STAGE_HP_RAMP = [1, 1, 1, 1, 1.15, 1.2, 1.25, 1.3, 1.3, 1.3, 1.3, 1.3];
+// 2-1부터 체력 보정 (2026-10-12 T_combo30). 2026-11-01: 스킬 해금 레벨을 올리고 2장 1.15~1.25 -> 1.4~1.6, 3-1·3-2 1.3 -> 1.4·1.35,
+// 3-3은 궁극기 없이 맞서는 곳이라 1.3 -> 1.15. 1-4·2-4·3-4 보스는 토벌전 기준 체력(Meta.raidRef)이 이 값을 써서 그대로
+const STAGE_HP_RAMP = [1, 1, 1, 1, 1.6, 1.6, 1.4, 1.3, 1.4, 1.35, 1.15, 1.3];
 // 4장부터: 각 장 첫 스테이지는 직전 보스 근처에서 시작해 장 안에서 CH_HP_STEP씩 오른다 (헤드리스 밸런스 봇으로 보정)
-const CH_HP = { 3: 4.3, 4: 5.3, 5: 7.0, 6: 8.4, 7: 9.4, 8: 12.0, 9: 17.5 };   // 9장 11.0 -> 12.0 (2026-10-31)
+const CH_HP = { 3: 4.0, 4: 5.3, 5: 7.0, 6: 8.4, 7: 9.4, 8: 12.0, 9: 17.5 };   // 9장 11.0 -> 12.0 (2026-10-31), 4장 4.3 -> 4.0 (2026-11-01: 궁극기가 Lv.20에 열려 전력 0.7배가 4장에서 크게 밀렸다)
 const CH_HP_STEP = 0.28;
 // 후반 벽 (2026-10-29): from 3-5 on stage health rises on top of the table, so late chapters are decided by gear.
 // Headless bot (tools/balance.js --enh N): +10 gear (the average end-game gear) clears, +6 does not; +15 is comfortable.
@@ -144,7 +145,9 @@ function stageStartGold(idx) {
 }
 // 처치 금화 배율: 4장부터 적 체력 증가를 일부 따라간다. 9장부터는 거의 오르지 않는다 (2026-10-31: 9~10장 금화가 남아돌아 탑 짓기가 너무 쉬웠다)
 // 10장은 영웅 난이도 10-3·10-5가 금화에 민감해서 9장보다 조금 높게 둔다
-function stageBountyMul(idx) { return idx < 12 ? 1 : idx < 42 ? 1 + 0.035 * (idx - 11) : idx < 48 ? 1.8 + 0.01 * (idx - 42) : 2.1 + 0.01 * (idx - 48); }
+// 1~3장 처치 금화 (2026-11-01: 2장 금화가 남아돌았다). 3-4 보스는 궁극기 없이 맞서서 조금 넉넉하게
+const EARLY_BOUNTY = [1, 1, 1, 0.9, 0.85, 0.85, 0.9, 0.9, 0.9, 0.9, 1, 1.25];
+function stageBountyMul(idx) { return idx < 12 ? EARLY_BOUNTY[idx] : idx < 42 ? 1 + 0.035 * (idx - 11) : idx < 48 ? 1.8 + 0.01 * (idx - 42) : 2.1 + 0.01 * (idx - 48); }
 // 어려움 난이도 (2026-10-31 개편): 보통 10장 보스를 깨면 한꺼번에 열리고, 어려움 장끼리는 앞 장 어려움 보스를 깨야 다음 장이 열린다 (js/meta.js hardUnlocked).
 // 어려움은 캠페인을 끝낸 뒤의 콘텐츠라 적 세기를 스테이지 번호가 아니라 보통 10-6에 맞춘다 (js/battle/core.js가 웨이브를 만든 뒤 hardScale을 부른다).
 // waveHp: 웨이브 하나의 일반·정예 적 체력 합. 빠른 적은 사거리 안에 머무는 시간이 짧아 (속도/40)^spdPow, 비행은 flyW배, 정예(문에 닿으면 패배)는 eliteW배로 세고,

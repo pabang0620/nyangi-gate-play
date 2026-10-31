@@ -215,7 +215,7 @@ Object.assign(Battle.prototype, {
             for (const e of this.enemies) if (!e.dead && !hit.has(e)) { const dd = dist2(e.x, e.y, cur.x, cur.y); if (dd < nd) { nd = dd; next = e; } }
             cur = next;
         }
-        if (pts.length > 1) { this.beams.push({ pts, life: 0.22, max: 0.22, color: '#fff27a', w: 3, zig: true }); this.on('shoot', 'zap'); }
+        if (pts.length > 1) { this.beams.push(hero ? { pts, life: 0.32, max: 0.32, color: '#d8f0ff', w: 3, zig: true, glow: '#6fb8ff' } : { pts, life: 0.22, max: 0.22, color: '#fff27a', w: 3, zig: true }); this.on('shoot', 'zap'); }
     },
 
 

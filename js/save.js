@@ -163,6 +163,8 @@ function itemScore(it) {
     for (const sb of it.subs) s += (SUB_OPTS[sb.k].pct ? sb.v * 1000 : sb.v * 4);
     return s;
 }
+// how good a rolled option is inside its range (SUB_OPTS min..max x the grade's subMul): 'lo' 하급 / 'mid' 중급 / 'hi' 상급, thirds of the range
+function subQ(it, sb) { const o = SUB_OPTS[sb.k], m = RARITY[it.r].subMul; if (!o) return 'mid'; const t = (sb.v / m - o.min) / (o.max - o.min); return t < 1 / 3 ? 'lo' : t < 2 / 3 ? 'mid' : 'hi'; }
 function fmtOpt(name, v, isPct) { return name + ' +' + (isPct ? (v * 100).toFixed(1).replace(/\.0$/, '') + '%' : fmt(v)); }
 function itemById(id) { return Save.p.items.find(i => i.id === id) || null; }
 function isEquipped(it) { return Save.p.equip[it.slot] === it.id; }

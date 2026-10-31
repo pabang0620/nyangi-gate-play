@@ -222,6 +222,7 @@ const Render = (() => {
             }
             x.restore();
         }
+        SkillFx.ground(x, B, T);
 
         // skin trails: paw prints sit on the ground under everything that stands
         updateTrail(B, now);
@@ -256,9 +257,9 @@ const Render = (() => {
         // projectiles
         for (const p of B.projs) {
             if (p.trail && p.trail.length > 2 && !p.dur) {          // streak behind arrows, bolts and orbs
-                const col = p.kind === 'bolt' ? '255,224,128' : p.kind === 'frostorb' ? '160,240,255' : p.kind === 'orb' || p.kind === 'heroorb' ? '216,168,255' : '255,244,220';
+                const col = p.kind === 'fireball' ? '255,140,50' : p.kind === 'bolt' ? '255,224,128' : p.kind === 'frostorb' ? '160,240,255' : p.kind === 'orb' || p.kind === 'heroorb' ? '216,168,255' : '255,244,220';
                 x.save(); x.lineCap = 'round';
-                for (let i = 2; i < p.trail.length; i += 2) { const a = i / p.trail.length; x.strokeStyle = `rgba(${col},${a * 0.7})`; x.lineWidth = 1 + a * (p.kind === 'orb' || p.kind === 'frostorb' ? 6 : 3); x.beginPath(); x.moveTo(p.trail[i - 2], p.trail[i - 1]); x.lineTo(p.trail[i], p.trail[i + 1]); x.stroke(); }
+                for (let i = 2; i < p.trail.length; i += 2) { const a = i / p.trail.length; x.strokeStyle = `rgba(${col},${a * 0.7})`; x.lineWidth = 1 + a * (p.kind === 'fireball' ? 14 : p.kind === 'orb' || p.kind === 'frostorb' ? 6 : 3); x.beginPath(); x.moveTo(p.trail[i - 2], p.trail[i - 1]); x.lineTo(p.trail[i], p.trail[i + 1]); x.stroke(); }
                 x.restore();
             }
             const fxName = { arrow: 'fx_arrow', bolt: 'fx_arrow', orb: 'fx_orb', heroorb: 'fx_orb', frostorb: 'fx_frost', fireball: 'fx_fireball', shell: 'fx_cannonball', fireshell: 'fx_fireball' }[p.kind];
@@ -318,11 +319,18 @@ const Render = (() => {
                         }
                     } else x.lineTo(p[0], p[1]);
                 }
+                if (b.glow) { x.save(); x.globalAlpha = k * 0.35; x.strokeStyle = b.glow; x.lineWidth = b.w * 4; x.stroke(); x.restore(); }
                 x.stroke();
-                if (b.w > 6) { x.strokeStyle = '#fff'; x.lineWidth = b.w * 0.35; x.stroke(); }
+                if (b.w > 6 || b.glow) { x.strokeStyle = '#fff'; x.lineWidth = b.glow ? 1.5 : b.w * 0.35; x.stroke(); }
+                if (b.glow) {
+                    // a spark on every enemy the bolt jumped to
+                    x.fillStyle = '#ffffff';
+                    for (let i = 1; i < b.pts.length; i++) { x.beginPath(); x.arc(b.pts[i][0], b.pts[i][1], 3 + 5 * k, 0, TAU); x.fill(); }
+                }
             }
             x.globalAlpha = 1;
         }
+        SkillFx.top(x, B, T);
 
         // particles
         for (const p of B.parts) {
@@ -606,7 +614,7 @@ const Render = (() => {
         const blink = h.dash ? 0.6 : 1;
         drawGhosts(now);
         shadow(h.x, h.y, 12);
-        if (h.oathUntil > T) { x.strokeStyle = 'rgba(242,193,78,.8)'; x.lineWidth = 2; x.beginPath(); x.ellipse(h.x, h.y - 20, 22, 26, 0, 0, TAU); x.stroke(); }
+        SkillFx.heroBack(x, h, T);
         if (h.galeUntil > T) { x.strokeStyle = 'rgba(127,255,176,.7)'; x.lineWidth = 2; x.beginPath(); x.ellipse(h.x, h.y, 18 + Math.sin(now * 10) * 2, 7, 0, 0, TAU); x.stroke(); }
         const f = h.moveTo ? Math.floor(h.walk) % 2 : 0;
         // gold ring marks the player's hero
@@ -616,6 +624,7 @@ const Render = (() => {
         const lg = h.lunge > 0 ? Math.sin((h.lunge / 0.14) * Math.PI) * 9 * h.dir : 0;
         const hb = 1 + Math.sin(now * 3.2) * 0.04;
         spr(hs, h.x + lg, h.y - (hs.hi && h.moveTo ? Math.abs(Math.sin(h.walk * Math.PI / 2)) * 3 : 0), 2, h.dir < 0, h.flash, blink, 2 - hb, hb);
+        SkillFx.heroFront(x, h, T, now);
         bar(h.x, h.y - hs.h * 2 - 8, 34, h.hp / h.maxHp, '#7fe08a', 4);
         if (h.moveTo && B.heroManual()) {
             x.strokeStyle = 'rgba(127,212,255,.6)'; x.lineWidth = 1; x.setLineDash([3, 4]);
@@ -639,22 +648,25 @@ const Render = (() => {
     }
 
     // 냥이 총출동 allies: golden flames licking up behind the body, so they read as temporary
-    function flameAura(cx, base, ph, nw) {
+    // flame drawn around the origin and scaled, so the halo gradient is made once and reused every frame
+    let flameGrad = null;
+    function flameAura(cx, base, ph, nw, sc = 1) {
             x.save();
+            x.translate(cx, base); x.scale(sc, sc);
             // soft halo
-            const g = x.createRadialGradient(cx, base - 16, 2, cx, base - 16, 34); g.addColorStop(0, 'rgba(255,240,130,0.95)'); g.addColorStop(0.55, 'rgba(255,170,20,0.6)'); g.addColorStop(1, 'rgba(255,120,0,0)');
-            x.fillStyle = g; x.beginPath(); x.arc(cx, base - 16, 40, 0, TAU); x.fill();
+            if (!flameGrad) { flameGrad = x.createRadialGradient(0, -16, 2, 0, -16, 34); flameGrad.addColorStop(0, 'rgba(255,240,130,0.95)'); flameGrad.addColorStop(0.55, 'rgba(255,170,20,0.6)'); flameGrad.addColorStop(1, 'rgba(255,120,0,0)'); }
+            x.fillStyle = flameGrad; x.beginPath(); x.arc(0, -16, 40, 0, TAU); x.fill();
             // flame tongues licking up around the body
             for (let i = 0; i < 6; i++) {
-                const side = (i / 5 - 0.5) * 2, flick = Math.sin(nw * (8 + i) + i * 1.9 + ph) * 0.5 + 0.5, hgt = 26 + flick * 18 - Math.abs(side) * 8, bx = cx + side * 15;
+                const side = (i / 5 - 0.5) * 2, flick = Math.sin(nw * (8 + i) + i * 1.9 + ph) * 0.5 + 0.5, hgt = 26 + flick * 18 - Math.abs(side) * 8, bx = side * 15;
                 for (let layer = 0; layer < 2; layer++) {
                     x.fillStyle = layer ? 'rgba(255,246,170,0.95)' : 'rgba(255,165,10,0.9)';
                     const wd = layer ? 4 : 7, hh2 = layer ? hgt * 0.65 : hgt;
-                    x.beginPath(); x.moveTo(bx - wd, base - 6); x.quadraticCurveTo(bx - wd * 0.5, base - 6 - hh2 * 0.6, bx + side * 3, base - 6 - hh2); x.quadraticCurveTo(bx + wd * 0.5, base - 6 - hh2 * 0.5, bx + wd, base - 6); x.closePath(); x.fill();
+                    x.beginPath(); x.moveTo(bx - wd, -6); x.quadraticCurveTo(bx - wd * 0.5, -6 - hh2 * 0.6, bx + side * 3, -6 - hh2); x.quadraticCurveTo(bx + wd * 0.5, -6 - hh2 * 0.5, bx + wd, -6); x.closePath(); x.fill();
                 }
             }
             // drifting sparks
-            for (let i = 0; i < 5; i++) { const k = (nw * 0.9 + i * 0.2 + ph) % 1; x.fillStyle = 'rgba(255,240,150,' + (1 - k) + ')'; x.fillRect(cx + Math.sin(i * 3.1 + nw * 2) * 14, base - 8 - k * 46, 2, 2); }
+            for (let i = 0; i < 5; i++) { const k = (nw * 0.9 + i * 0.2 + ph) % 1; x.fillStyle = 'rgba(255,240,150,' + (1 - k) + ')'; x.fillRect(Math.sin(i * 3.1 + nw * 2) * 14, -8 - k * 46, 2, 2); }
             x.restore();
     }
 
@@ -662,12 +674,21 @@ const Render = (() => {
     function drawAlly(B, a, T, now) {
         const fade = Math.min(1, (a.until - T) / 1);
         shadow(a.x, a.y, 12);
-        x.globalAlpha = fade; flameAura(a.x, a.y + 4, a.x * 0.07, now); x.globalAlpha = 1;
+        x.globalAlpha = fade; flameAura(a.x, a.y + 6, a.x * 0.07, now, 2.2); x.globalAlpha = 1;
         x.strokeStyle = `rgba(255,224,138,${0.8 * fade})`; x.lineWidth = 2;
         x.beginPath(); x.ellipse(a.x, a.y, 16 + Math.sin(now * 8) * 2, 6, 0, 0, TAU); x.stroke();
         const hs = a.skin ? heroSprite(a.cls, a.skin) : Art.hero(a.cls, 0);
         const lg = a.lunge > 0 ? Math.sin((a.lunge / 0.14) * Math.PI) * 9 * a.dir : 0;
         spr(hs, a.x + lg, a.y, 2, a.dir < 0, 0, 0.85 * fade);
+        const rem = a.until - T;
+        if (rem < 6 && rem > 0) {
+            // last seconds: 5 4 3 2 1 0 over the head, each new number pops in
+            const n = Math.floor(rem), pop = 1 + 0.45 * Math.max(0, 1 - (1 - (rem - n)) * 5), fs = Math.round(24 * view.textMul * pop);
+            x.font = `${fs}px BlackHan`; x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round';
+            x.lineWidth = 5; x.strokeStyle = '#2a1206'; x.fillStyle = '#ffffff';
+            const ty = a.y - hs.h * 2 - 30;
+            x.strokeText(n, a.x, ty); x.fillText(n, a.x, ty);
+        }
     }
 
     function drawDrop(d, now) {

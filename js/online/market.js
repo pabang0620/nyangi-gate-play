@@ -31,6 +31,31 @@ const Market = {
     range(grade) { const c = this.cfg; return c ? { min: c.floor[grade], max: c.ceil[grade] } : null; },
     deposit(price) { return Math.max(1, Math.ceil(price * ((this.cfg && this.cfg.deposit) || 0.02))); },
     fee(price) { return Math.ceil(price * ((this.cfg && this.cfg.fee) || 0.05)); },
+    // 착용 레벨 단계 of a listing / minted item (its level decides the tier, GEAR_TIERS in js/data/rules.js)
+    tierOf(lv) { return tierForIlvl(Math.max(1, Math.round(Number(lv) || 1))); },
+    // price help for the sell screen: the lowest open price of the same slot + grade, overall and in the same tier
+    // (market_search sorted by price; up to 2 pages so a cheaper lower tier doesn't hide the tier's own lowest)
+    async lowest(slot, grade, tier) {
+        const out = { any: null, tier: null, n: 0 };
+        for (let page = 0; page < 2; page++) {
+            const r = await this.search(slot, grade, 'price', page);
+            if (r.error) return page ? out : r;
+            for (const row of r.rows) {
+                const v = Number(row.price);
+                if (out.any === null) out.any = v;
+                if (this.tierOf(row.lv) === tier) { out.n++; if (out.tier === null) out.tier = v; }
+            }
+            if (out.tier !== null || r.rows.length < ((this.cfg && this.cfg.pageSize) || 20)) break;
+        }
+        return out;
+    },
+    // recent trades of the same slot + grade (market_price, migration 20261038000000). null when the server doesn't have it yet
+    async prices(slot, grade) {
+        const r = await this.call('market_price', { p_slot: slot, p_grade: grade });
+        return r && !r.error && Array.isArray(r.trades) ? r.trades : null;
+    },
+    // what an open listing pays out when it sells: price - fee + the deposit back
+    payout(price, deposit) { return price - this.fee(price) + (deposit === undefined ? this.deposit(price) : deposit); },
     async list(it, price) {
         Save.save(); await Online.pushSave(true);          // the server checks the item in the cloud copy (unenhanced, not equipped)
         const r = await this.call('market_list', { p_mid: it.mid, p_price: Math.round(price), p_req: this.req() });

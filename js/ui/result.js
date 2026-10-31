@@ -134,48 +134,11 @@
         const nextIdx = R.stageIdx + 1;
         const hasNext = stageMode && R.win && nextIdx < STAGES.length && (R.hard ? STAGES[nextIdx].ch === STAGES[R.stageIdx].ch && hardUnlocked(p, nextIdx) : true);
         if (hasNext) btns.appendChild(h('button.btn.gold', { onclick: () => { stopAuto(); click(); d.remove(); startStage(nextIdx, R.hard); } }, L('다음 스테이지')));
-        // 자동 진행 (stages only, after a win): off -> next stage -> repeat this one. Locked until AUTO_NEXT.unlock is cleared
-        // (the button says which stage); any tap on the result stops the count, a loss never auto-starts.
-        const autoMode = () => p.set.autoNext === true ? 'next' : p.set.autoNext || 'off';
-        const autoName = m => m === 'next' ? '\u2713 ' + L('자동: 다음 판') : m === 'repeat' ? '\u2713 ' + L('자동: 반복') : L('자동 진행');
-        const can = (p.stars[AUTO_NEXT.unlock] || 0) > 0, at = stageLabel(AUTO_NEXT.unlock);
-        const autoLine = h('div.tip'), autoTog = h('div.btn.small');
-        let autoTimer = 0;
-        function stopAuto() { clearInterval(autoTimer); autoTimer = 0; autoLine.textContent = ''; }
-        function startAuto() {
-            stopAuto();
-            const m = autoMode();
-            if (!R.win || m === 'off' || (m === 'next' && !hasNext)) return;
-            let left = AUTO_NEXT.wait;
-            const say = () => { autoLine.textContent = m === 'next' ? L('{0}초 뒤 다음 스테이지 · 화면을 누르면 멈춰요', left) : L('{0}초 뒤 다시 시작 · 화면을 누르면 멈춰요', left); };
-            say();
-            autoTimer = setInterval(() => {
-                if (!d.isConnected) { stopAuto(); return; }
-                if (--left <= 0) { stopAuto(); d.remove(); if (m === 'next') startStage(nextIdx, R.hard); else Game.startBattle({ stageIdx: R.stageIdx, hard: R.hard }); return; }
-                say();
-            }, 1000);
-        }
-        const stageWin = !toChallenge && !R.cup && R.win;
-        if (stageWin) {
-            const paint = () => { autoTog.className = 'btn small' + (can && autoMode() !== 'off' ? ' gold' : '') + (can ? '' : ' off'); autoTog.textContent = can ? autoName(autoMode()) : L('{0} 클리어 시 자동 진행', at); };
-            paint();
-            autoTog.addEventListener('click', e => {
-                e.stopPropagation(); click();
-                if (!can) { toast(L('{0}을(를) 클리어하면 자동 진행·반복을 쓸 수 있어요', at)); return; }
-                const m = autoMode(); p.set.autoNext = m === 'off' ? 'next' : m === 'next' ? 'repeat' : false; Save.save();
-                paint(); startAuto();
-            });
-            btns.appendChild(autoTog);
-        }
+        // 자동 진행 was removed (2026-11-01): the result always waits for a tap
+        function stopAuto() { }
         btns.appendChild(exitBtn);   // 나가기 is always the right-most button
         content.push(btns);
-        if (stageWin) content.push(autoLine);
         const d = modal(content, { noClose: true });
-        // the first clear of a chapter boss plays its outro, so no auto start then
-        if (stageWin && can && R.chapterClear === undefined) {
-            startAuto();
-            d.addEventListener('pointerdown', e => { if (!autoTog.contains(e.target)) stopAuto(); }, true);
-        }
         // fireworks only when this run dropped gear of 영웅 grade (r 2) or better, played short and soft
         if (gearItems.some(it => it && it.r >= 2)) UI.vfx('vfx/victory.mp4', d, { rate: 1.5, opacity: 0.7 });
         d.id = 'resultbox';

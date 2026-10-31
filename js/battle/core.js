@@ -124,7 +124,7 @@ class Battle {
         this.state = 'prep';             // prep | run | win | lose
         if (this.raid) { this.queue.push({ t: 6, kind: this.raidKind, path: 0, hpMul: this.raidLive ? this.raidLive.hpMul : this.hpMul * RAID.hpMul }); this.countdown = -2; }
         this.enemies = []; this.soldiers = []; this.projs = [];
-        this.parts = []; this.texts = []; this.rings = []; this.beams = []; this.zones = []; this.teles = []; this.drops = [];
+        this.parts = []; this.texts = []; this.rings = []; this.beams = []; this.zones = []; this.teles = []; this.drops = []; this.skfx = [];
         this.loot = []; this.kills = 0; this.leaked = 0;
         this.hitstop = 0; this.slowmo = 0; this.shake = 0;
         // game feel: hit sparks, death pops, coins flying to the gold counter, kill combo, screen flash, zoom punch

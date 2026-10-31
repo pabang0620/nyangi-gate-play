@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.19';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.20';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
     const SITE_URL = 'https://pabang0620.github.io/nyangi-gate/';   // game intro page (hosted in the developer site repo); the app hands external links to the phone's browser

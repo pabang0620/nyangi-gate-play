@@ -112,7 +112,8 @@ const GEAR_TIERS = [{ req: 1, ilvl: 1 }, { req: 10, ilvl: 18 }, { req: 20, ilvl:
 function tierForIlvl(v) { let t = 0; for (let i = 0; i < GEAR_TIERS.length; i++) if (v >= GEAR_TIERS[i].ilvl) t = i; return t; }
 const HERO_RESPAWN = 12;
 const HERO_LEASH = 260;      // AUTO hero only chases enemies this close to its guard post, so towers matter
-const SKILL_UNLOCK = [1, 2, 4, 7];
+// skill unlock levels (2026-11-01, was 1/2/4/7): reference player gets skill 2 on 1-4, skill 3 on 3-1, the ultimate on 4-3 (tools/balance.js profileFor)
+const SKILL_UNLOCK = [1, 5, 13, 20];
 // coef x hero atk. target: 'point' needs a click (AUTO picks the best cluster), 'self' casts instantly
 const SKILLS = {
     knight: [

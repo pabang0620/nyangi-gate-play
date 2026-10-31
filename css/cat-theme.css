@@ -595,3 +595,92 @@ body { line-height: 1.4; }
 
 /* hub guide (js/ui/tutorial.js hubGuide): lift the pointed top-bar button above the dim */
 .topbar .tut-hl { position: relative; }
+/* 권장 전투력 line (challenge entries, tower, stage popup): wraps instead of overflowing on phones */
+.recp { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: center; font-size: 15px; line-height: 1.3; max-width: 100%; }
+.recp > span { white-space: nowrap; }
+.recp .ok { color: #9be37a; }
+.recp .low { color: #ffb070; }
+.recp .recp-r { opacity: .9; }
+.recp.sm { font-size: 12px; justify-content: flex-start; }
+.si-left .recp { justify-content: flex-start; color: #6a4a2a; font-weight: bold; }
+.si-left .recp .ok { color: #2f7a1a; }
+.si-left .recp .low { color: #c0401a; }
+.dg-row .recp.sm .ok { color: #9be37a; }
+@media (max-width: 700px), (max-height: 420px) { .recp { font-size: 13px; } .recp.sm { font-size: 11px; } }
+
+/* 거래소 (js/ui/market.js, 2026-11-01 개편): tabs 사기 / 팔기 / 내 판매 / 금화·정산, search + filters, sell price help. Phone: no sideways scroll */
+.mk-modal { width: 720px; max-width: calc(100% - 12px); min-width: 0; box-sizing: border-box; gap: 6px; overflow: hidden; }
+.mk-modal > * { max-width: 100%; box-sizing: border-box; }
+.mk-top { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; width: 100%; }
+.mk-wallet { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px 3px 6px; border-radius: 18px; border: 2px solid #8a6a3a; background: #fff3d0; color: #5a3a10; font: inherit; font-size: 17px; cursor: pointer; }
+.mk-wallet b { font-family: 'Lilita', 'BlackHan', sans-serif; font-size: 19px; }
+.mk-gico { width: 26px; height: 26px; object-fit: contain; flex: none; }
+.mk-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; width: 100%; }
+.mk-tab { display: flex; flex-direction: column; align-items: center; gap: 0; min-width: 0; padding: 4px 2px; border-radius: 10px; border: 2px solid #b08a50; background: rgba(255, 248, 225, .7); color: #6a4a24; font: inherit; cursor: pointer; }
+.mk-tab b { font-family: 'BlackHan', 'Jua', sans-serif; font-weight: normal; font-size: 17px; }
+.mk-tab span { font-size: 12px; opacity: .85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.mk-tab.on { background: linear-gradient(#ffd66a, #f0a93a); border-color: #8a5a10; color: #4a2a00; box-shadow: 0 2px 0 #8a5a10; }
+.mk-lock { width: 100%; padding: 3px 8px; border-radius: 8px; background: #ffe2c4; color: #8a3a10; font-size: 14px; line-height: 1.3; }
+.mk-hint { width: 100%; font-size: 14px; line-height: 1.3; color: #7a5a3a; }
+.mk-body { width: 100%; min-height: 120px; max-height: 420px; flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; gap: 6px; text-align: left; }
+.mk-search { display: flex; gap: 6px; align-items: center; width: 100%; }
+.mk-q { flex: 1 1 auto; min-width: 0; width: auto; font-size: 16px; padding: 5px 10px; }
+.mk-filters { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; width: 100%; }
+.mk-f { display: flex; flex-direction: column; min-width: 0; font-size: 12px; color: #7a5a3a; }
+.mk-sel { width: 100%; min-width: 0; font: inherit; font-size: 15px; padding: 4px 2px; border-radius: 8px; border: 2px solid #8a6a3a; background: #fff8e8; color: #3a2410; }
+.mk-list { display: flex; flex-direction: column; gap: 4px; width: 100%; }
+.mk-row { display: flex; align-items: center; gap: 8px; padding: 4px 6px; border-radius: 10px; background: rgba(0, 0, 0, .06); min-width: 0; }
+.mk-row.off { opacity: .7; }
+.mk-row > .btn { flex: none; }
+.mk-info { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; line-height: 1.25; }
+.mk-nm { text-shadow: var(--stroke-s); font-size: 16px; overflow-wrap: anywhere; }
+.mk-meta { font-size: 13px; color: #7a5a3a; overflow-wrap: anywhere; }
+.mk-stat { font-size: 13px; color: #4a3418; overflow-wrap: anywhere; }
+.mk-why { font-size: 13px; color: #a0401a; }
+.mk-price { flex-direction: row; gap: 3px; }
+.mk-price .mk-gico { width: 20px; height: 20px; }
+.mk-gtxt { display: inline-flex; align-items: center; gap: 2px; font-weight: bold; color: #5a3a10; }
+.mk-gtxt .mk-gico { width: 16px; height: 16px; }
+.mk-more { align-self: center; }
+.mk-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px; text-align: center; font-size: 16px; color: #5a3a10; }
+.mk-empty .tip { font-size: 14px; line-height: 1.35; }
+.mk-count { align-self: flex-end; font-size: 13px; color: #7a5a3a; }
+.mk-sec { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 10px; background: rgba(255, 248, 225, .6); font-size: 14px; line-height: 1.35; color: #4a3418; }
+.mk-sec > b { font-size: 15px; color: #8a3a12; }
+.mk-bal { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 4px; }
+.mk-bal .mk-gico { width: 40px; height: 40px; }
+.mk-bal > div { display: flex; flex-direction: column; }
+.mk-bal b { font-family: 'Lilita', 'BlackHan', sans-serif; font-size: 26px; color: #5a3a10; }
+.mk-bal span { font-size: 13px; color: #7a5a3a; }
+.mk-wait { margin-top: 2px; font-weight: bold; color: #2f6a1a; }
+.mk-cl { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; font-size: 14px; }
+.mk-cl > span { flex: 1 1 auto; min-width: 0; }
+.mk-cl > i { font-style: normal; font-size: 12px; color: #7a5a3a; }
+.mk-cl.sum { border-top: 1px dashed #b08a50; padding-top: 2px; font-size: 15px; }
+.mk-cl.sum b { color: #2f6a1a; }
+/* sell window */
+.mk-sell { width: 560px; max-width: calc(100% - 12px); min-width: 0; box-sizing: border-box; gap: 6px; text-align: left; }
+.mk-sell > * { max-width: 100%; box-sizing: border-box; }
+.mk-sell > h2 { align-self: center; }
+.mk-sell .mk-head, .mk-mkt, .mk-calc, .mk-sug, .mk-quick, .mk-plabel { width: 100%; }
+.mk-mkt, .mk-calc { display: flex; flex-direction: column; gap: 2px; padding: 5px 8px; border-radius: 10px; background: rgba(255, 248, 225, .6); }
+.mk-mt { font-size: 13px; color: #8a3a12; font-weight: bold; }
+.mk-sug { font-size: 14px; color: #2f6a1a; font-weight: bold; }
+.mk-plabel { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 15px; }
+.mk-pin { flex: 1 1 120px; min-width: 0; width: auto; }
+.mk-quick { display: flex; gap: 4px; flex-wrap: wrap; }
+.mk-quick .btn.small { min-height: 34px; font-size: 13px; border-width: 9px; border-image-width: 9px; }
+.mk-wallet span { font-size: 14px; }
+.mk-warn { font-size: 13px; color: #b03a10; font-weight: bold; }
+.mk-sell > .row { align-self: center; }
+@media (max-width: 700px), (max-height: 420px) {
+  .mk-body { max-height: none; }
+  .mk-tab b { font-size: 15px; }
+  .mk-tab span { font-size: 11px; }
+  .mk-row .cell { width: 54px; height: 54px; border-width: 8px; border-image-width: 8px; }
+  .mk-row .cell canvas, .mk-row .cell img { width: 36px; height: 36px; }
+}
+@media (max-width: 560px) { .mk-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mk-tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* 장비 부옵션 굴림 품질 (subQ in js/save.js): 하급 회색 / 중급 흰색 / 상급 파랑, outlined so they read on paper too */
+#app .subq { text-shadow: var(--stroke-s); font-weight: bold; }
+#app .subq.lo { color: #a9a9a9; } #app .subq.mid { color: #ffffff; } #app .subq.hi { color: #4fb3ff; }

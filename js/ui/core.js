@@ -91,10 +91,10 @@ const UI = {};
     function itemInfo(it) {
         const m = itemMain(it);
         infoModal(`${itemName(it)}${it.enh ? ' +' + it.enh : ''}`, h('div', { style: { display: 'flex', gap: '14px', alignItems: 'center', textAlign: 'left' } }, itemCell(it, { noNew: true }),
-            h('div', h('div', { style: { color: RARITY[it.r].color } }, L('{0} {1} · 아이템 레벨 {2}', RARITY[it.r].name, SLOT_NAME[it.slot], itemLv(it))),
-                h('div', { style: { color: canWear(it) ? '#9fd65a' : '#ff7a5c' } }, L('{0}단계 · 착용 Lv.{1}', itemTier(it) + 1, itemReq(it))),
+            h('div', h('div', { style: { color: RARITY[it.r].color } }, `${RARITY[it.r].name} ${SLOT_NAME[it.slot]}`),   // 아이템 레벨 is not shown (2026-11-01: players mixed it up with 착용 Lv)
+                h('div', { style: { color: canWear(it) ? '#9fd65a' : '#ff7a5c' } }, L('착용 Lv.{0}', itemReq(it))),
                 h('div', { style: { color: '#f5c451' } }, fmtOpt(m.name, m.v, m.pct)),
-                it.subs.map(sb => h('div', fmtOpt(SUB_OPTS[sb.k].name, sb.v, SUB_OPTS[sb.k].pct))))));
+                it.subs.map(sb => h('div.subq.' + subQ(it, sb), fmtOpt(SUB_OPTS[sb.k].name, sb.v, SUB_OPTS[sb.k].pct))))));
     }
 
 

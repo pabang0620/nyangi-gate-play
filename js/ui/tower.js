@@ -42,6 +42,7 @@
             win.appendChild(h('div.tw-run',
                 h('div.tw-runhead', h('b', L('원정 중 · {0}층 도전', f)), boss ? h('span.tw-boss', img('i_skull', '.icon'), L('보스 {0}', ENEMIES[boss].name)) : null,
                     h('span.tip', L('이번 원정 탑 코인 {0} · 이어하기 {1}', run.coins, run.revived ? L('사용함') : L('1회 남음')))),
+                UI.powerLine(Meta.recFor('tower', f)),
                 run.bless.length ? blessRow(run.bless) : h('div.tip', L('아직 축복이 없어요. 층을 깨면 3개 중 하나를 골라요.')),
                 run.offer ? h('div.gold-t', L('고를 축복이 기다리고 있어요!')) : h('div.tw-muts', muts.length ? muts.map(mutLine) : h('div.tip', L('이번 층은 변이가 없어요'))),
                 h('div.row', h('button.btn.red.small', { onclick: () => { click(); confirmBox(L('원정을 포기할까요?\n지금까지 오른 층과 축복이 사라져요.'), () => { Tower.giveUp(p); showHub('endless'); }); } }, L('원정 포기')),
@@ -49,6 +50,7 @@
         } else {
             win.appendChild(h('div.tw-run',
                 h('div', L('층을 깰 때마다 축복을 하나씩 골라 점점 강해져요. 한 번 지면 원정은 끝나고, 다시 1층부터 올라가요.')),
+                UI.powerLine(Meta.recFor('tower', 1)),
                 T.last ? h('div.tip', L('지난 원정: {0}층까지 · 탑 코인 {1}', T.last.reached, T.last.coins)) : null,
                 h('button.btn.gold.tw-start', { onclick: () => { click(); Tower.newRun(p); towerNext(); } }, L('새 원정 시작'))));
         }
@@ -75,9 +77,10 @@
             boss ? h('div.tw-boss', img('i_skull', '.icon'), L('보스 층 · {0}', ENEMIES[boss].name)) : null,
             h('div.tw-muts', muts.length ? muts.map(mutLine) : h('div.tip', L('이번 층은 변이가 없어요'))),
             run.bless.length ? blessRow(run.bless) : null,
+            UI.powerLine(Meta.recFor('tower', f)),
             f > Tower.state(p).best ? h('div.tip.gold-t', L('처음 오르는 층! 깨면 보상을 받아요')) : null,
             h('div.row', h('button.btn.ghost', { onclick: () => { click(); d.remove(); S.ctab = 'tower'; showHub('endless'); } }, L('나중에')),
-                h('button.btn.gold', { onclick: () => { click(); d.remove(); Game.startBattle({ tower: true }); } }, L('출발'))),
+                h('button.btn.gold', { onclick: () => { click(); UI.powerGate(Meta.recFor('tower', f), () => { d.remove(); Game.startBattle({ tower: true }); }); } }, L('출발'))),
         ], { noClose: true });
         d.querySelector('.modal').classList.add('tw-intro');
     }

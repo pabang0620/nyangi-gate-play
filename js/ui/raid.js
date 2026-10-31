@@ -29,7 +29,7 @@
 
     // 내 전투력 vs 권장 전투력 for a difficulty (green when the player has enough)
     function powerBox(d) {
-        const mine = Meta.power(Save.p), rec = RAID_ON.diffs[d].power;
+        const mine = Meta.power(Save.p), rec = Meta.recFor('online', d);
         return h('div.rd-power', h('span' + (mine >= rec ? '.ok' : '.low'), L('내 전투력 {0}', fmt(mine))), h('span.tip', L('권장 전투력 {0}', fmt(rec))));
     }
 
@@ -125,7 +125,7 @@
                 if (sel !== i) { click(); onPick(i); }
             } }, h('b.rd2-dn', open ? null : img('i_lock', '.icon'), D.name),
                 boss ? h('span.rd2-db', ENEMIES[boss].name) : null,
-                h('span.rd2-dp' + (mine >= D.power ? '.ok' : '.low'), L('권장 전투력 {0}', fmt(D.power))));
+                h('span.rd2-dp' + (mine >= Meta.recFor('online', i) ? '.ok' : '.low'), L('권장 전투력 {0}', fmt(Meta.recFor('online', i)))));
         }));
     }
     // world boss card (파티 레이드 / 협동 디펜스 flip on the result screen; one left unflipped is flipped by the server 5 minutes later and mailed)

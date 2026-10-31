@@ -102,6 +102,11 @@ Object.assign(Battle.prototype, {
         if (this.texts.length > 120) this.texts.splice(0, this.texts.length - 120);
         for (const r of this.rings) r.life -= dt;
         this.rings = this.rings.filter(r => r.life > 0);
+        if (this.skfx && this.skfx.length) {   // hero skill effects run on battle time (js/render-skills.js)
+            let n = 0;
+            for (const f of this.skfx) if (this.t - f.t0 < f.dur) this.skfx[n++] = f;
+            this.skfx.length = n;
+        }
         for (const b of this.beams) b.life -= dt;
         this.beams = this.beams.filter(b => b.life > 0);
         for (const d of this.drops) { d.t += dt; }
@@ -121,6 +126,14 @@ Object.assign(Battle.prototype, {
     },
 
     text(x, y, str, color, size, big) { this.texts.push({ x, y, str: String(str), color, size, life: big ? 1.0 : 0.7, max: big ? 1.0 : 0.7, big }); },
+
+    // visual-only skill effect drawn by js/render-skills.js; the seed shapes it without touching Math.random
+    skillFx(o) {
+        o.t0 = this.t;
+        o.seed = Math.floor((o.x !== undefined ? o.x : o.x1) * 13.7 + (o.y !== undefined ? o.y : o.y1) * 7.3 + this.t * 31) % 9973;
+        (this.skfx || (this.skfx = [])).push(o);
+        if (this.skfx.length > 24) this.skfx.shift();
+    },
 
     ringFx(x, y, r, color) { this.rings.push({ x, y, r0: r * 0.3, r1: r, life: 0.4, max: 0.4, color }); },
 

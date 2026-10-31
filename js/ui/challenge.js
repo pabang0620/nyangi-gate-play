@@ -50,6 +50,18 @@
             [img('i_league'), L('랭킹'), L('다른 냥이들과 기록을 비교해요.')]] },
     ];
 
+    // 권장 전투력 (Meta.recFor): one line with my power (colored when short) and the recommended one
+    function powerLine(rec) {
+        const mine = Meta.power(Save.p);
+        return h('div.recp', h('span' + (mine >= rec ? '.ok' : '.low'), L('내 전투력 {0}', fmt(mine))), h('span.recp-r', L('권장 전투력 {0}', fmt(rec))));
+    }
+    // start right away, or ask first when my power is below the recommended one
+    function powerGate(rec, go) {
+        const mine = Meta.power(Save.p);
+        if (mine >= rec) { go(); return; }
+        UI.confirmBox(L('전투력이 부족해요. 그래도 도전할까요?') + '\n' + L('내 전투력 {0}', fmt(mine)) + ' / ' + L('권장 전투력 {0}', fmt(rec)), go);
+    }
+
     // endless ---------------------------------------------------
     // 도전 tab: 무한의 성벽 · 요일 도전 · 보스 토벌전 (PLAN_V2 1.3)
     function tabEndless() {
@@ -88,7 +100,7 @@
         win.appendChild(h('div', { style: { display: 'flex', alignItems: 'baseline', gap: '14px' } }, h('div.title-t', { style: { fontSize: '32px' } }, L('무한의 성벽')),
             h('div', { style: { color: '#f3e3c3', textShadow: 'var(--stroke-s)' } }, rule.id === 'boss' ? L('5웨이브마다 보스') : L('10웨이브마다 보스')),
             h('div.rulecard', h('b', L('이번 주 규칙: {0}', rule.name)), h('span', ` · ${rule.desc}`))));
-        const go = un ? h('button.btn.gold', { style: { fontSize: '22px', padding: '10px 40px', marginLeft: '12px' }, onclick: () => { click(); Game.startBattle({ endless: true }); } }, L('도전하기'))
+        const go = un ? h('button.btn.gold', { style: { fontSize: '22px', padding: '10px 40px', marginLeft: '12px' }, onclick: () => { click(); powerGate(Meta.recFor('wall'), () => Game.startBattle({ endless: true })); } }, L('도전하기'))
             : h('div', { style: { color: '#ff9090' } }, L('1장 보스 "{0}"을(를) 물리치면 열립니다', ENEMIES.ironfang.name));
         win.appendChild(h('div.row', { style: { display: 'flex', gap: '14px', alignItems: 'center' } }, h('div', { style: { fontSize: '22px' } }, L('최고 기록 '), h('span.gold-t', L('{0} 웨이브', p.endlessBest))),
             h('div', { style: { textAlign: 'center' } }, rewardCell('silver', ENDLESS.silverPerWave), h('div.tip', L('웨이브마다'))), h('div', { style: { textAlign: 'center' } }, rewardCell('gem', ENDLESS.gemsPer10), h('div.tip', L('10웨이브 기록마다'))), go));
@@ -102,6 +114,7 @@
         });
         win.appendChild(h('div.wk-line', h('span', { style: { fontSize: '20px' } }, L('이번 주 구간 보상 '), h('span.gold-t', L('최고 {0} 웨이브', wk.best)), h('span.tip', L(' · 매주 월 05:00 초기화'))),
             h('button.btn.small', { onclick: () => { click(); const d = UI.modal([h('div.title-t', L('이번 주 구간 보상')), h('div.wk-list', wkRows()), h('button.btn', { onclick: () => { click(); d.remove(); } }, L('닫기'))], { dismiss: true }); } }, L('구간 보상 보기'))));
+        win.appendChild(powerLine(Meta.recFor('wall')));
         win.appendChild(h('div.tip.norevive', L('이어하기 없음 · 공정한 기록')));
         if (un) win.appendChild(leagueCard(p));
         root().appendChild(win);
@@ -200,13 +213,13 @@
                 const rw = DUNGEON.reward(kind, t, 3);
                 const row = h('div.dg-row' + (tOpen ? '' : '.lock'),
                     tOpen ? null : h('div.lock-over.sm', img('i_lock', '.lock-big'), h('b', L('{0} 클리어 후 열립니다', stageLabel(T.need)))),
-                    h('div.dg-nm', h('b', T.name), h('div', starsStr(best))),
+                    h('div.dg-nm', h('b', T.name), h('div', starsStr(best)), h('div.recp.sm', h('span' + (Meta.power(p) >= Meta.recFor('dungeon', t) ? '.ok' : '.low'), L('권장 전투력 {0}', fmt(Meta.recFor('dungeon', t)))))),
                     h('div.dg-rw', ...rewardIcons(rw)),
                     h('div.dg-btns',
                         h('button.btn.small' + (open && tOpen && left ? '.gold' : '.off'), { onclick: () => {
                             if (!tOpen) { toast(L('{0} 클리어 후 열립니다', stageLabel(T.need))); return; }
                             if (!open || !left) { toast(open ? L('오늘 도전 횟수를 다 썼습니다') : L('오늘은 닫혀 있습니다')); return; }
-                            click(); Game.startBattle({ dungeon: kind, tier: t });
+                            click(); powerGate(Meta.recFor('dungeon', t), () => Game.startBattle({ dungeon: kind, tier: t }));
                         } }, L('도전')),
                         best >= 3 ? h('button.btn.small' + (open && left ? '' : '.off'), { onclick: () => {
                             if (!open || !left) { toast(open ? L('오늘 도전 횟수를 다 썼습니다') : L('오늘은 닫혀 있습니다')); return; }
@@ -220,13 +233,6 @@
         root().appendChild(win);
     }
 
-    // recommended power for the stage the boss is tuned to: the raid difficulty table (stage -> power of a player there), straight lines between its rows
-    function raidRecPower(si) {
-        const pts = [[0, 0], ...RAID_ON.diffs.map(D => [D.eq, D.power])];
-        for (let i = 1; i < pts.length; i++) if (si <= pts[i][0]) { const [a, pa] = pts[i - 1], [b, pb] = pts[i]; return Math.round((pa + (pb - pa) * (si - a) / (b - a)) / 100) * 100; }
-        const [a, pa] = pts[pts.length - 2], [b, pb] = pts[pts.length - 1];
-        return Math.round((pb + (pb - pa) * (si - b) / (b - a)) / 100) * 100;
-    }
     function tabRaid() {
         const p = Save.p;
         const win = h('div.panel.win');
@@ -238,11 +244,11 @@
         const left = h('div.inset.raidleft',
             h('div.title-t', { style: { fontSize: '22px' } }, `${ENEMIES[kind].title} ${ENEMIES[kind].name}`),
             (c => { c.style.maxHeight = '118px'; c.style.maxWidth = '220px'; return c; })(Art.domCanvas(Art.enemy(kind, 0), 3.2)),
-            (() => { const mine = Meta.power(p), rec = raidRecPower(si); return h('div.rd-power', h('span' + (mine >= rec ? '.ok' : '.low'), L('내 전투력 {0}', fmt(mine))), h('span.tip', L('권장 전투력 {0}', fmt(rec)))); })(),
+            (() => { const mine = Meta.power(p), rec = Meta.recPower(si); return h('div.rd-power', h('span' + (mine >= rec ? '.ok' : '.low'), L('내 전투력 {0}', fmt(mine))), h('span.tip', L('권장 전투력 {0}', fmt(rec)))); })(),
             h('div', L('최고 피해 '), h('span.gold-t', fmt(p.raid.best)), ` · `, h('span.gold-t', `${tierNow} / ${RAID.tiers.length}`), (LANG === 'ko' ? '' : ' ') + L('단계')),
             h('button.btn.gold' + (p.raid.runs < RAID.tries ? '' : '.off'), { style: { fontSize: '20px', minWidth: '200px' }, onclick: () => {
                 if (p.raid.runs >= RAID.tries) { toast(L('이번 주 도전 횟수를 다 썼습니다')); return; }
-                click(); Game.startBattle({ raid: true });
+                click(); powerGate(Meta.recPower(si), () => Game.startBattle({ raid: true }));
             } }, L('토벌 시작')));
         const list = h('div.inset.raidtiers', RAID.tiers.map((T, i) => h('div.mrow' + (p.raid.claimed.includes(i) ? '.claimed' : ''),
             h('div.rt-nm', h('b', L('{0}단계', i + 1)), h('div.tip', L('피해 {0}', fmt(Math.round(T.x * ref))))),
@@ -281,8 +287,9 @@
             h('div', L('이번 주 내 최고 '), h('span.gold-t', L('{0}점', fmt(st.best))), st.bestWave ? L(' ({0}웨이브)', st.bestWave) : '', h('span.tip.norevive', ' · ' + L('이어하기 없음 · 공정한 기록'))),
             h('button.btn.gold' + (left ? '' : '.off'), { style: { fontSize: '20px' }, onclick: () => {
                 if (!left) { toast(L('오늘 도전 횟수를 다 썼습니다')); return; }
-                click(); Game.startBattle({ cup: true });
+                click(); powerGate(Meta.recFor('cup'), () => Game.startBattle({ cup: true }));
             } }, L('도전하기')),
+            powerLine(Meta.recFor('cup')),
             h('div.tip', L('주간 순위 보상 (월요일 정산)')),
             h('div.cup-rw', rw.map(([n, r]) => h('div', h('b', n), ...rewardIcons(r)))));
         const right = h('div.inset', { style: { flex: 1, padding: '10px', display: 'flex', flexDirection: 'column', minHeight: 0 } }, h('b', L('이번 주 순위')));
@@ -311,5 +318,5 @@
         (id === 'overall' ? Online.overall(100) : Online.board(id, 50)).then(v => { box.innerHTML = ''; box.appendChild(myRankLine(v, unit)); box.appendChild(rankList(v, unit)); });
     }
 
-    Object.assign(UI, { tabEndless, leagueCard, leagueBoard, tabDungeon, tabRaid, tabCup, tabRank });
+    Object.assign(UI, { powerLine, powerGate, tabEndless, leagueCard, leagueBoard, tabDungeon, tabRaid, tabCup, tabRank });
 })();

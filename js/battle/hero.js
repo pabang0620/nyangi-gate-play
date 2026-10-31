@@ -51,34 +51,43 @@ Object.assign(Battle.prototype, {
                 if (h.engaged) this.releaseBlock(h);
                 h.dash = { fx: h.x, fy: h.y, tx: clamp(h.x + Math.cos(ang) * L, 20, W - 20), ty: clamp(h.y + Math.sin(ang) * L, 60, H - 20), t: 0, dur: 0.22, hit: new Set(), dmg: A * s.coef, stun: s.stun };
                 h.dir = Math.cos(ang) >= 0 ? 1 : -1;
+                this.skillFx({ k: 'dash', x1: h.dash.fx, y1: h.dash.fy, x2: h.dash.tx, y2: h.dash.ty, hit: h.dash.dur, dur: 0.6 });
                 break;
             }
             case 'quake':
                 this.aoe(h.x, h.y, s.r, A * s.coef, 'phys', { stun: s.stun, crit: crit(), hero: true });
                 this.ringFx(h.x, h.y, s.r, '#ffe080'); this.debris(h.x, h.y, '#c8a070', 18); this.addShake(6); this.hitstop = Math.max(this.hitstop, 0.06);
+                this.skillFx({ k: 'quake', x: h.x, y: h.y, r: s.r, dir: h.dir, dur: 0.9 });
                 break;
             case 'oath':
                 h.oathUntil = this.t + s.dur; h.hp = Math.min(h.maxHp, h.hp + h.maxHp * s.heal);
                 for (const e of this.enemies) if (!e.def.fly && !e.def.boss && dist2(e.x, e.y, h.x, h.y) < s.r * s.r && !e.blockedBy) { e.blockedBy = h; }
                 this.ringFx(h.x, h.y, s.r, '#f2c14e');
                 this.text(h.x, h.y - 40, L('수호!'), '#f2c14e', 20);
+                this.skillFx({ k: 'oath', x: h.x, y: h.y, r: s.r, dur: 0.9 });
                 break;
             case 'judge':
+                this.skillFx({ k: 'judge', x, y, r: s.r, fall: 0.5, dur: 1.3 });
                 this.teles.push({ shape: 'circle', x, y, r: s.r, t0: this.t, dur: 0.5, color: '#fff4c0', ally: true,
                     done: () => { this.aoe(x, y, s.r, A * s.coef, 'phys', { stun: s.stun, crit: crit(), hero: true, kb: 14 }); this.bigBoom(x, y, s.r, '#fff4c0'); this.addShake(14); this.hitstop = 0.12; this.zoom = 0.18; this.flash = 0.16; } });
                 break;
-            case 'fireball':
+            case 'fireball': {
+                const land = dist(h.x, h.y - 20, x, y) / 520;
+                this.skillFx({ k: 'fireball', x, y, r: s.r, land, dur: land + 0.6 });
                 this.projs.push({ kind: 'fireball', x: h.x, y: h.y - 20, tx: x, ty: y, speed: 520, dmg: A * s.coef, type: 'magic', splash: s.r, hero: true, crit: crit() });
                 break;
+            }
             case 'frost':
                 this.aoe(h.x, h.y, s.r, A * s.coef, 'magic', { stun: s.stun, crit: crit(), hero: true, frost: true });
                 this.ringFx(h.x, h.y, s.r, '#a0f0ff'); this.burstParts(h.x, h.y, '#c8ffff', 24, 160);
                 this.healAround(h.x, h.y, s.healR, s.heal);
+                this.skillFx({ k: 'frost', x: h.x, y: h.y, r: s.r, healR: s.healR, dur: 0.9 });
                 break;
             case 'chain':
                 this.chainLightning(h.x, h.y - 20, A * s.coef, s.chain, s.range, 'magic', true, 0.9);
                 break;
             case 'meteor':
+                this.skillFx({ k: 'meteor', x, y, r: s.r, fall: 0.7, dur: 1.5 });
                 this.teles.push({ shape: 'circle', x, y, r: s.r, t0: this.t, dur: 0.7, color: '#ff9040', ally: true,
                     done: () => {
                         this.aoe(x, y, s.r, A * s.coef, 'magic', { crit: crit(), hero: true });
@@ -97,7 +106,7 @@ Object.assign(Battle.prototype, {
                         if (s.id === 'storm' && !e.def.boss) e.d = Math.max(0, e.d - 50);
                     }
                 }
-                this.beams.push({ pts: [[h.x, h.y - 16], [ex, ey - 16]], life: s.id === 'storm' ? 0.4 : 0.25, max: s.id === 'storm' ? 0.4 : 0.25, color: s.id === 'storm' ? '#c0f8ff' : '#fff0c0', w: s.id === 'storm' ? 14 : 5 });
+                this.skillFx({ k: s.id, x1: h.x, y1: h.y, x2: ex, y2: ey, wid: s.wid, dur: s.id === 'storm' ? 0.7 : 0.45 });
                 if (s.id === 'storm') { this.addShake(10); this.hitstop = 0.1; this.zoom = 0.15; this.flash = 0.12; }
                 break;
             }
@@ -109,10 +118,12 @@ Object.assign(Battle.prototype, {
                     } });
                 }
                 this.teles.push({ shape: 'circle', x, y, r: s.r, t0: this.t, dur: 2.0, color: '#7fd4ff', ally: true, done: () => { } });
+                this.skillFx({ k: 'rain', x, y, r: s.r, rainT: 0.25 * s.ticks, dur: 0.25 * s.ticks + 0.1 });
                 break;
             case 'gale':
                 h.galeUntil = this.t + s.dur;
                 this.ringFx(h.x, h.y, 60, '#7fffb0');
+                this.skillFx({ k: 'gale', x: h.x, y: h.y, dur: 0.5 });
                 break;
         }
         return true;
