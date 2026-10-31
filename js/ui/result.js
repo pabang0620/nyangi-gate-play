@@ -12,7 +12,8 @@
     const rewardCell = (...a) => UI.rewardCell(...a);
     const modal = (...a) => UI.modal(...a);
     const showHub = (...a) => UI.showHub(...a);
-    const playStory = (...a) => UI.playStory(...a);
+    let afterStory = null;   // runs once the chapter outro closes (skill unlock popup waits for it)
+    const playStory = (lines, done) => UI.playStory(lines, (...a) => { if (done) done(...a); const f = afterStory; afterStory = null; if (f) f(); });
     const startStage = (...a) => UI.startStage(...a);
 
 
@@ -29,7 +30,7 @@
         if (R.silver + gotSilver > 0) { const c = rewardCell('silver', fmt(R.silver + gotSilver)); cells.push(c); if (R.silver > 0) dblCells.push(c); }
         if (R.xp) cells.push(dblCells[dblCells.length] = rewardCell('i_xp', R.xp));
         if (R.gems + gotGems > 0) cells.push(rewardCell('gem', R.gems + gotGems));
-        const gear = R.items.map(it => itemCell(it, { noNew: true, onclick: () => { click(); UI.itemInfo(it); } }));   // second row; tap for the options
+        const gearItems = [...R.items];   // second row; one 장비 꾸러미 box when there are two or more (UI.gearCells)
         const content = [];
         if (R.cup) {
             content.push(h('div.ribbon', h('span', L('{0}점', fmt(R.cup.score)))));
@@ -69,27 +70,53 @@
             if (!R.win && R.leaks && R.leaks.some(([k]) => ENEMIES[k] && (ENEMIES[k].boss || ENEMIES[k].elite))) content.push(h('div.tip', { style: { color: '#a8401a' } }, L('보스·정예가 성문을 넘으면 바로 패배! 5초 안에 잡으세요')));
             if (R.cond) content.push(h('div', { style: { fontSize: '16px', color: R.cond.ok ? '#3a7a2a' : '#a8401a' } }, L('3성 조건 · {0}: {1}', R.cond.name, R.cond.ok ? L('달성') : L('실패'))));
         }
-        for (const g of (R.got || [])) if (g.item) gear.push(itemCell(g.item, { noNew: true, onclick: () => { click(); UI.itemInfo(g.item); } }));
+        for (const g of (R.got || [])) if (g.item) gearItems.push(g.item);
+        const gear = UI.gearCells(gearItems);
         for (const [icon, n] of gotCur) cells.push(rewardCell(icon, icon === 'silver' ? fmt(n) : n));
-        content.push(h('div', { style: { fontSize: '15px', color: '#5a3a1c' } }, L('처치 {0} · 잃은 목숨 {1}', R.kills, R.lost) + (R.levelUp ? L(' · 영웅 레벨 업! Lv.{0}', R.heroLv) : '')));
+        // hero level up: a small badge that pops in under the stars
+        const heroCls = Game.lastHero || p.hero;
+        const lvPop = h('div.lvup-pop', L('레벨 업! Lv.{0}', R.heroLv));
+        if (!R.levelUp) lvPop.style.display = 'none';
+        content.push(lvPop);
+        content.push(h('div', { style: { fontSize: '15px', color: '#5a3a1c' } }, L('처치 {0} · 잃은 목숨 {1}', R.kills, R.lost)));
         if (R.xpLost) content.push(h('div.tip', { style: { color: '#a8401a' } }, L('영웅이 쓰러진 채 끝나서 경험치를 받지 못했어요')));
         if (R.xpShare) content.push(h('div.tip', L('다른 영웅도 경험치 +{0}', fmt(R.xpShare))));
-        // silver and xp always come first, gear on its own row under them
-        if (cells.length) content.push(h('div.row.res-row', cells));
-        if (gear.length) content.push(h('div.row.res-row', gear));
+        // one row: silver, xp and gems first, then the gear (one 장비 꾸러미 box when two or more)
+        if (cells.length || gear.length) content.push(h('div.row.res-row', cells, gear));
+        // skills unlocked by this level up (SKILL_UNLOCK): a popup once the result is up (after the chapter outro when one plays)
+        const hd = p.heroes[heroCls];
+        let shownLv = hd ? hd.lv - (R.heroUps || 0) : 0;
+        let resultUp = false;
+        function lvUpdate() {
+            if (!hd || hd.lv <= R.heroLv) return;   // the ad x2 can add another level
+            lvPop.textContent = L('레벨 업! Lv.{0}', hd.lv);
+            lvPop.style.display = '';
+            R.heroLv = hd.lv;
+            if (resultUp) skillPop();
+        }
+        function skillPop() {
+            if (!hd || !SKILLS[heroCls]) return;
+            const fresh = SKILLS[heroCls].filter((sk, i) => SKILL_UNLOCK[i] > shownLv && SKILL_UNLOCK[i] <= hd.lv);
+            shownLv = hd.lv;
+            if (!fresh.length) return;
+            stopAuto();
+            UI.infoModal(L('스킬 해금!'), h('div.skill-list', fresh.map(sk => h('div.skrow',
+                h('div.skill' + (SKILLS[heroCls].indexOf(sk) === 3 ? '.ult' : ''), Art.domCanvas(Art.icon(sk.id), 2.3)),
+                h('div', h('b', sk.name), h('div', sk.desc))))));
+        }
         const btns = h('div.row');
         const toChallenge = R.endless || R.dungeon || R.raid || R.raidOn || R.coop || R.praid || R.tower;
-        const exitBtn = h('button.btn.ghost', { onclick: () => { click(); if (R.dungeon) S.ctab = 'dungeon'; if (R.raid) S.ctab = 'raid'; if (R.raidOn || R.coop || R.praid) S.ctab = 'online'; if (R.cup) S.ctab = 'cup'; if (R.tower) S.ctab = 'tower'; showHub(toChallenge ? 'endless' : 'map'); } }, toChallenge ? L('나가기') : L('지도로'));
+        const exitBtn = h('button.btn.ghost', { onclick: () => { click(); if (R.dungeon) S.ctab = 'dungeon'; if (R.raid) S.ctab = 'raid'; if (R.raidOn || R.coop || R.praid) S.ctab = 'online'; if (R.cup) S.ctab = 'cup'; if (R.tower) S.ctab = 'tower'; showHub(toChallenge ? 'endless' : 'map'); } }, L('나가기'));
         const again = R.cup ? { cup: true } : R.endless ? { endless: true } : R.dungeon ? { dungeon: R.dungeon.kind, tier: R.dungeon.tier } : R.raid ? { raid: true } : { stageIdx: R.stageIdx, hard: R.hard };
         const canAgain = R.raidOn || R.coop || R.praid || R.tower ? false : R.cup ? Meta.cupLeft(p) > 0 : R.dungeon ? Meta.dungeonLeft(p) > 0 : R.raid ? p.raid.runs < RAID.tries : true;   // online raids start from the 레이드 tab
         if (canAgain) btns.appendChild(h('button.btn', { onclick: () => { click(); Game.startBattle(again); } }, L('다시 하기')));
         if (R.tower && R.tower.win) btns.appendChild(h('button.btn.gold', { onclick: () => { click(); d.remove(); UI.towerNext(); } }, L('다음 층으로')));
-        if (R.items.length) btns.appendChild(h('button.btn', { onclick: () => { click(); S.selItem = R.items[R.items.length - 1].id; showHub('hero'); } }, L('장비 보기')));
         if (!R.win && !toChallenge && !R.cup) { btns.appendChild(h('button.btn', { onclick: () => { click(); showHub('hero'); } }, L('영웅'))); btns.appendChild(h('button.btn', { onclick: () => { click(); showHub('research'); } }, L('연구'))); }   // where to get stronger
         if ((R.win || R.endless) && R.silver > 0) {
             const doubleNow = () => {
-                Save.p.silver += R.silver; grantBattleXp(Save.p, Game.lastHero || Save.p.hero, R.xp); Save.save();
+                Save.p.silver += R.silver; grantBattleXp(Save.p, heroCls, R.xp); Save.save();
                 UI.markDouble(dblCells[0], fmt(R.silver * 2 + gotSilver)); if (R.xp) UI.markDouble(dblCells[dblCells.length - 1], R.xp * 2);
+                lvUpdate();
             };
             if (Save.p.shop && Save.p.shop.premium) {
                 // 냥이의 가호: no button, the x2 is applied right away while today's count lasts
@@ -149,13 +176,16 @@
             startAuto();
             d.addEventListener('pointerdown', e => { if (!autoTog.contains(e.target)) stopAuto(); }, true);
         }
-        // fireworks only for big wins: a chapter boss or a first 3-star clear, played short and soft
-        if (R.win && !R.endless && (R.chapterClear !== undefined || R.firstThree)) UI.vfx('vfx/victory.mp4', d, { rate: 1.5, opacity: 0.7 });
+        // fireworks only when this run dropped gear of 영웅 grade (r 2) or better, played short and soft
+        if (gearItems.some(it => it && it.r >= 2)) UI.vfx('vfx/victory.mp4', d, { rate: 1.5, opacity: 0.7 });
         d.id = 'resultbox';
+        resultUp = true;
+        if (R.chapterClear !== undefined && Meta.storyFor(p, R.chapterClear, 'outro')) afterStory = skillPop;
+        else setTimeout(() => { if (d.isConnected) skillPop(); }, 700);
         // first clear of a chapter boss: outro scene on top of the result
         if (R.chapterClear !== undefined) {
             const lines = Meta.storyFor(p, R.chapterClear, 'outro');
-            if (lines) { Meta.markStory(p, R.chapterClear, 'outro'); setTimeout(() => playStory(lines, () => toast(R.chapterClear + 1 < CHAPTERS.length ? L('{0}장이 열렸습니다! 어려움 난이도도 열렸습니다', R.chapterClear + 2) : L('어려움 난이도가 열렸습니다'))), 600); }
+            if (lines) { Meta.markStory(p, R.chapterClear, 'outro'); setTimeout(() => playStory(lines, () => toast(R.chapterClear + 1 < CHAPTERS.length ? L('{0}장이 열렸습니다!', R.chapterClear + 2) : L('어려움 난이도가 열렸습니다'))), 600); }
         }
         // count the silver up so the reward lands
         const sc = d.querySelector('.cell .cnt');

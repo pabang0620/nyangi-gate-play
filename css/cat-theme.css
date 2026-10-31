@@ -572,12 +572,26 @@ body { line-height: 1.4; }
 #app .rd2-wrow > b { font-size: 11px; font-weight: normal; opacity: .85; }
 #app .rd2-wrow { align-items: center; padding-top: 3px; padding-bottom: 3px; }
 #app .rd2-wtitle { font-size: 13px; font-weight: normal; margin-top: 8px; margin-bottom: 2px; }   /* smaller headings, the room they free goes to space above each list */
-/* 보상 칸 통일 (UI.rewardCell이 .rwc를 붙임): 어디서든 아이콘은 칸의 2/3, 수량은 칸 크기에 맞춘 작은 글자로 아래 테두리에 걸쳐 아이콘을 가리지 않게.
+/* 보상 칸 통일 (UI.rewardCell이 .rwc를 붙임): 어디서든 아이콘은 칸의 2/3 가운데, 수량은 칸 크기에 맞춘 글자로 오른쪽 아래에 오른쪽 정렬, 아이콘 위 레이어.
+   등급 색 줄은 칸 위쪽(css/theme.css .cell::after).
    칸 크기는 화면마다 그대로 두고 그 안의 비율만 맞춘다. 테두리를 7px로 고정해서 100cqw + 14px = 칸 바깥 크기 */
 #app .cell.rwc { container-type: size; border-width: 7px; border-image-width: 7px; }
-#app .cell.rwc:not(.gear3) > :is(canvas, img):not(.cnt) { width: calc((100cqw + 14px) * .66) !important; height: calc((100cqw + 14px) * .66) !important; max-width: none !important; max-height: none !important; transform: translateY(calc((100cqw + 14px) * -.07)); }
-#app .cell.rwc .cnt { left: 50%; right: auto; bottom: -7px; transform: translateX(-50%); font-family: inherit; font-weight: normal; font-size: clamp(9px, calc((100cqw + 14px) * .2), 13px) !important; line-height: 1.15; padding: 0 3px; border-radius: 4px; background: rgba(24, 12, 4, .78); }
+#app .cell.rwc:not(.gear3) > :is(canvas, img):not(.cnt) { width: calc((100cqw + 14px) * .66) !important; height: calc((100cqw + 14px) * .66) !important; max-width: none !important; max-height: none !important; transform: none; }
+#app .cell.rwc .cnt { left: auto; right: -5px; bottom: -5px; transform: none; text-align: right; font-family: inherit; font-weight: normal; font-size: clamp(10px, calc((100cqw + 14px) * .21), 14px) !important; line-height: 1.15; padding: 0 3px; border-radius: 4px; background: rgba(24, 12, 4, .78); }
 #app .cell.rwc:not(:has(> .cnt)) > :is(canvas, img) { transform: none; }   /* no amount (요일 도전 drops): icon stays centred */
 /* 지도: 난이도 버튼 하나를 장 이름 오른쪽에 */
 .chname .chtitle { display: flex; align-items: center; gap: 8px; }
 .chname .chtitle .modetog { margin-left: 0; }
+/* 장비 꾸러미 (UI.gearCells): the list popup wraps and scrolls when a sweep brings many */
+#app .gb-list { flex-wrap: wrap; justify-content: center; gap: 6px; max-height: 52vh; overflow-y: auto; }
+#app .cell.gbundle { cursor: pointer; }
+/* 수량은 모든 보상 칸에서 오른쪽 아래(css/fix-tabs.css의 휴대폰 패스·우편 행 가운데 정렬을 되돌림), 아이콘·뱃지 위에 */
+#app.mobile :is(.pcell, .mrow, .dg-rw) .cell:is(.r0, .r1, .r2, .r3, .r4, .r5) .cnt { right: -4px; transform: none; }
+#app .cell .cnt { z-index: 3; }
+/* 결과 창: 영웅 레벨 업 표시 */
+.lvup-pop { display: inline-block; align-self: center; margin: 2px auto; padding: 2px 12px; border-radius: 10px; font-family: 'BlackHan', sans-serif; font-size: 17px; color: #fff3c0; background: linear-gradient(#e0902a, #b8561a); box-shadow: 0 2px 0 #6a2a0a; text-shadow: var(--stroke-s); animation: lvpop .5s .7s backwards cubic-bezier(.3, 1.6, .5, 1); }
+@keyframes lvpop { from { transform: scale(.2); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .lvup-pop { animation: none; } }
+
+/* hub guide (js/ui/tutorial.js hubGuide): lift the pointed top-bar button above the dim */
+.topbar .tut-hl { position: relative; }

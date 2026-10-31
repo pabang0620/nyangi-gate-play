@@ -19,9 +19,19 @@ function metaEnsure(p) {
 function normalStars(p) { let s = 0; for (const k in p.stars) s += p.stars[k]; return s; }
 function hardStars(p) { let s = 0; for (const k in (p.hstars || {})) s += p.hstars[k]; return s; }
 function chapterCleared(p, ch) { return (p.stars[chapterBossIdx(ch)] || 0) > 0; }
+// 어려움 (2026-10-31): opens all at once when the last 보통 chapter boss falls; inside 어려움 each stage needs the one before it
+// (so a chapter needs the previous chapter's 어려움 boss). Saves from before: a stage already cleared on 어려움 stays playable.
+function hardOpenAll(p) { return chapterCleared(p, CHAPTERS.length - 1); }
 function hardUnlocked(p, idx) {
-    const ch = STAGES[idx].ch;
-    return chapterCleared(p, ch) && (idx === CH_START[ch] || ((p.hstars || {})[idx - 1] || 0) > 0);
+    const hs = p.hstars || {};
+    if ((hs[idx] || 0) > 0) return true;
+    return hardOpenAll(p) && (idx === 0 || (hs[idx - 1] || 0) > 0);
+}
+// the map's 어려움 button works in a chapter once 어려움 is open (or an older save has 어려움 stars there)
+function hardChapterOpen(p, ch) {
+    if (hardOpenAll(p)) return true;
+    for (let i = CH_START[ch]; i < CH_START[ch] + CH_LEN[ch]; i++) if (((p.hstars || {})[i] || 0) > 0) return true;
+    return false;
 }
 function gameDay() { return new Date(nowMs() - 5 * 3600 * 1000).getDay(); }
 function weekIndex() { return Math.floor((nowMs() - 5 * 3600 * 1000 + 3 * 86400000) / (7 * 86400000)); }   // changes on Monday 05:00

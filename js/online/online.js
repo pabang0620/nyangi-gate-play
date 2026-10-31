@@ -110,6 +110,7 @@ const Online = {
         const p = Save.p;
         p.owner = this.user.id;   // whose progress this is: a different account on this device must not adopt it (see pullSave)
         p.device = this.deviceId();
+        p.ownerGuest = !this.isLinked();   // a guest's progress may move to the first account it signs in to; a linked account's never does (see pullSave)
         const { error } = await this.sb.from('saves').upsert({ uid: this.user.id, data: p, rev: p.rev || 0, saved_ms: Math.round(p.savedMs || nowMs()), updated_at: new Date(nowMs()).toISOString() });
         // the server refuses saves over its size limit (saves.save_size): huge bags after 연속 소환. Say so once per session
         if (error && /save_size/.test(error.message || '') && !this.sizeWarned) { this.sizeWarned = true; toast(L('진행을 저장하지 못했습니다. 가방에 장비가 너무 많아요. 장비를 분해해 주세요')); }
@@ -132,6 +133,10 @@ const Online = {
         if (fresh || (!hasProgress && local.owner !== this.user.id)) { Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); return; }
         // the cloud copy is from another device and newer: let the player choose
         // (compared on progress, currencies and collections, so a newer gem purchase / summon on the other device is not overwritten silently)
+        // another linked account's progress never moves to this one: keeping it would copy the same gems and gear into a second account.
+        // The account's own progress comes back and this device's copy is only backed up. A guest's progress (ownerGuest) may still move once:
+        // the guest session is gone after signing in, so nothing is left behind to copy again.
+        if (foreign && local.ownerGuest === false) { await this.backupLocal(local, 'foreign_linked'); Save.p = data.data; localStorage.setItem(SAVE_KEY, JSON.stringify(Save.p)); location.reload(); return; }
         const sig = s => JSON.stringify([s.stars, s.hstars, s.gems, s.tickets, (s.items || []).length, s.shop && s.shop.skins, s.shop && s.shop.purchases && s.shop.purchases.length]);
         if ((switched || foreign || Number(data.saved_ms) > (local.savedMs || 0) + 5000) && sig(data.data) !== sig(local)) {
             if (typeof UI !== 'undefined' && UI.cloudChoice) UI.cloudChoice(data.data, local, async keepCloud => {

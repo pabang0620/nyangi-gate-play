@@ -152,7 +152,9 @@ function itemMain(it) {
     const m = RARITY[it.r].mul * (1 + ENHANCE.perLv * it.enh), lv = itemLv(it);
     if (it.slot === 'weapon') return { k: 'atk', name: L('영웅 공격력'), v: Math.round((4 + lv * 1.2) * m) };
     if (it.slot === 'armor') return { k: 'hp', name: L('영웅 체력'), v: Math.round((30 + lv * 8) * m) };
-    return { k: 'towerDmg', name: L('모든 탑 피해'), v: Math.round((0.03 + lv * 0.002) * m * 1000) / 1000, pct: true };
+    // 2026-10-31: 신화 장신구의 탑 피해는 등급배수 8 대신 4.5 (신화 +13 하나가 탑 피해 +475%였다). 무기·갑옷은 그대로
+    const cm = it.r === 4 ? 4.5 * (1 + ENHANCE.perLv * it.enh) : m;
+    return { k: 'towerDmg', name: L('모든 탑 피해'), v: Math.round((0.03 + lv * 0.002) * cm * 1000) / 1000, pct: true };
 }
 function itemScore(it) {
     // rough comparable value used by "최적 장착"

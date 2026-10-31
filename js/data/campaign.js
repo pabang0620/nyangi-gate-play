@@ -127,7 +127,7 @@ const STAGES = [
 // 2-1부터 체력 보정을 단계적으로 올려 2장 후반~3장은 x1.3 (2026-10-12, player-sim 튜닝 실험 T_combo30)
 const STAGE_HP_RAMP = [1, 1, 1, 1, 1.15, 1.2, 1.25, 1.3, 1.3, 1.3, 1.3, 1.3];
 // 4장부터: 각 장 첫 스테이지는 직전 보스 근처에서 시작해 장 안에서 CH_HP_STEP씩 오른다 (헤드리스 밸런스 봇으로 보정)
-const CH_HP = { 3: 4.3, 4: 5.3, 5: 7.0, 6: 8.4, 7: 9.4, 8: 11.0, 9: 17.5 };
+const CH_HP = { 3: 4.3, 4: 5.3, 5: 7.0, 6: 8.4, 7: 9.4, 8: 12.0, 9: 17.5 };   // 9장 11.0 -> 12.0 (2026-10-31)
 const CH_HP_STEP = 0.28;
 // 후반 벽 (2026-10-29): from 3-5 on stage health rises on top of the table, so late chapters are decided by gear.
 // Headless bot (tools/balance.js --enh N): +10 gear (the average end-game gear) clears, +6 does not; +15 is comfortable.
@@ -142,15 +142,33 @@ function stageStartGold(idx) {
     const ch = STAGES[idx].ch;
     return 440 + 30 * (ch - 3) + 10 * (idx - CH_START[ch]);
 }
-// 처치 금화 배율: 4장부터 적 체력 증가를 일부 따라간다
-function stageBountyMul(idx) { return idx < 12 ? 1 : 1 + 0.035 * (idx - 11); }
-// 영웅 난이도 (PLAN_V2 1.2): 장 보스를 처음 잡으면 그 장이 열린다
-const HARD = { hpMul: 2.0, bossHpMul: 1.6, lateFrom: 9, lateHpMul: 1.4, lateBossHpMul: 1.2, atkMul: 1.5, goldMul: 1.15, lives: 20, silverMul: 2, ilvlAdd: 12, gemsPerStar: 20 };   // lateFrom: chapter index from which the lower late* multipliers apply (chapter 10 enemies are already 17.5x+)   // bossHpMul: chapter-boss stages (tools/balance.js --hard: 220% there costs 10+ lives even for the end-game profile)
-// enemy HP multiplier of 영웅 난이도 on one stage
-function hardHpMul(idx) {
-    const st = STAGES[idx]; if (!st) return HARD.hpMul;
-    const late = st.ch >= HARD.lateFrom;
-    return st.boss ? (late ? HARD.lateBossHpMul : HARD.bossHpMul) : (late ? HARD.lateHpMul : HARD.hpMul);
+// 처치 금화 배율: 4장부터 적 체력 증가를 일부 따라간다. 9장부터는 거의 오르지 않는다 (2026-10-31: 9~10장 금화가 남아돌아 탑 짓기가 너무 쉬웠다)
+// 10장은 영웅 난이도 10-3·10-5가 금화에 민감해서 9장보다 조금 높게 둔다
+function stageBountyMul(idx) { return idx < 12 ? 1 : idx < 42 ? 1 + 0.035 * (idx - 11) : idx < 48 ? 1.8 + 0.01 * (idx - 42) : 2.1 + 0.01 * (idx - 48); }
+// 어려움 난이도 (2026-10-31 개편): 보통 10장 보스를 깨면 한꺼번에 열리고, 어려움 장끼리는 앞 장 어려움 보스를 깨야 다음 장이 열린다 (js/meta.js hardUnlocked).
+// 어려움은 캠페인을 끝낸 뒤의 콘텐츠라 적 세기를 스테이지 번호가 아니라 보통 10-6에 맞춘다 (js/battle/core.js가 웨이브를 만든 뒤 hardScale을 부른다).
+// waveHp: 웨이브 하나의 일반·정예 적 체력 합. 빠른 적은 사거리 안에 머무는 시간이 짧아 (속도/40)^spdPow, 비행은 flyW배, 정예(문에 닿으면 패배)는 eliteW배로 세고,
+// 길이 짧거나(2300/길이)^lenPow 갈래가 많으면(갈래 수)^pathPow 더 세게 센다
+// bossHp: 장 보스 체력 (보통 10-6 크로노스 = 약 204,000), enemyAtk: 적 평균 공격력 (보통 10-6 평균 93 x 1.5),
+// waveGold: 웨이브당 처치 금화 (보통 10-6 = 약 2,000), startGold: 시작 금화 (보통 10-6 = 670).
+// 장마다 chGrow배, 장 안에서 스테이지마다 step씩 더 세진다 (공격력은 그 제곱근만큼). tools/balance.js --hard 로 보정한다.
+const HARD = { waveHp: 500000, bossHp: 230000, spdPow: 2, flyW: 1.5, lenPow: 1, pathPow: 0.5, eliteW: 2.5, armorW: 1, enemyAtk: 140, waveGold: 2020, startGold: 670, chGrow: 1.15, step: 0.04, goldMul: 1.15, lives: 20, silverMul: 2, ilvlAdd: 12, gemsPerStar: 20 };
+// enemy multipliers of 어려움 on one stage, from the stage's own waves: hp for every enemy, boss = extra factor on the chapter boss
+function hardScale(idx, waves, paths) {
+    let reg = 0, boss = 0, atk = 0, gold = 0, n = 0;
+    for (const w of waves) for (const s of w) {
+        const d = ENEMIES[s.kind], hp = d.hp * (s.bossMul || 1);
+        if (d.boss) boss += hp; else reg += hp * Math.pow(d.spd / 40, HARD.spdPow) * (d.fly ? HARD.flyW : 1) * (d.elite ? HARD.eliteW : 1) * (1 + HARD.armorW * (d.armor || 0));
+        atk += d.atk || 0; gold += d.gold || 0; n++;
+    }
+    // short roads and roads split in two leave less time under the towers
+    const len = paths && paths.length ? paths.reduce((a, P) => a + P.len, 0) / paths.length : 2300;
+    const road = Math.pow(2300 / len, HARD.lenPow) * Math.pow(paths && paths.length ? paths.length : 1, HARD.pathPow);
+    reg *= road; boss *= road;
+    const st = STAGES[idx], nw = Math.max(1, waves.length);
+    const grow = Math.pow(HARD.chGrow, st.ch) * (1 + HARD.step * (idx - CH_START[st.ch]));
+    const hp = HARD.waveHp * grow * nw / Math.max(1, reg);
+    return { hp, boss: boss ? HARD.bossHp * grow / (boss * hp) : 1, atk: HARD.enemyAtk * Math.sqrt(grow) * n / Math.max(1, atk), bounty: HARD.waveGold * nw / Math.max(1, gold), gold: HARD.startGold };
 }
 // 영웅 난이도 3성 조건 (PLAN_V3 C): 1~2성은 목숨, 3성은 목숨 + 이 조건
 const HARD_COND = [

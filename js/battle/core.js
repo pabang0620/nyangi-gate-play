@@ -89,8 +89,8 @@ class Battle {
         this.cond = this.hard && this.mode === 'stage' ? hardCond(cfg.stageIdx) : null;   // 3성 조건
         this.condBroken = false;
         const M = this.hard ? HARD : null;
-        this.hpMul = this.endless ? 1 : stageHpMul(cfg.stageIdx) * (this.mode === 'stage' ? stageWall(cfg.stageIdx) : 1) * (M ? hardHpMul(cfg.stageIdx) : 1) * (cfg.hpMulExtra || 1);
-        this.atkMul = this.endless ? 1 : (1 + 0.1 * cfg.stageIdx) * (M ? M.atkMul : 1);
+        this.hpMul = this.endless ? 1 : stageHpMul(cfg.stageIdx) * (this.mode === 'stage' ? stageWall(cfg.stageIdx) : 1) * (cfg.hpMulExtra || 1);   // 어려움: replaced below once the waves exist (hardScale)
+        this.atkMul = this.endless ? 1 : 1 + 0.1 * cfg.stageIdx;
         this.bountyMul = this.endless ? 1 : stageBountyMul(cfg.stageIdx);
         this.gold = Math.round(((this.endless ? ENDLESS.startGold : stageStartGold(cfg.stageIdx)) + this.b.startGold) * (M ? M.goldMul : 1));
         this.chillUntil = 0; this.chill = 0; this.blindUntil = 0; this.blind = 1;
@@ -101,6 +101,12 @@ class Battle {
         this.raid = this.mode === 'raid';
         this.totalWaves = this.raid ? Infinity : this.endless ? (this.maxWaves || Infinity) : st.waves;
         this.waves = this.endless || this.raid ? [] : this.genStageWaves(st);
+        if (M && this.mode === 'stage' && this.waves.length) {   // 어려움: enemies sized against 보통 10-6 (js/data/campaign.js hardScale)
+            const hs = hardScale(cfg.stageIdx, this.waves, this.paths);
+            this.hpMul = hs.hp * (cfg.hpMulExtra || 1); this.atkMul = hs.atk; this.bountyMul = hs.bounty;
+            for (const w of this.waves) for (const s of w) if (ENEMIES[s.kind].boss) s.bossMul = (s.bossMul || 1) * hs.boss;
+            this.gold += Math.round((hs.gold - stageStartGold(cfg.stageIdx)) * M.goldMul);
+        }
         if (this.coop) this.coopWaves();
         if (this.raid) {
             // 보스 토벌전: one giant boss walks the road, escorts keep coming; the score is damage dealt in RAID.time seconds

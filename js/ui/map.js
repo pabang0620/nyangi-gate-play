@@ -27,7 +27,7 @@
         }
         const ch = S.chapter, n = CH_LEN[ch], pos = NODE_POS[n], base = CH_START[ch];
         const chOpen = c => stageUnlocked(p, CH_START[c]);
-        const hardOpen = chapterCleared(p, ch);
+        const hardOpen = hardChapterOpen(p, ch);   // 어려움 opens for every chapter after the last 보통 boss (js/meta.js)
         if (S.hard && !hardOpen) S.hard = false;
         const stars = idx => (S.hard ? p.hstars[idx] : p.stars[idx]) || 0;
         const unlocked = idx => (S.hard ? hardUnlocked(p, idx) : stageUnlocked(p, idx));
@@ -36,13 +36,13 @@
         // centred: ◀ chapter name (n / total under it) ▶; one difficulty button right of the name shows the current one (보통 / 어려움), a tap switches
         const toHard = () => {
             if (!hardOpen) { hardInfo(false); return; }
-            if (!p.seenTips.hardMode) { p.seenTips.hardMode = true; Save.save(); hardInfo(true, () => { S.hard = true; showHub('map'); }); return; }
+            if (!p.seenTips.hardAll) { p.seenTips.hardAll = true; Save.save(); hardInfo(true, () => { S.hard = true; showHub('map'); }); return; }
             S.hard = true; showHub('map');
         };
         // still locked: the tap explains how 어려움 opens
         const modeBtn = h('div.modetog',
             h('button.btn.small' + (S.hard ? '.red' : '.gold'), { onclick: () => { click(); if (S.hard) { S.hard = false; showHub('map'); } else toHard(); } }, S.hard ? L('어려움') : L('보통')),
-            hardOpen && !p.seenTips.hardMode ? h('span.badge.hard-new', '!') : null);
+            hardOpen && !p.seenTips.hardAll ? h('span.badge.hard-new', '!') : null);
         root().appendChild(h('div.chnav',
             h('button.btn.small' + (ch > 0 ? '' : '.off'), { onclick: () => go(-1) }, '◀'),
             h('div.chname' + (S.hard ? '.hard' : ''), h('div.chtitle', h('span', L('{0}장 {1}', ch + 1, CHAPTERS[ch].name)), modeBtn), h('div.chnum', `${ch + 1} / ${CHAPTERS.length}`)),
@@ -117,10 +117,11 @@
         const text = [L('같은 스테이지를 더 강한 적과 다시 싸우는 어려운 모드입니다 (영웅 탭과는 다릅니다).'),
             L('· 별 1개마다 보석 {0}개 · 은화 {1}배', HARD.gemsPerStar, HARD.silverMul),
             L('· 별 3개: 스테이지마다 정해진 조건 + 잃은 목숨 2 이하'),
+            L('· 어려움 장은 앞 장의 어려움 보스를 물리치면 열립니다'),
         ].filter(Boolean).join('\n');
         // the reward line gets icons you can tap for the full explanation
         const rw = h('div.rwrow', UI.rewardCell('gem', HARD.gemsPerStar), UI.rewardCell('silver', 'x' + HARD.silverMul));
-        const lock = open ? null : h('div.locknote', img('i_lock', '.icon'), ' ', L('이 장의 보스를 물리치면 어려움 난이도가 열립니다'));
+        const lock = open ? null : h('div.locknote', img('i_lock', '.icon'), ' ', L('{0}장 보스를 물리치면 어려움 난이도가 열립니다', CHAPTERS.length));
         UI.infoModal(L('어려움 난이도'), [h('div', text), rw, lock], open && then ? [[L('도전하러 가기'), then]] : []);
     }
 

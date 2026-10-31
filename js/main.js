@@ -249,7 +249,7 @@ const Game = {
         }
         p.silver += R.silver; p.gems += R.gems;
         const gx = grantBattleXp(p, B.hero.cls, R.xp);
-        R.levelUp = gx.ups > 0; R.xpShare = gx.share; R.heroLv = p.heroes[B.hero.cls].lv;
+        R.levelUp = gx.ups > 0; R.heroUps = gx.ups; R.xpShare = gx.share; R.heroLv = p.heroes[B.hero.cls].lv;
         Save.save();
         UI.S.result = R;
         UI.showResult(R);

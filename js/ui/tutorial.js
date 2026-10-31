@@ -94,7 +94,34 @@
         runCards(list, { last: L('확인'), onEnd });
         return true;
     }
+
+    // hub guide: first time on the map after clearing 1-1, one card per real nav button (and the mail button).
+    // Seen flag p.seenTips.hub_0; the settings replay clears seenTips, so it shows again on the next map visit.
+    function hubGuide() {
+        const p = Save.p; p.seenTips = p.seenTips || {};
+        if (p.seenTips.hub_0 || highestCleared(p) < 0) return;
+        setTimeout(() => {
+            if (S.screen !== 'hub' || S.tab !== 'map' || p.seenTips.hub_0 || q('.dim') || q('.lesson')) return;
+            const nav = id => { const im = q(`.navbar img[src*="nav_${id}."]`); return im ? im.closest('.navbtn') : null; };
+            const rows = [
+                ['map', L('지도'), L('스테이지를 골라 싸워요. 별을 모아 다음 장을 열어요.')],
+                ['hero', L('영웅'), L('장비를 끼우고 스킨을 바꿔요. 영웅도 바꿀 수 있어요.')],
+                ['research', L('연구'), L('별로 탑을 영구히 강하게 만들어요.')],
+                ['summon', L('소환'), L('보석으로 장비를 뽑아요.')],
+                ['challenge', L('도전'), L('무한의 성벽, 요일 도전, 보스 토벌전 같은 도전 콘텐츠예요.')],
+                ['rewards', L('보상'), L('임무, 출석, 업적 보상을 여기서 받아요.')],
+                ['shop', L('상점'), L('보석과 패키지를 사요.')],
+            ];
+            const list = rows.map(([id, t, line]) => { const el = nav(id); return el ? [img('nav_' + id), t, line, el] : null; }).filter(Boolean);
+            const mail = q('.topbar .mailbtn');
+            if (mail) list.push([null, L('우편함'), L('선물과 공지가 오면 여기에 와요.'), mail]);
+            if (!list.length) return;
+            p.seenTips.hub_0 = true; Save.save();
+            runCards(list, { last: L('확인'), skip: true, alive: () => S.screen === 'hub' && list.every(x => x[3].isConnected) });
+        }, 450);
+    }
 
     UI.lesson = start;
     UI.cardsOnce = once;
+    UI.hubGuide = hubGuide;
 })();

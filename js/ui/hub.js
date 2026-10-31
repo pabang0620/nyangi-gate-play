@@ -21,7 +21,7 @@
     const tabRewards = (...a) => UI.tabRewards(...a);
 
 
-    const GAME_VERSION = '3.3.17';          // keep in step with versionName in android/app/build.gradle
+    const GAME_VERSION = '3.3.19';          // keep in step with versionName in android/app/build.gradle
     const TERMS_VERSION = '2026-10-20';    // bump when the terms/privacy policy change materially: players agree again
     const SUPPORT_MAIL = 'lwh970924@gmail.com';
     const SITE_URL = 'https://pabang0620.github.io/nyangi-gate/';   // game intro page (hosted in the developer site repo); the app hands external links to the phone's browser
@@ -223,7 +223,7 @@
         root().appendChild(top);
         root().appendChild(nav);
         ({ map: tabMap, hero: tabHero, research: tabResearch, summon: tabSummon, rewards: tabRewards, shop: tabShop, endless: tabEndless, settings: tabSettings })[S.tab]();
-        if (S.tab === 'map') { maybeLogin(); UI.accountPrompts(); }
+        if (S.tab === 'map') { maybeLogin(); UI.accountPrompts(); if (UI.hubGuide) UI.hubGuide(); }
         UI.fitAll();
     }
 
@@ -244,7 +244,7 @@
             sec(L('자동·배속'), L('영웅 자동: 알아서 싸움 · 자동 웨이브: 알아서 시작'), L('배속: 게임 속도')),
             sec(L('별'), L('목숨을 2 이하로 잃고 이기면 별 3개. 별은 연구에 써요.')),
             sec(L('재화'), L('은화: 강화 · 보석: 소환 · 강화석: +11 이상 강화')),
-            sec(L('어려움 난이도'), L('이 장의 보스를 물리치면 어려움 난이도가 열립니다')),
+            sec(L('어려움 난이도'), L('{0}장 보스를 물리치면 어려움 난이도가 열립니다', CHAPTERS.length)),
         ]));
     }
 

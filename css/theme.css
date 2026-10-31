@@ -61,10 +61,10 @@ img { -webkit-user-drag: none; }
 
 /* item / reward cell: iron slot + rarity gem strip */
 .cell { width: 68px; height: 68px; position: relative; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; border: 10px solid transparent; border-image: url('../img/ui_slot.png') 40 fill / 10px stretch; }
-.cell::after { content: ''; position: absolute; left: -2px; right: -2px; bottom: -6px; height: 5px; border-radius: 2px; background: var(--r0); box-shadow: 0 1px 0 rgba(0,0,0,.6); }
+.cell::after { content: ''; position: absolute; left: -2px; right: -2px; top: -6px; height: 5px; border-radius: 2px; background: var(--r0); box-shadow: 0 1px 0 rgba(0,0,0,.6); }
 .cell canvas, .cell img { width: 46px; height: 46px; object-fit: contain; }
 .cell .enh { position: absolute; right: -4px; top: -6px; font-family: 'Lilita'; font-size: 14px; color: #fff; text-shadow: var(--stroke-s); }
-.cell .cnt { position: absolute; right: -4px; bottom: -4px; font-family: 'Lilita', 'BlackHan'; font-size: 14px; color: #fff; text-shadow: var(--stroke-s); z-index: 1; white-space: nowrap; }
+.cell .cnt { position: absolute; right: -4px; bottom: -4px; text-align: right; font-family: 'Lilita', 'BlackHan'; font-size: 14px; color: #fff; text-shadow: var(--stroke-s); z-index: 1; white-space: nowrap; }
 .cell .trd { position: absolute; left: -4px; bottom: -5px; font-family: 'BlackHan'; font-size: 12px; color: #7fe0d0; text-shadow: var(--stroke-s); }
 .cell .eq { position: absolute; left: -4px; top: -6px; font-family: 'Lilita'; font-size: 12px; color: var(--gold); text-shadow: var(--stroke-s); }
 .cell .eq.new { color: #ff8a6a; font-size: 12px; letter-spacing: .5px; }
